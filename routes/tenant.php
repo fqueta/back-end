@@ -6,6 +6,7 @@ use App\Http\Controllers\admin\DashboardController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\api\RegisterController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\TesteController;
 use App\Services\Escola;
@@ -63,6 +64,12 @@ Route::name('api.')->prefix('api/v1')->middleware([
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
     Route::post('register', [RegisterController::class, 'store']);
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');
+
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('password.email');
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('clients', ClientController::class);
     });
