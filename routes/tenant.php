@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\MenuController;
 use App\Http\Controllers\TesteController;
 use App\Services\Escola;
 use Illuminate\Support\Facades\Route;
@@ -72,6 +73,8 @@ Route::name('api.')->prefix('api/v1')->middleware([
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('clients', ClientController::class);
+        Route::get('menus', [MenuController::class, 'getMenus']);
+
     });
     // Route::middleware('auth:sanctum')->get('/user', [AuthController::class,'user']);
     // Route::middleware('auth:sanctum')->post('/add-presenca-massa', [Escola::class,'add_presenca'])->name('add_presenca');

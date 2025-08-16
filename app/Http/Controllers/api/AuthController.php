@@ -25,27 +25,42 @@ class AuthController extends Controller
         ];
 
         // 3. Tentativa de login
-        if (!Auth::attempt($credentials)) {
+        // if (!Auth::attempt($credentials)) {
+        //     return response()->json([
+        //         'status' => 403,
+        //         'message' => 'Sem Autorização',
+        //     ], 403);
+        // }
+
+        // // 4. Usuário logado
+        // $user = Auth::user();
+
+        // // 5. Gerar token
+        // $token = $user->createToken('developer')->plainTextToken;
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+
+            // Gera token (Laravel Sanctum)
+            $token = $user->createToken('developer')->plainTextToken;
+
+            // Carrega menus permitidos
+            $menus = $user->menusPermitidosFiltrados();
+
             return response()->json([
-                'status' => 403,
-                'message' => 'Sem Autorização',
-            ], 403);
+                'token'       => $token,
+                'user'        => $user,
+                'permissions' => [$user->permission_id],
+                'menu'        => $menus
+            ], 200);
         }
-
-        // 4. Usuário logado
-        $user = Auth::user();
-
-        // 5. Gerar token
-        $token = $user->createToken('developer')->plainTextToken;
-
         // 6. Resposta
-        return response()->json([
-            'status' => 200,
-            'user' => $user,
-            'token' => $token,
-            'message' => 'Authorized',
+        // return response()->json([
+        //     'status' => 200,
+        //     'user' => $user,
+        //     'token' => $token,
+        //     'message' => 'Authorized',
 
-        ]);
+        // ]);
     }
 
     public function logout(Request $request)
