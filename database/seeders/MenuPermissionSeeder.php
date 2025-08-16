@@ -3,127 +3,64 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use App\Models\Menu;
 use App\Models\Permission;
+use App\Models\Menu;
 use App\Models\MenuPermission;
 
 class MenuPermissionSeeder extends Seeder
 {
     public function run()
     {
-        // Desativar FK checks na conexão tenant
-        DB::connection('tenant')->statement('SET FOREIGN_KEY_CHECKS=0;');
+        // Buscar permissões já criadas no PermissionSeeder
+        $master       = Permission::where('name', 'Master')->first();
+        $admin        = Permission::where('name', 'Administrador')->first();
+        $gerente      = Permission::where('name', 'Gerente')->first();
+        $escritorio   = Permission::where('name', 'Escritório')->first();
 
-        // Apagar pivot primeiro
-        MenuPermission::truncate();
-
-        // Apagar menus e permissions
-        Menu::truncate();
-        Permission::truncate();
-
-        // Ativar novamente FK checks
-        DB::connection('tenant')->statement('SET FOREIGN_KEY_CHECKS=1;');
-
-        // Definir menus
-        $menus = [
-            [
-                'title' => 'Dashboard',
-                'url'   => '/',
-                'icon'  => 'Home',
-                'items' => null,
-            ],
-            [
-                'title' => 'Clientes',
-                'url'   => '/clients',
-                'icon'  => 'Users',
-                'items' => null,
-            ],
-            [
-                'title' => 'Objetos do Serviço',
-                'url'   => '/service-objects',
-                'icon'  => 'Wrench',
-                'items' => null,
-            ],
-            [
-                'title' => 'Catálogo',
-                'url'   => null,
-                'icon'  => 'Package',
-                'items' => [
-                    [ 'title' => 'Produtos', 'url' => '/products' ],
-                    [ 'title' => 'Serviços', 'url' => '/services' ],
-                    [ 'title' => 'Categorias', 'url' => '/categories' ],
-                ],
-            ],
-            [
-                'title' => 'Orçamentos',
-                'url'   => '/budgets',
-                'icon'  => 'FileText',
-                'items' => null,
-            ],
-            [
-                'title' => 'Ordens de Serviço',
-                'url'   => '/service-orders',
-                'icon'  => 'ClipboardList',
-                'items' => null,
-            ],
-            [
-                'title' => 'Financeiro',
-                'url'   => null,
-                'icon'  => 'DollarSign',
-                'items' => [
-                    [ 'title' => 'Pagamentos', 'url' => '/payments' ],
-                    [ 'title' => 'Fluxo de Caixa', 'url' => '/cash-flow' ],
-                    [ 'title' => 'Contas a Receber', 'url' => '/accounts-receivable' ],
-                    [ 'title' => 'Contas a Pagar', 'url' => '/accounts-payable' ],
-                ],
-            ],
-            [
-                'title' => 'Relatórios',
-                'url'   => null,
-                'icon'  => 'BarChart3',
-                'items' => [
-                    [ 'title' => 'Faturamento', 'url' => '/reports/revenue' ],
-                    [ 'title' => 'OS por Período', 'url' => '/reports/service-orders' ],
-                    [ 'title' => 'Produtos Mais Vendidos', 'url' => '/reports/top-products' ],
-                    [ 'title' => 'Análise Financeira', 'url' => '/reports/financial' ],
-                ],
-            ],
-            [
-                'title' => 'Configurações',
-                'url'   => null,
-                'icon'  => 'Settings',
-                'items' => [
-                    [ 'title' => 'Usuários', 'url' => '/settings/users' ],
-                    [ 'title' => 'Perfis de Usuário', 'url' => '/settings/user-profiles' ],
-                    [ 'title' => 'Permissões', 'url' => '/settings/permissions' ],
-                    [ 'title' => 'Status de OS', 'url' => '/settings/os-statuses' ],
-                    [ 'title' => 'Formas de Pagamento', 'url' => '/settings/payment-methods' ],
-                    [ 'title' => 'Sistema', 'url' => '/settings/system' ],
-                ],
-            ],
-        ];
-
-        // Inserir menus
-        foreach ($menus as $menuData) {
-            $menu = Menu::create([
-                'title' => $menuData['title'],
-                'url'   => $menuData['url'],
-                'icon'  => $menuData['icon'],
-                'items' => $menuData['items'] ? json_encode($menuData['items']) : null,
-            ]);
-
-            // Criar permissão associada
-            $permission = Permission::create([
-                'name' => 'view_' . \Str::slug($menuData['title'], '_'),
-                'guard_name' => 'web',
-            ]);
-
-            // Associar menu e permissão
+        // Master -> todos os menus
+        $allMenus = Menu::all();
+        foreach ($allMenus as $menu) {
             MenuPermission::create([
+                'permission_id' => $master->id,
                 'menu_id' => $menu->id,
-                'permission_id' => $permission->id,
+            ]);
+        }
+
+        // Administrador -> todos menos algumas configs
+        $restrictedConfigMenus = ['Permissões', 'Status de OS', 'Formas de Pagamento', 'Sistema'];
+        $menusAdmin = Menu::whereDoesntHave('parent', function ($q) use ($restrictedConfigMenus) {
+                $q->whereIn('title', $restrictedConfigMenus);
+            })
+            ->orWhereIn('title', ['Usuários', 'Perfis de Usuário'])
+            ->get();
+
+        foreach ($menusAdmin as $menu) {
+            MenuPermission::create([
+                'permission_id' => $admin->id,
+                'menu_id' => $menu->id,
+            ]);
+        }
+
+        // Gerente -> todos menos Configurações
+        $menusGerente = Menu::whereDoesntHave('parent', function ($q) {
+                $q->where('title', 'Configurações');
+            })
+            ->where('title', '!=', 'Configurações')
+            ->get();
+
+        foreach ($menusGerente as $menu) {
+            MenuPermission::create([
+                'permission_id' => $gerente->id,
+                'menu_id' => $menu->id,
+            ]);
+        }
+
+        // Escritório -> apenas Dashboard e Clientes
+        $menusEscritorio = Menu::whereIn('title', ['Dashboard', 'Clientes'])->get();
+        foreach ($menusEscritorio as $menu) {
+            MenuPermission::create([
+                'permission_id' => $escritorio->id,
+                'menu_id' => $menu->id,
             ]);
         }
     }

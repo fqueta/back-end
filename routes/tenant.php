@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+use App\Http\Controllers\Api\PermissionMenuController;
 
 /*
 |--------------------------------------------------------------------------
@@ -74,6 +75,11 @@ Route::name('api.')->prefix('api/v1')->middleware([
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('clients', ClientController::class);
         Route::get('menus', [MenuController::class, 'getMenus']);
+
+        Route::prefix('permissions')->group(function () {
+            Route::get('{id}/menus', [PermissionMenuController::class, 'index']);
+            Route::post('{id}/menus', [PermissionMenuController::class, 'update']);
+        });
 
     });
     // Route::middleware('auth:sanctum')->get('/user', [AuthController::class,'user']);

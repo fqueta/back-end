@@ -26,8 +26,8 @@ class DatabaseSeeder extends Seeder
             // ProfissaoSeeder::class,
             // DocumentSeeder::class,
             // tagSeeder::class,
-            // MenuSeeder::class,
-            // PermissionSeeder::class,
+            MenuSeeder::class,
+            PermissionSeeder::class,
             MenuPermissionSeeder::class,
             // QoptionSeeder::class,
         ]);

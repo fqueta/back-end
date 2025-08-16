@@ -13,7 +13,8 @@ return new class extends Migration
             $table->string('title');
             $table->string('url')->nullable();
             $table->string('icon')->nullable();
-            $table->json('items')->nullable(); // submenus
+            $table->json('items')->nullable();
+            $table->foreignId('parent_id')->nullable()->constrained('menus')->onDelete('cascade');
             $table->timestamps();
         });
     }

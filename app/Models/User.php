@@ -1,86 +1,75 @@
-<?php
-
+<?
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
+        'tipo_pessoa',
         'name',
-        'avatar',
+        'razao',
+        'cpf',
+        'cnpj',
         'email',
         'password',
+        'status',
+        'genero',
+        'verificado',
         'permission_id',
+        'config',
+        'preferencias',
+        'foto_perfil',
+        'ativo',
+        'autor',
         'token',
+        'excluido',
+        'reg_excluido',
+        'deletado',
+        'reg_deletado',
     ];
-     protected $casts = [
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
         'config' => 'array',
         'preferencias' => 'array',
     ];
-     public function permission()
-    {
-        return $this->belongsTo(Permission::class, 'permission_id');
-    }
 
-    public function menusPermitidos()
-    {
-        return Menu::whereHas('permissions', function ($q) {
-            $q->where('permissions.id', $this->permission_id);
-        })->get();
-    }
-    public function menusPermitidosFiltrados()
-    {
-        $menus = Menu::whereHas('permissions', function ($q) {
-            $q->where('permissions.id', $this->permission_id);
-        })->get();
-
-        // Filtra também os submenus dentro do campo "items"
-        $menusFiltrados = $menus->map(function ($menu) {
-            if (is_array($menu->items) && !empty($menu->items)) {
-                $menu->items = collect($menu->items)->filter(function ($submenu) {
-                    // Aqui você pode colocar lógica adicional
-                    // Ex: checar se o submenu exige permissão extra
-                    return true;
-                })->values()->toArray();
-            }
-            return $menu;
-        });
-
-        return $menusFiltrados;
-    }
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
+        'token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    // RELACIONAMENTOS
+    public function permission()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->belongsTo(Permission::class);
+    }
+
+    public function menus()
+    {
+        return $this->belongsToMany(Menu::class, 'menu_permission', 'permission_id', 'menu_id');
+    }
+
+    // MÉTODO PARA RETORNAR MENUS FORMATADOS
+    public function menusPermitidosFiltrados()
+    {
+        return $this->menus()
+            ->with('submenus') // Caso queira carregar itens de menus
+            ->orderBy('title')
+            ->get()
+            ->map(function ($menu) {
+                return [
+                    'title' => $menu->title,
+                    'url'   => $menu->url,
+                    'icon'  => $menu->icon,
+                    'items' => $menu->items ? json_decode($menu->items, true) : null,
+                ];
+            });
     }
 }

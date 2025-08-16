@@ -2,29 +2,25 @@
 
 namespace Database\Seeders;
 
-use App\Models\Contrato;
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class UserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        $arr = [
+        $users = [
             [
                 'name' => 'Fernando Queta',
                 'email' => 'fernando@maisaqui.com.br',
                 'password' => Hash::make('ferqueta'),
                 'status' => 'actived',
                 'verificado' => 'n',
-                'permission_id' => '1',
+                'permission_id' => 1, // Grupo Master
             ],
             [
                 'name' => 'Test User',
@@ -32,13 +28,15 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('mudar123'),
                 'status' => 'actived',
                 'verificado' => 'n',
-                'permission_id' => '2',
+                'permission_id' => 2, // Grupo Administrador
             ],
         ];
-        User::truncate();
-        // Contrato::truncate();
-        foreach ($arr as $key => $value) {
-            User::create($value);
+
+        foreach ($users as $userData) {
+            User::updateOrCreate(
+                ['email' => $userData['email']], // evita duplicados
+                $userData
+            );
         }
     }
 }

@@ -5,71 +5,301 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    // public function login(Request $request)
+    // {
+    //     $request->validate([
+    //         'email' => 'required|email',
+    //         'password' => 'required|string',
+    //     ]);
+
+    //     $credentials = [
+    //         'email' => $request->email,
+    //         'password' => $request->password,
+    //         'ativo' => 's',
+    //         'excluido' => 'n',
+    //     ];
+
+    //     if (Auth::attempt($credentials)) {
+    //         $user = Auth::user();
+    //         $token = $user->createToken('developer')->plainTextToken;
+
+    //         // Menu base do sistema
+    //         $menu = config('menu');
+
+    //         // Permissões do usuário (permission_id -> tabela permissions -> id_menu)
+    //         $userPermissions = $user->permission?->id_menu
+    //             ? json_decode($user->permission->id_menu, true)
+    //             : [];
+
+    //         // Filtrar menu conforme permissões
+    //         $filteredMenu = $this->filterMenu($menu, $userPermissions);
+
+    //         return response()->json([
+    //             'token' => $token,
+    //             'user'  => $user,
+    //             'menu'  => $filteredMenu,
+    //         ], 200);
+    //     }
+
+    //     return response()->json(['message' => 'Credenciais inválidas'], 403);
+    // }
+
+    /**
+     * Filtra menu pelo array de permissões do usuário
+     */
+    private function filterMenu(array $menu, array $userPermissions): array
     {
-        // 1. Validação
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+        $filtered = [];
 
-        // 2. Credenciais
-        $credentials = [
-            'email' => $request->email,
-            'password' => $request->password,
-            'ativo' => 's',
-            'excluido' => 'n',
-        ];
+        foreach ($menu as $item) {
+            if (isset($item['permission']) && in_array($item['permission'], $userPermissions)) {
+                $newItem = $item;
 
-        // 3. Tentativa de login
-        // if (!Auth::attempt($credentials)) {
-        //     return response()->json([
-        //         'status' => 403,
-        //         'message' => 'Sem Autorização',
-        //     ], 403);
-        // }
+                // Se tiver sub-itens, filtra também
+                if (isset($item['items'])) {
+                    $newItem['items'] = $this->filterMenu($item['items'], $userPermissions);
+                    // Se nenhum subitem restar, podemos ocultar o pai
+                    if (empty($newItem['items']) && !isset($item['url'])) {
+                        continue;
+                    }
+                }
 
-        // // 4. Usuário logado
-        // $user = Auth::user();
-
-        // // 5. Gerar token
-        // $token = $user->createToken('developer')->plainTextToken;
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-
-            // Gera token (Laravel Sanctum)
-            $token = $user->createToken('developer')->plainTextToken;
-
-            // Carrega menus permitidos
-            $menus = $user->menusPermitidosFiltrados();
-
-            return response()->json([
-                'token'       => $token,
-                'user'        => $user,
-                'permissions' => [$user->permission_id],
-                'menu'        => $menus
-            ], 200);
+                $filtered[] = $newItem;
+            }
         }
-        // 6. Resposta
-        // return response()->json([
-        //     'status' => 200,
-        //     'user' => $user,
-        //     'token' => $token,
-        //     'message' => 'Authorized',
 
-        // ]);
+        return $filtered;
     }
+
 
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'status' => 200,
+            'status'  => 200,
             'message' => 'Logout realizado com sucesso',
         ]);
+    }
+
+
+      public function login(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (!Auth::attempt($credentials)) {
+            return response()->json(['message' => 'Credenciais inválidas'], 401);
+        }
+
+        $user = Auth::user();
+
+        // Carrega o grupo de permissões
+        $group = DB::table('permissions')->where('id', $user->permission_id)->first();
+
+        if (!$group) {
+            return response()->json(['message' => 'Permissão não encontrada'], 403);
+        }
+
+        // Lista de permissões do grupo
+        $allowedPermissions = json_decode($group->id_menu, true) ?? [];
+// dd($allowedPermissions);
+        // Menu base (estrutura completa)
+        $menu = $this->getMenuStructure();
+
+        // Filtra o menu conforme as permissões do grupo
+        $filteredMenu = $this->filterMenuByPermissions($menu, $allowedPermissions);
+        $token = $user->createToken('developer')->plainTextToken;
+        return response()->json([
+            'user' => $user,
+            'permissions' => $allowedPermissions,
+            'token' => $token,
+            'menu' => $filteredMenu,
+            'redirect' => $group->redirect_login ?? '/home',
+        ]);
+    }
+
+    /**
+     * Estrutura completa do menu (igual a que você passou)
+     */
+    private function getMenuStructure(): array
+    {
+        return [
+            [
+                "title" => "Dashboard",
+                "url" => "/",
+                "icon" => "Home",
+                "permission" => "dashboard.view",
+            ],
+            [
+                "title" => "Clientes",
+                "url" => "/clients",
+                "icon" => "Users",
+                "permission" => "clients.view",
+            ],
+            [
+                "title" => "Objetos do Serviço",
+                "url" => "/service-objects",
+                "icon" => "Wrench",
+                "permission" => "service-objects.view",
+            ],
+            [
+                "title" => "Catálogo",
+                "icon" => "Package",
+                "permission" => "catalog.view",
+                "items" => [
+                    [
+                        "title" => "Produtos",
+                        "url" => "/products",
+                        "permission" => "catalog.products.view",
+                    ],
+                    [
+                        "title" => "Serviços",
+                        "url" => "/services",
+                        "permission" => "catalog.services.view",
+                    ],
+                    [
+                        "title" => "Categorias",
+                        "url" => "/categories",
+                        "permission" => "catalog.categories.view",
+                    ],
+                ],
+            ],
+            [
+                "title" => "Orçamentos",
+                "url" => "/budgets",
+                "icon" => "FileText",
+                "permission" => "budgets.view",
+            ],
+            [
+                "title" => "Ordens de Serviço",
+                "url" => "/service-orders",
+                "icon" => "ClipboardList",
+                "permission" => "service-orders.view",
+            ],
+            [
+                "title" => "Financeiro",
+                "icon" => "DollarSign",
+                "permission" => "finance.view",
+                "items" => [
+                    [
+                        "title" => "Pagamentos",
+                        "url" => "/payments",
+                        "permission" => "finance.payments.view",
+                    ],
+                    [
+                        "title" => "Fluxo de Caixa",
+                        "url" => "/cash-flow",
+                        "permission" => "finance.cash-flow.view",
+                    ],
+                    [
+                        "title" => "Contas a Receber",
+                        "url" => "/accounts-receivable",
+                        "permission" => "finance.accounts-receivable.view",
+                    ],
+                    [
+                        "title" => "Contas a Pagar",
+                        "url" => "/accounts-payable",
+                        "permission" => "finance.accounts-payable.view",
+                    ],
+                ],
+            ],
+            [
+                "title" => "Relatórios",
+                "icon" => "BarChart3",
+                "permission" => "reports.view",
+                "items" => [
+                    [
+                        "title" => "Faturamento",
+                        "url" => "/reports/revenue",
+                        "permission" => "reports.revenue.view",
+                    ],
+                    [
+                        "title" => "OS por Período",
+                        "url" => "/reports/service-orders",
+                        "permission" => "reports.service-orders.view",
+                    ],
+                    [
+                        "title" => "Produtos Mais Vendidos",
+                        "url" => "/reports/top-products",
+                        "permission" => "reports.top-products.view",
+                    ],
+                    [
+                        "title" => "Análise Financeira",
+                        "url" => "/reports/financial",
+                        "permission" => "reports.financial.view",
+                    ],
+                ],
+            ],
+            [
+                "title" => "Configurações",
+                "icon" => "Settings",
+                "permission" => "settings.view",
+                "items" => [
+                    [
+                        "title" => "Usuários",
+                        "url" => "/settings/users",
+                        "permission" => "settings.users.view",
+                    ],
+                    [
+                        "title" => "Perfis de Usuário",
+                        "url" => "/settings/user-profiles",
+                        "permission" => "settings.user-profiles.view",
+                    ],
+                    [
+                        "title" => "Permissões",
+                        "url" => "/settings/permissions",
+                        "permission" => "settings.permissions.view",
+                    ],
+                    [
+                        "title" => "Status de OS",
+                        "url" => "/settings/os-statuses",
+                        "permission" => "settings.os-statuses.view",
+                    ],
+                    [
+                        "title" => "Formas de Pagamento",
+                        "url" => "/settings/payment-methods",
+                        "permission" => "settings.payment-methods.view",
+                    ],
+                    [
+                        "title" => "Sistema",
+                        "url" => "/settings/system",
+                        "permission" => "settings.system.view",
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Filtra o menu conforme permissões
+     */
+    private function filterMenuByPermissions(array $menu, array $allowedPermissions): array
+    {
+        $filtered = [];
+
+        foreach ($menu as $item) {
+            // Se o item principal tiver permissão
+            if (in_array($item['permission'], $allowedPermissions)) {
+                $newItem = $item;
+
+                // Se tiver submenus, filtra também
+                if (isset($item['items'])) {
+                    $newItem['items'] = $this->filterMenuByPermissions($item['items'], $allowedPermissions);
+
+                    // Se depois de filtrar não sobrar nada, remove o bloco
+                    if (empty($newItem['items'])) {
+                        unset($newItem['items']);
+                    }
+                }
+
+                $filtered[] = $newItem;
+            }
+        }
+
+        return $filtered;
     }
 }
