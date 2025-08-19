@@ -44,4 +44,8 @@ class Menu extends Model
     {
         return $this->belongsToMany(Permission::class, 'menu_permission');
     }
+    public function children()
+    {
+        return $this->hasMany(Menu::class, 'parent_id')->with('children');
+    }
 }

@@ -10,27 +10,22 @@ return new class extends Migration
     {
         Schema::create('menu_permission', function (Blueprint $table) {
             $table->id();
-
-            // Relacionamento com perfil (permission)
-            $table->unsignedBigInteger('permission_id');
-            $table->foreign('permission_id')->references('id')->on('permissions')->onDelete('cascade');
-
-            // Relacionamento com menu
             $table->unsignedBigInteger('menu_id');
-            $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
-
-            // Permissões (checkboxes da tela)
-            $table->boolean('can_view')->default(0);
-            $table->boolean('can_create')->default(0);
-            $table->boolean('can_edit')->default(0);
-            $table->boolean('can_delete')->default(0);
-            $table->boolean('can_upload')->default(0);
-
+            $table->unsignedBigInteger('permission_id'); // 🔑 grupo de usuários
+            $table->string('permission_key', 100);
+            $table->boolean('can_view')->default(false);
+            $table->boolean('can_create')->default(false);
+            $table->boolean('can_edit')->default(false);
+            $table->boolean('can_delete')->default(false);
+            $table->boolean('can_upload')->default(false);
             $table->timestamps();
 
-            // Evita duplicidade (mesmo perfil e menu)
-            $table->unique(['permission_id', 'menu_id']);
+            $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
+            $table->foreign('permission_id')->references('id')->on('permissions')->onDelete('cascade');
+
+            $table->unique(['menu_id', 'permission_id']);
         });
+
     }
 
     public function down(): void

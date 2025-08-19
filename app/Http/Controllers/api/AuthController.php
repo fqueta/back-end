@@ -3,51 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\MenuController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
-    // public function login(Request $request)
-    // {
-    //     $request->validate([
-    //         'email' => 'required|email',
-    //         'password' => 'required|string',
-    //     ]);
-
-    //     $credentials = [
-    //         'email' => $request->email,
-    //         'password' => $request->password,
-    //         'ativo' => 's',
-    //         'excluido' => 'n',
-    //     ];
-
-    //     if (Auth::attempt($credentials)) {
-    //         $user = Auth::user();
-    //         $token = $user->createToken('developer')->plainTextToken;
-
-    //         // Menu base do sistema
-    //         $menu = config('menu');
-
-    //         // Permissões do usuário (permission_id -> tabela permissions -> id_menu)
-    //         $userPermissions = $user->permission?->id_menu
-    //             ? json_decode($user->permission->id_menu, true)
-    //             : [];
-
-    //         // Filtrar menu conforme permissões
-    //         $filteredMenu = $this->filterMenu($menu, $userPermissions);
-
-    //         return response()->json([
-    //             'token' => $token,
-    //             'user'  => $user,
-    //             'menu'  => $filteredMenu,
-    //         ], 200);
-    //     }
-
-    //     return response()->json(['message' => 'Credenciais inválidas'], 403);
-    // }
-
     /**
      * Filtra menu pelo array de permissões do usuário
      */
@@ -98,6 +60,7 @@ class AuthController extends Controller
         $user = Auth::user();
 
         // Carrega o grupo de permissões
+        $pid = $user->permission_id;
         $group = DB::table('permissions')->where('id', $user->permission_id)->first();
 
         if (!$group) {
@@ -106,12 +69,12 @@ class AuthController extends Controller
 
         // Lista de permissões do grupo
         $allowedPermissions = json_decode($group->id_menu, true) ?? [];
-// dd($allowedPermissions);
         // Menu base (estrutura completa)
         $menu = $this->getMenuStructure();
 
         // Filtra o menu conforme as permissões do grupo
-        $filteredMenu = $this->filterMenuByPermissions($menu, $allowedPermissions);
+        // $filteredMenu = $this->filterMenuByPermissions($menu, $allowedPermissions);
+        $filteredMenu = (new MenuController)->getMenus($pid);;
         $token = $user->createToken('developer')->plainTextToken;
         return response()->json([
             'user' => $user,

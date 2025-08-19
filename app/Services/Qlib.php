@@ -23,7 +23,7 @@ use App\Models\Tenant;
 use DateTime;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Str;
 class Qlib
 {
     static $RAIZ;
@@ -2745,5 +2745,14 @@ class Qlib
         $tenant1 = Tenant::create(['id' => $id]);
         $tenant1->domains()->create(['domain' => $dominio]);
         return $tenant1;
+    }
+    static function token($tp=1){
+        if($tp==1){
+            // UUID v4
+            return (string) Str::uuid();
+        }elseif($tp==2){
+            // UUID v7
+            return (string) Str::random(60);
+        }
     }
 }

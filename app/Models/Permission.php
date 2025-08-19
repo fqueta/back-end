@@ -13,16 +13,23 @@ class Permission extends Model
 
     protected $fillable = [
         'name',
-        'description',
-        'redirect_login',
-        'active',
         'id_menu',
+        'redirect_login',
+        'config',
+        'description',
+        'guard_name',
+        'active',
+        'autor',
+        'token',
+        'excluido',
+        'reg_excluido',
+        'deletado',
+        'reg_deletado',
     ];
-
     protected $casts = [
-        'id_menu' => 'array', // caso continue salvando menus padrão em JSON
+        'id_menu' => 'array',
+        'config'  => 'array',
     ];
-
     /**
      * Relacionamento com permissões de menu
      */

@@ -120,6 +120,16 @@ class PermissionSeeder extends Seeder
                     "clients.view"
                 ]),
             ],
+            // Cliente → para clientes sem acesso ao admin
+            [
+                'name' => 'Cliente',
+                'description' => 'Acesso limitado a Dashboard e Clientes',
+                'redirect_login' => '/home',
+                'active' => 's',
+                'id_menu' => json_encode([
+                    "dashboard.view"
+                ]),
+            ],
         ]);
     }
 }

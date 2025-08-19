@@ -12,8 +12,9 @@ class MenuPermission extends Model
     protected $table = 'menu_permission';
 
     protected $fillable = [
-        'permission_id',
         'menu_id',
+        'permission_id',
+        'permission_key',
         'can_view',
         'can_create',
         'can_edit',
@@ -21,14 +22,10 @@ class MenuPermission extends Model
         'can_upload',
     ];
 
-    /**
-     * Relacionamento com a permissão (perfil)
-     */
     public function permission()
     {
         return $this->belongsTo(Permission::class, 'permission_id');
     }
-
     /**
      * Relacionamento com o menu
      */

@@ -3,65 +3,48 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Permission;
+use Illuminate\Support\Facades\DB;
 use App\Models\Menu;
-use App\Models\MenuPermission;
+use App\Models\Permission; // grupos
 
 class MenuPermissionSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Buscar permissões já criadas no PermissionSeeder
-        $master       = Permission::where('name', 'Master')->first();
-        $admin        = Permission::where('name', 'Administrador')->first();
-        $gerente      = Permission::where('name', 'Gerente')->first();
-        $escritorio   = Permission::where('name', 'Escritório')->first();
+        $menus = Menu::all();
+        $groups = Permission::all(); // grupos de usuário do sistema
+        DB::table('menu_permission')->delete();
+        foreach ($menus as $menu) {
+            foreach ($groups as $group) {
+                $keyBase = $this->generateKey($menu);
 
-        // Master -> todos os menus
-        $allMenus = Menu::all();
-        foreach ($allMenus as $menu) {
-            MenuPermission::create([
-                'permission_id' => $master->id,
-                'menu_id' => $menu->id,
-            ]);
+                DB::table('menu_permission')->insert([
+                    'menu_id'       => $menu->id,
+                    'permission_id' => $group->id,
+                    'permission_key'=> $keyBase . '.view',
+                    'can_view'      => true,   // por padrão todos os grupos podem visualizar
+                    'can_create'    => false,
+                    'can_edit'      => false,
+                    'can_delete'    => false,
+                    'can_upload'    => false,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+            }
+        }
+    }
+
+    private function generateKey(Menu $menu): string
+    {
+        if(empty($menu->url) || $menu->url === '/') {
+            return 'dashboard'; // fallback para dashboard
+        }
+        if ($menu->url) {
+            return str_replace('/', '.', trim($menu->url, '/'));
+            // "/clients" -> "clients"
         }
 
-        // Administrador -> todos menos algumas configs
-        $restrictedConfigMenus = ['Permissões', 'Status de OS', 'Formas de Pagamento', 'Sistema'];
-        $menusAdmin = Menu::whereDoesntHave('parent', function ($q) use ($restrictedConfigMenus) {
-                $q->whereIn('title', $restrictedConfigMenus);
-            })
-            ->orWhereIn('title', ['Usuários', 'Perfis de Usuário'])
-            ->get();
-
-        foreach ($menusAdmin as $menu) {
-            MenuPermission::create([
-                'permission_id' => $admin->id,
-                'menu_id' => $menu->id,
-            ]);
-        }
-
-        // Gerente -> todos menos Configurações
-        $menusGerente = Menu::whereDoesntHave('parent', function ($q) {
-                $q->where('title', 'Configurações');
-            })
-            ->where('title', '!=', 'Configurações')
-            ->get();
-
-        foreach ($menusGerente as $menu) {
-            MenuPermission::create([
-                'permission_id' => $gerente->id,
-                'menu_id' => $menu->id,
-            ]);
-        }
-
-        // Escritório -> apenas Dashboard e Clientes
-        $menusEscritorio = Menu::whereIn('title', ['Dashboard', 'Clientes'])->get();
-        foreach ($menusEscritorio as $menu) {
-            MenuPermission::create([
-                'permission_id' => $escritorio->id,
-                'menu_id' => $menu->id,
-            ]);
-        }
+        return \Str::slug($menu->title, '.');
+        // "Ordens de Serviço" -> "ordens.de.servico"
     }
 }
