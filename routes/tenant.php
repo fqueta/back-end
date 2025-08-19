@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Http\Controllers\admin\DashboardController;
 use App\Http\Controllers\api\AuthController;
-use App\Http\Controllers\Api\ClientController;
-use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\api\ClientController;
+use App\Http\Controllers\api\PermissionController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
