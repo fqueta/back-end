@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\MenuController;
 use App\Models\Menu;
 use App\Models\MenuPermission;
 use App\Models\Permission;
@@ -31,15 +32,16 @@ class MenuPermissionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, $permissionId)
     {
-        //
+        $arr_parmission = (new MenuController)->getMenuPermissions($permissionId);
+        return response()->json($arr_parmission);
     }
     public function updatePermissions(Request $request, $permissionId)
     {
         $validator = Validator::make($request->all(), [
             'permissions' => 'required|array',
-            'permissions.*.permission_key' => 'required|string|max:100',
+            'permissions.*.menu_id' => 'required|max:100',
             'permissions.*.can_view' => 'required|boolean',
             'permissions.*.can_create' => 'required|boolean',
             'permissions.*.can_edit' => 'required|boolean',
@@ -64,13 +66,14 @@ class MenuPermissionController extends Controller
         $menuKeys = $permission['id_menu'] ?? [];
 
         foreach ($validated['permissions'] as $perm) {
-            // Verifica se o permission_key está autorizado para esse grupo
-            if (!in_array($perm['permission_key'], $menuKeys)) {
-                continue; // Ignora se não estiver listado
-            }
+            // dd($perm,$menuKeys);
+            // // Verifica se o permission_key está autorizado para esse grupo
+            // if (!in_array($perm['menu_id'], $menuKeys)) {
+            //     continue; // Ignora se não estiver listado
+            // }
 
            // Busca o menu correspondente ao permission_key (url)
-            $menu = Menu::where('url', $perm['permission_key'])->whereNotNull('url')->first();
+            $menu = Menu::where('id', $perm['menu_id'])->first();
             // dd($menu);
             if (!$menu) {
                 continue; // Ignora se não encontrar o menu
@@ -78,9 +81,9 @@ class MenuPermissionController extends Controller
 
             MenuPermission::updateOrCreate(
                 [
-                    'menu_id' => $menu->id,
+                    'menu_id' => $menu['id'],
                     'permission_id' => $permissionId,
-                    'permission_key' => $perm['permission_key'],
+                    // 'permission_key' => $perm['permission_key'],
                 ],
                 [
                     'can_view' => $perm['can_view'],
@@ -91,9 +94,8 @@ class MenuPermissionController extends Controller
                 ]
             );
         }
-
-        return response()->json(['message' => 'Permissões atualizadas com sucesso!']);
-
+        $menuSchema = (new MenuController)->getMenus($permissionId);
+        return response()->json(['message' => 'Permissões atualizadas com sucesso!','menu'=>$menuSchema]);
     }
 
     /**

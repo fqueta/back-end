@@ -95,7 +95,8 @@ Route::name('api.')->prefix('api/v1')->middleware([
             // Route::apiResource('menu-permissions', MenuPermissionController::class,['parameters' => [
             //     'menu-permissions' => 'menuId'
             // ]]);
-
+            Route::get('{id}/menu-permissions', [MenuPermissionController::class, 'show'])
+                ->name('menu-permissions.show');
             Route::put('{id}/menu-permissions', [MenuPermissionController::class, 'updatePermissions'])
                 ->name('menu-permissions.update');
             // Route::post('{id}/menus', [PermissionMenuController::class, 'update']);

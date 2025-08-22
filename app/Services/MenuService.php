@@ -44,9 +44,6 @@ class MenuService
 
     private function generatePermission(Menu $menu)
     {
-        // Exemplo: "settings.users" -> "settings.users.view"
-        // baseando-se no "url"
-        // dd($menu);
         $permission_id = $this->permission_id;
         if ($menu->url) {
             $lurl = $menu->url;
@@ -58,16 +55,6 @@ class MenuService
             }else{
                 return false;
             }
-            // if($lurl=='/'){
-            //     $lurl = isset($menu->title) ? $menu->title : 'dashboard';
-            //     $lurl = strtolower($lurl);
-            // }
-            // $slug = Str::of($lurl)->trim('/')
-                // ->replace('/', '.'); // "/settings/users" -> "settings.users"
         }
-        // else {
-        //     $slug = Str::slug($menu->title, '.'); // fallback no título
-        // }
-        // return $slug . '.view';
     }
 }

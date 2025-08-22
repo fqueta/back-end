@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MenuPermission;
 use App\Models\Permission;
 use App\Services\MenuService;
 use Illuminate\Http\Request;
@@ -18,21 +19,29 @@ class MenuController extends Controller
     //         'menus' => $user->menusPermitidosFiltrados()
     //     ]);
     // }
+    private $permission_id=null;
     public function getMenus($permission_id = null)
     {
         $ret = [];
         $menu = [];
-        $allowedPermissions = [];
+        $allowedPermissions = false;
         if(!$permission_id){
             return $ret;
         }
         // $allowedPermissions = $this->allowedPermissions($permission_id);
         $menu = (new MenuService($permission_id))->getMenuStructure() ;//$this->getMenuStructure();
-        // $menu = $this->getMenuStructure();
-        // dd($menu);
         return $this->filterMenuByPermissions($menu, $allowedPermissions);
     }
-
+    public function getMenuPermissions($permission_id = null)
+    {
+        $ret = [];
+        if(!$permission_id){
+            return $ret;
+        }
+        $this->permission_id = $permission_id;
+        $menu = (new MenuService($permission_id))->getMenuStructure();
+        return $this->filterMenuByPermissions($menu, true);
+    }
     public function allowedPermissions($permission_id = null)
     {
         $group = Permission::where('id', $permission_id)->first();
@@ -45,15 +54,28 @@ class MenuController extends Controller
     /**
      * Filtra o menu conforme permissões
      */
-    private function filterMenuByPermissions(array $menu, array $allowedPermissions): array
+    private function filterMenuByPermissions(array $menu, bool $allowedPermissions): array
     {
         $filtered = [];
         foreach ($menu as $item) {
             // Se o item principal tiver permissão
-            if(count($allowedPermissions)>0){
-                if (in_array($item['permission'], $allowedPermissions)) {
+            if($allowedPermissions && ($permission_id=$this->permission_id)){
                     $newItem = $item;
-
+                    //Busca as permissões na tabela de menu_permissions e adiciona no $newItem
+                    if(isset($item['id']) && isset($item['title']) && isset($item['url'])){
+                        $dp = MenuPermission::where('menu_id', $item['id'])
+                            ->where('permission_id', $permission_id)
+                            ->first();
+                        if($dp && isset($dp['can_view'])){
+                            $newItem['can_view'] = $dp['can_view'];
+                            $newItem['can_edit'] = $dp['can_edit'];
+                            $newItem['can_create'] = $dp['can_create'];
+                            $newItem['can_delete'] = $dp['can_delete'];
+                            $newItem['can_upload'] = $dp['can_upload'];
+                        }
+                    }else{
+                        $newItem['can_view'] = false;
+                    }
                     // Se tiver submenus, filtra também
                     if (isset($item['items'])) {
                         $newItem['items'] = $this->filterMenuByPermissions($item['items'], $allowedPermissions);
@@ -65,7 +87,7 @@ class MenuController extends Controller
                     }
 
                     $filtered[] = $newItem;
-                }
+
             }else{
                 $newItem = $item;
 
