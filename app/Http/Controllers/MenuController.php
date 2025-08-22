@@ -72,6 +72,7 @@ class MenuController extends Controller
                             $newItem['can_create'] = $dp['can_create'];
                             $newItem['can_delete'] = $dp['can_delete'];
                             $newItem['can_upload'] = $dp['can_upload'];
+                            $newItem['menu_id'] = $item['id'];
                         }
                     }else{
                         $newItem['can_view'] = false;
