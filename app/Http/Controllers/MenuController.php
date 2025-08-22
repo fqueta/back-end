@@ -26,10 +26,10 @@ class MenuController extends Controller
         if(!$permission_id){
             return $ret;
         }
-        $allowedPermissions = $this->allowedPermissions($permission_id);
-        // $menu = (new MenuService)->getMenuStructure() ;//$this->getMenuStructure();
-        $menu = $this->getMenuStructure();
-        // dd($menu,$menu_);
+        // $allowedPermissions = $this->allowedPermissions($permission_id);
+        $menu = (new MenuService($permission_id))->getMenuStructure() ;//$this->getMenuStructure();
+        // $menu = $this->getMenuStructure();
+        // dd($menu);
         return $this->filterMenuByPermissions($menu, $allowedPermissions);
     }
 
@@ -48,10 +48,25 @@ class MenuController extends Controller
     private function filterMenuByPermissions(array $menu, array $allowedPermissions): array
     {
         $filtered = [];
-
         foreach ($menu as $item) {
             // Se o item principal tiver permissão
-            if (in_array($item['permission'], $allowedPermissions)) {
+            if(count($allowedPermissions)>0){
+                if (in_array($item['permission'], $allowedPermissions)) {
+                    $newItem = $item;
+
+                    // Se tiver submenus, filtra também
+                    if (isset($item['items'])) {
+                        $newItem['items'] = $this->filterMenuByPermissions($item['items'], $allowedPermissions);
+
+                        // Se depois de filtrar não sobrar nada, remove o bloco
+                        if (empty($newItem['items'])) {
+                            unset($newItem['items']);
+                        }
+                    }
+
+                    $filtered[] = $newItem;
+                }
+            }else{
                 $newItem = $item;
 
                 // Se tiver submenus, filtra também
@@ -65,6 +80,7 @@ class MenuController extends Controller
                 }
 
                 $filtered[] = $newItem;
+
             }
         }
 
@@ -211,6 +227,11 @@ class MenuController extends Controller
                         "title" => "Formas de Pagamento",
                         "url" => "/settings/payment-methods",
                         "permission" => "settings.payment-methods.view",
+                    ],
+                    [
+                        "title" => "Métricas",
+                        "url" => "/settings/metrics",
+                        "permission" => "settings.metrics.view",
                     ],
                     [
                         "title" => "Sistema",

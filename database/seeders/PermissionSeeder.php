@@ -44,6 +44,7 @@ class PermissionSeeder extends Seeder
                     "settings.permissions.view",
                     "settings.os-statuses.view",
                     "settings.payment-methods.view",
+                    "settings.metrics.view",
                     "settings.system.view"
                 ]),
             ],

@@ -22,7 +22,7 @@ class MenuPermissionSeeder extends Seeder
                     'menu_id'       => $menu->id,
                     'permission_id' => $group->id,
                     'permission_key'=> $keyBase . '.view',
-                    'can_view'      => true,   // por padrão todos os grupos podem visualizar
+                    'can_view'      => false,   // por padrão todos os grupos podem visualizar
                     'can_create'    => false,
                     'can_edit'      => false,
                     'can_delete'    => false,

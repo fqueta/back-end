@@ -25,10 +25,10 @@ class DatabaseSeeder extends Seeder
             // estadocivilSeeder::class,
             // ProfissaoSeeder::class,
             // DocumentSeeder::class,
-            // tagSeeder::class,
             MenuSeeder::class,
             PermissionSeeder::class,
             MenuPermissionSeeder::class,
+            DashboardMetricsSeeder::class,
             // QoptionSeeder::class,
         ]);
     }

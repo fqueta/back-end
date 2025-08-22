@@ -3,10 +3,16 @@
 namespace App\Services;
 
 use App\Models\Menu;
+use App\Models\MenuPermission;
 use Illuminate\Support\Str;
 
 class MenuService
 {
+    private $permission_id;
+    public function __construct($permission_id=0)
+    {
+        $this->permission_id = $permission_id;
+    }
     public function getMenuStructure(): array
     {
         $menus = Menu::whereNull('parent_id')->with('children')->get();
@@ -19,10 +25,12 @@ class MenuService
     private function mapMenu(Menu $menu): array
     {
         $data = [
+            'id'         => $menu->id,
             'title'      => $menu->title,
+            'parent_id'  => $menu->parent_id,
             'url'        => $menu->url,
             'icon'       => $menu->icon,
-            'permission' => $this->generatePermission($menu),
+            'can_view' => $this->generatePermission($menu),
         ];
 
         if ($menu->children->isNotEmpty()) {
@@ -34,21 +42,32 @@ class MenuService
         return $data;
     }
 
-    private function generatePermission(Menu $menu): string
+    private function generatePermission(Menu $menu)
     {
         // Exemplo: "settings.users" -> "settings.users.view"
         // baseando-se no "url"
+        // dd($menu);
+        $permission_id = $this->permission_id;
         if ($menu->url) {
             $lurl = $menu->url;
-            if($lurl=='/'){
-                $lurl = isset($menu->title) ? $menu->title : 'dashboard';
-                $lurl = strtolower($lurl);
+            $dp = MenuPermission::where('menu_id', $menu->id)
+                ->where('permission_id', $permission_id)
+                ->first();
+            if($dp && isset($dp['can_view'])){
+                return $dp['can_view'];
+            }else{
+                return false;
             }
-            $slug = Str::of($lurl)->trim('/')
-                ->replace('/', '.'); // "/settings/users" -> "settings.users"
-        } else {
-            $slug = Str::slug($menu->title, '.'); // fallback no título
+            // if($lurl=='/'){
+            //     $lurl = isset($menu->title) ? $menu->title : 'dashboard';
+            //     $lurl = strtolower($lurl);
+            // }
+            // $slug = Str::of($lurl)->trim('/')
+                // ->replace('/', '.'); // "/settings/users" -> "settings.users"
         }
-        return $slug . '.view';
+        // else {
+        //     $slug = Str::slug($menu->title, '.'); // fallback no título
+        // }
+        // return $slug . '.view';
     }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Http\Controllers\admin\DashboardController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\ClientController;
+use App\Http\Controllers\Api\DashboardMetricController;
+use App\Http\Controllers\api\MenuPermissionController;
 use App\Http\Controllers\api\PermissionController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -83,11 +85,21 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::apiResource('permissions', PermissionController::class,['parameters' => [
             'permissions' => 'token'
         ]]);
+        Route::get('metrics/filter', [DashboardMetricController::class, 'filter']);
+        Route::apiResource('metrics', DashboardMetricController::class,['parameters' => [
+            'metrics' => 'id'
+        ]]);
+        // rota flexível de filtros
         Route::get('menus', [MenuController::class, 'getMenus']);
-        // Route::prefix('permissions')->group(function () {
-        //     Route::get('{id}/menus', [PermissionMenuController::class, 'index']);
-        //     Route::post('{id}/menus', [PermissionMenuController::class, 'update']);
-        // });
+        Route::prefix('permissions')->group(function () {
+            // Route::apiResource('menu-permissions', MenuPermissionController::class,['parameters' => [
+            //     'menu-permissions' => 'menuId'
+            // ]]);
+
+            Route::put('{id}/menu-permissions', [MenuPermissionController::class, 'updatePermissions'])
+                ->name('menu-permissions.update');
+            // Route::post('{id}/menus', [PermissionMenuController::class, 'update']);
+        });
 
     });
 

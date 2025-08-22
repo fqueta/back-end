@@ -177,6 +177,11 @@ class MenuSeeder extends Seeder
         ]);
 
         Menu::create([
+            'title' => 'Metricas',
+            'url'   => '/settings/metrics',
+            'parent_id' => $configuracoes->id,
+        ]);
+        Menu::create([
             'title' => 'Sistema',
             'url'   => '/settings/system',
             'parent_id' => $configuracoes->id,
