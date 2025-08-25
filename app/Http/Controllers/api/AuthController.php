@@ -13,35 +13,15 @@ class AuthController extends Controller
     /**
      * Filtra menu pelo array de permissões do usuário
      */
-    private function filterMenu(array $menu, array $userPermissions): array
-    {
-        $filtered = [];
-
-        foreach ($menu as $item) {
-            if (isset($item['permission']) && in_array($item['permission'], $userPermissions)) {
-                $newItem = $item;
-
-                // Se tiver sub-itens, filtra também
-                if (isset($item['items'])) {
-                    $newItem['items'] = $this->filterMenu($item['items'], $userPermissions);
-                    // Se nenhum subitem restar, podemos ocultar o pai
-                    if (empty($newItem['items']) && !isset($item['url'])) {
-                        continue;
-                    }
-                }
-
-                $filtered[] = $newItem;
-            }
-        }
-
-        return $filtered;
-    }
 
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
-
+        // $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        // $user = Auth::user();
+        // dd($user);
+        $user->tokens()->delete();
         return response()->json([
             'status'  => 200,
             'message' => 'Logout realizado com sucesso',
@@ -68,17 +48,17 @@ class AuthController extends Controller
         }
 
         // Lista de permissões do grupo
-        $allowedPermissions = json_decode($group->id_menu, true) ?? [];
+        // $allowedPermissions = json_decode($group->id_menu, true) ?? [];
         // Menu base (estrutura completa)
         $menu = $this->getMenuStructure();
 
         // Filtra o menu conforme as permissões do grupo
         // $filteredMenu = $this->filterMenuByPermissions($menu, $allowedPermissions);
-        $filteredMenu = (new MenuController)->getMenus($pid);;
+        $filteredMenu = (new MenuController)->getMenus($pid);
         $token = $user->createToken('developer')->plainTextToken;
         return response()->json([
             'user' => $user,
-            'permissions' => $allowedPermissions,
+            // 'permissions' => $allowedPermissions,
             'token' => $token,
             'menu' => $filteredMenu,
             'redirect' => $group->redirect_login ?? '/home',

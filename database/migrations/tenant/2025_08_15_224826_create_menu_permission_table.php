@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('menu_id');
             $table->unsignedBigInteger('permission_id'); // 🔑 grupo de usuários
-            $table->string('permission_key', 100);
+            // $table->string('permission_key', 100);
             $table->boolean('can_view')->default(false);
             $table->boolean('can_create')->default(false);
             $table->boolean('can_edit')->default(false);

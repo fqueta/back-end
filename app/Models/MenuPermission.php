@@ -14,7 +14,6 @@ class MenuPermission extends Model
     protected $fillable = [
         'menu_id',
         'permission_id',
-        'permission_key',
         'can_view',
         'can_create',
         'can_edit',

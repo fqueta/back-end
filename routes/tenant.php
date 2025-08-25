@@ -63,7 +63,8 @@ Route::name('api.')->prefix('api/v1')->middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
-    Route::post('/login',[AuthController::class,'login']);
+    Route::post('/login',[AuthController::class,'login'])->name('login');
+
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
     Route::post('register', [RegisterController::class, 'store']);
@@ -76,6 +77,8 @@ Route::name('api.')->prefix('api/v1')->middleware([
         return view('erro404_site');
     });
     Route::middleware('auth:sanctum')->group(function () {
+        Route::get('user',[UserController::class,'perfil'])->name('perfil.user');
+        Route::post('/logout',[AuthController::class,'logout'])->name('logout');
         Route::apiResource('users', UserController::class,['parameters' => [
             'users' => 'token'
         ]]);
@@ -95,8 +98,6 @@ Route::name('api.')->prefix('api/v1')->middleware([
             // Route::apiResource('menu-permissions', MenuPermissionController::class,['parameters' => [
             //     'menu-permissions' => 'menuId'
             // ]]);
-            Route::get('{id}/menu-permissions', [MenuPermissionController::class, 'show'])
-                ->name('menu-permissions.show');
             Route::put('{id}/menu-permissions', [MenuPermissionController::class, 'updatePermissions'])
                 ->name('menu-permissions.update');
             // Route::post('{id}/menus', [PermissionMenuController::class, 'update']);

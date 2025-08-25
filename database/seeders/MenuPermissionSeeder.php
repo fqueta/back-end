@@ -16,20 +16,34 @@ class MenuPermissionSeeder extends Seeder
         DB::table('menu_permission')->delete();
         foreach ($menus as $menu) {
             foreach ($groups as $group) {
-                $keyBase = $this->generateKey($menu);
-
-                DB::table('menu_permission')->insert([
-                    'menu_id'       => $menu->id,
-                    'permission_id' => $group->id,
-                    'permission_key'=> $keyBase . '.view',
-                    'can_view'      => false,   // por padrão todos os grupos podem visualizar
-                    'can_create'    => false,
-                    'can_edit'      => false,
-                    'can_delete'    => false,
-                    'can_upload'    => false,
-                    'created_at'    => now(),
-                    'updated_at'    => now(),
-                ]);
+                // $keyBase = $this->generateKey($menu);
+                if($group->id==1){
+                    DB::table('menu_permission')->insert([
+                        'menu_id'       => $menu->id,
+                        'permission_id' => $group->id,
+                        // 'permission_key'=> $keyBase . '.view',
+                        'can_view'      => true,   // por padrão todos os grupos podem visualizar
+                        'can_create'    => false,
+                        'can_edit'      => false,
+                        'can_delete'    => false,
+                        'can_upload'    => false,
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }else{
+                    DB::table('menu_permission')->insert([
+                        'menu_id'       => $menu->id,
+                        'permission_id' => $group->id,
+                        // 'permission_key'=> $keyBase . '.view',
+                        'can_view'      => false,   // por padrão todos os grupos podem visualizar
+                        'can_create'    => false,
+                        'can_edit'      => false,
+                        'can_delete'    => false,
+                        'can_upload'    => false,
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }
             }
         }
     }

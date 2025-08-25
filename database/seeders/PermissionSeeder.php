@@ -18,35 +18,6 @@ class PermissionSeeder extends Seeder
                 'description' => 'Desenvolvedores',
                 'redirect_login' => '/home',
                 'active' => 's',
-                'id_menu' => json_encode([
-                    "dashboard.view",
-                    "clients.view",
-                    "service-objects.view",
-                    "catalog.view",
-                    "catalog.products.view",
-                    "catalog.services.view",
-                    "catalog.categories.view",
-                    "budgets.view",
-                    "service-orders.view",
-                    "finance.view",
-                    "finance.payments.view",
-                    "finance.cash-flow.view",
-                    "finance.accounts-receivable.view",
-                    "finance.accounts-payable.view",
-                    "reports.view",
-                    "reports.revenue.view",
-                    "reports.service-orders.view",
-                    "reports.top-products.view",
-                    "reports.financial.view",
-                    "settings.view",
-                    "settings.users.view",
-                    "settings.user-profiles.view",
-                    "settings.permissions.view",
-                    "settings.os-statuses.view",
-                    "settings.payment-methods.view",
-                    "settings.metrics.view",
-                    "settings.system.view"
-                ]),
             ],
 
             // ADMINISTRADOR → tudo, mas em configurações só "Usuários" e "Perfis"
@@ -54,31 +25,7 @@ class PermissionSeeder extends Seeder
                 'name' => 'Administrador',
                 'description' => 'Administradores do sistema',
                 'redirect_login' => '/home',
-                'active' => 's',
-                'id_menu' => json_encode([
-                    "dashboard.view",
-                    "clients.view",
-                    "service-objects.view",
-                    "catalog.view",
-                    "catalog.products.view",
-                    "catalog.services.view",
-                    "catalog.categories.view",
-                    "budgets.view",
-                    "service-orders.view",
-                    "finance.view",
-                    "finance.payments.view",
-                    "finance.cash-flow.view",
-                    "finance.accounts-receivable.view",
-                    "finance.accounts-payable.view",
-                    "reports.view",
-                    "reports.revenue.view",
-                    "reports.service-orders.view",
-                    "reports.top-products.view",
-                    "reports.financial.view",
-                    "settings.view",
-                    "settings.users.view",
-                    "settings.user-profiles.view"
-                ]),
+                'active' => 's'
             ],
 
             // GERENTE → todos os menus exceto configurações
@@ -86,28 +33,7 @@ class PermissionSeeder extends Seeder
                 'name' => 'Gerente',
                 'description' => 'Gerente do sistema (sem acesso a configurações)',
                 'redirect_login' => '/home',
-                'active' => 's',
-                'id_menu' => json_encode([
-                    "dashboard.view",
-                    "clients.view",
-                    "service-objects.view",
-                    "catalog.view",
-                    "catalog.products.view",
-                    "catalog.services.view",
-                    "catalog.categories.view",
-                    "budgets.view",
-                    "service-orders.view",
-                    "finance.view",
-                    "finance.payments.view",
-                    "finance.cash-flow.view",
-                    "finance.accounts-receivable.view",
-                    "finance.accounts-payable.view",
-                    "reports.view",
-                    "reports.revenue.view",
-                    "reports.service-orders.view",
-                    "reports.top-products.view",
-                    "reports.financial.view"
-                ]),
+                'active' => 's'
             ],
 
             // ESCRITÓRIO → somente dois primeiros menus
@@ -115,21 +41,14 @@ class PermissionSeeder extends Seeder
                 'name' => 'Escritório',
                 'description' => 'Acesso limitado a Dashboard e Clientes',
                 'redirect_login' => '/home',
-                'active' => 's',
-                'id_menu' => json_encode([
-                    "dashboard.view",
-                    "clients.view"
-                ]),
+                'active' => 's'
             ],
             // Cliente → para clientes sem acesso ao admin
             [
                 'name' => 'Cliente',
                 'description' => 'Acesso limitado a Dashboard e Clientes',
                 'redirect_login' => '/home',
-                'active' => 's',
-                'id_menu' => json_encode([
-                    "dashboard.view"
-                ]),
+                'active' => 's'
             ],
         ]);
     }

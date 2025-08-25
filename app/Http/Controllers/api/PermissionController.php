@@ -29,7 +29,16 @@ class PermissionController extends Controller
      */
     public function index()
     {
-        return response()->json(Permission::all(), 200);
+        $user = Auth::user();
+        if(!$user){
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        $permission_id = $user->permission_id ?? null;
+        // dd($parmission_id);
+        if (! $this->permissionService->can($user, 'settings.'.$this->sec.'.view', 'view')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        return response()->json(Permission::all()->where('id','>=',$permission_id)->where('excluido','n')->where('deletado','n'), 200);
     }
 
     /**
@@ -51,7 +60,7 @@ class PermissionController extends Controller
             'config'         => 'nullable|array',
             'description'    => 'nullable|string',
             'guard_name'     => 'nullable|string|max:125',
-            'active'         => 'required|in:s,n',
+            // 'active'         => 'required|in:s,n',
             'autor'          => 'nullable|integer',
             // 'excluido'       => 'in:s,n',
             // 'deletado'       => 'in:s,n',
@@ -115,7 +124,7 @@ class PermissionController extends Controller
             'config'         => 'nullable|array',
             'description'    => 'nullable|string',
             'guard_name'     => 'nullable|string|max:125',
-            'active'         => 'in:s,n',
+            // 'active'         => 'in:s,n',
             'autor'          => 'nullable|integer',
             'excluido'       => 'in:s,n',
             'deletado'       => 'in:s,n',
@@ -185,6 +194,7 @@ class PermissionController extends Controller
 
         // Aqui você pode decidir se realmente deleta ou só marca como deletado
         $permission->update([
+            'excluido'     => 's',
             'deletado'     => 's',
             'reg_deletado' => now()->toDateTimeString()
         ]);
