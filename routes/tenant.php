@@ -74,7 +74,7 @@ Route::name('api.')->prefix('api/v1')->middleware([
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
         ->name('password.email');
     Route::fallback(function () {
-        return view('erro404_site');
+        return response()->json(['message' => 'Rota não encontrada'], 404);
     });
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('user',[UserController::class,'perfil'])->name('perfil.user');
@@ -95,8 +95,8 @@ Route::name('api.')->prefix('api/v1')->middleware([
             'permissions' => 'id'
         ]]);
         Route::prefix('permissions')->group(function () {
-            Route::put('{id}/menu-permissions', [MenuPermissionController::class, 'updatePermissions'])
-                ->name('menu-permissions.update');
+            Route::get('{id}/menu-permissions', [MenuPermissionController::class, 'show'])->name('menu-permissions.show');
+            Route::put('{id}/menu-permissions', [MenuPermissionController::class, 'updatePermissions'])->name('menu-permissions.update');
             // Route::post('{id}/menus', [PermissionMenuController::class, 'update']);
         });
 
