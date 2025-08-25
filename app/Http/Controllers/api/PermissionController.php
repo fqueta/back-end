@@ -39,7 +39,9 @@ class PermissionController extends Controller
         if (!$this->isHasPermission('view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        return response()->json(Permission::all()->where('id','>=',$permission_id)->where('excluido','n')->where('deletado','n'), 200);
+        $d = Permission::where('id','>=',$permission_id)->where('excluido','n')->where('deletado','n')->get();
+        // dd($d);
+        return response()->json($d, 200);
     }
     /**
      * Metodo para veriricar se o usuario tem permissão para executar ao acessar esse recurso atraves de ''
