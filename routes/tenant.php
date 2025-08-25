@@ -86,6 +86,9 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::apiResource('clients', ClientController::class,['parameters' => [
             'clients' => 'token'
         ]]);
+        Route::apiResource('users', ClientController::class,['parameters' => [
+            'users' => 'id'
+        ]]);
         Route::get('metrics/filter', [DashboardMetricController::class, 'filter']);
         Route::apiResource('metrics', DashboardMetricController::class,['parameters' => [
             'metrics' => 'id'

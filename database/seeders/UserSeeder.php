@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Services\Qlib;
 
 class UserSeeder extends Seeder
 {
@@ -15,6 +16,7 @@ class UserSeeder extends Seeder
     {
         $users = [
             [
+                // 'id' => Qlib::token(),
                 'name' => 'Fernando Queta',
                 'email' => 'fernando@maisaqui.com.br',
                 'password' => Hash::make('ferqueta'),
@@ -23,6 +25,7 @@ class UserSeeder extends Seeder
                 'permission_id' => 1, // Grupo Master
             ],
             [
+                // 'id' => Qlib::token(),
                 'name' => 'Test User',
                 'email' => 'ger.maisaqui1@gmail.com',
                 'password' => Hash::make('mudar123'),
@@ -33,8 +36,12 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            User::updateOrCreate(
-                ['email' => $userData['email']], // evita duplicados
+            // dump($userData);
+            // User::updateOrCreate(
+            //     ['email' => $userData['email']], // evita duplicados
+            //     $userData
+            // );
+            User::create(
                 $userData
             );
         }

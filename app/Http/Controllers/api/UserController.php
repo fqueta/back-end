@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Validation\Rule;
 use function PHPUnit\Framework\isArray;
 
 class UserController extends Controller
@@ -25,20 +25,26 @@ class UserController extends Controller
         $this->sec = request()->segment(3);
     }
     /**
-     * Display a listing of the resource.
+     * Metodo para veriricar se o usuario tem permissão para executar ao acessar esse recurso atraves de ''
+     * @params string 'view | create | edit | delete'
      */
-    public function index()
+    // private function isHasPermission($permissao=''){
+    //     $user = request()->user();
+    //     if ($this->permissionService->can($user, $this->routeName, $permissao)) {
+    //         return true;
+    //     }else{
+    //         return false;
+    //     }
+    // }
+    /**
+     * Listar todos os usuários
+     */
+    public function index(Request $request)
     {
-        //
+        $users = User::paginate(10);
+        return response()->json($users);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -46,20 +52,29 @@ class UserController extends Controller
     public function store(Request $request)
     {
         // $d = $request->all();
-        $user = Auth::user();
+        $user = $request->user();
         if(!$user){
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        if (! $this->permissionService->can($user, 'settings.'.$this->sec.'.view', 'create')) {
+        // if (! $this->permissionService->can($user, 'settings.'.$this->sec.'.view', 'create')) {
+        //     return response()->json(['error' => 'Acesso negado'], 403);
+        // }
+        // $permission_id = $user->permission_id ?? null;
+        if (!$this->permissionService->isHasPermission('create')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-
         $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users',
-            'password' => 'required|string|min:6',
-            'phone'    => 'nullable|string|max:20',
-            'config'    => 'array',
+            'tipo_pessoa'   => ['required', Rule::in(['pf','pj'])],
+            'name'          => 'required|string|max:255',
+            'razao'         => 'nullable|string|max:255',
+            'cpf'           => 'nullable|string|max:20|unique:users,cpf',
+            'cnpj'          => 'nullable|string|max:20|unique:users,cnpj',
+            'email'         => 'nullable|email|unique:users,email',
+            'password'      => 'required|string|min:6',
+            'status'        => ['required', Rule::in(['actived','inactived','pre_registred'])],
+            'genero'        => ['required', Rule::in(['ni','m','f'])],
+            'verificado'    => ['required', Rule::in(['n','s'])],
+            'permission_id' => 'nullable|integer',
         ]);
 
         if ($validator->fails()) {
@@ -121,12 +136,6 @@ class UserController extends Controller
         if(!$user){
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        // if (! $this->permissionService->can($user_d, 'settings.'.$this->sec.'.view', 'view')) {
-        //     return response()->json(['error' => 'Acesso negado'], 403);
-        // }
-        // if (! $this->permissionService->can($user, 'clients.view', 'view')) {
-        //     return response()->json(['error' => 'Acesso negado'], 403);
-        // }
         return response()->json($user);
     }
     public function perfil(Request $request)
