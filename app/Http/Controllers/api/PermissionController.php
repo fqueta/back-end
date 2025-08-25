@@ -36,13 +36,22 @@ class PermissionController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         $permission_id = $user->permission_id ?? null;
-        // dd($permission_id);
-        $url = $this->sec.'/'.$this->sec1;
-        // dd();
-        if (! $this->permissionService->can($user, $this->routeName, 'view')) {
+        if (!$this->isHasPermission('view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         return response()->json(Permission::all()->where('id','>=',$permission_id)->where('excluido','n')->where('deletado','n'), 200);
+    }
+    /**
+     * Metodo para veriricar se o usuario tem permissão para executar ao acessar esse recurso atraves de ''
+     * @params string 'view | create | edit | delete'
+     */
+    private function isHasPermission($permissao=''){
+        $user = request()->user();
+        if ($this->permissionService->can($user, $this->routeName, $permissao)) {
+            return true;
+        }else{
+            return false;
+        }
     }
 
     /**
@@ -50,11 +59,7 @@ class PermissionController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        if(!$user){
-            return response()->json(['error' => 'Acesso negado'], 403);
-        }
-        if (! $this->permissionService->can($user, 'settings.'.$this->sec.'.view', 'create')) {
+        if (!$this->isHasPermission('create')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         $validator = Validator::make($request->all(), [
@@ -106,6 +111,9 @@ class PermissionController extends Controller
         if (!$permission) {
             return response()->json(['message' => 'Permissão não encontrada'], 404);
         }
+        if (!$this->isHasPermission('view')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
 
         return response()->json($permission, 200);
     }
@@ -120,7 +128,9 @@ class PermissionController extends Controller
         if (!$permission) {
             return response()->json(['message' => 'Permissão não encontrada'], 404);
         }
-
+        if (!$this->isHasPermission('edit')) {
+            return response()->json(['error' => 'Acesso negado, sem permissão'], 403);
+        }
         $validator = Validator::make($request->all(), [
             'name'           => 'sometimes|required|string|max:125|unique:permissions,name,' . $id,
             'id_menu'        => 'nullable|array',
@@ -146,29 +156,29 @@ class PermissionController extends Controller
         try {
             $permission->update($validator->validated());
 
-            if ($request->has('permissions')) {
-                // 🔑 remove permissões antigas antes de recriar
-                MenuPermission::where('permission_id', $permission->id)->delete();
+            // if ($request->has('permissions')) {
+            //     // 🔑 remove permissões antigas antes de recriar
+            //     MenuPermission::where('permission_id', $permission->id)->delete();
 
-                foreach ($request->permissions as $perm) {
-                    MenuPermission::updateOrCreate(
-                        [
-                            'menu_id'       => $perm['menu_id'],
-                            'permission_id' => $permission->id,
-                        ],
-                        [
-                            'permission_key' => $perm['permission_key'],
-                            'can_view'       => $perm['can_view'] ?? false,
-                            'can_create'     => $perm['can_create'] ?? false,
-                            'can_edit'       => $perm['can_edit'] ?? false,
-                            'can_delete'     => $perm['can_delete'] ?? false,
-                            'can_upload'     => $perm['can_upload'] ?? false,
-                        ]
-                    );
-                }
-            }
+            //     foreach ($request->permissions as $perm) {
+            //         MenuPermission::updateOrCreate(
+            //             [
+            //                 'menu_id'       => $perm['menu_id'],
+            //                 'permission_id' => $permission->id,
+            //             ],
+            //             [
+            //                 'permission_key' => $perm['permission_key'],
+            //                 'can_view'       => $perm['can_view'] ?? false,
+            //                 'can_create'     => $perm['can_create'] ?? false,
+            //                 'can_edit'       => $perm['can_edit'] ?? false,
+            //                 'can_delete'     => $perm['can_delete'] ?? false,
+            //                 'can_upload'     => $perm['can_upload'] ?? false,
+            //             ]
+            //         );
+            //     }
+            // }
 
-            DB::commit();
+            // DB::commit();
 
             return response()->json([
                 'message' => 'Permissão atualizada com sucesso',
