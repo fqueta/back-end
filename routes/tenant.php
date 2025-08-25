@@ -78,6 +78,7 @@ Route::name('api.')->prefix('api/v1')->middleware([
     });
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('user',[UserController::class,'perfil'])->name('perfil.user');
+        Route::get('user/can',[UserController::class,'can_access'])->name('perfil.can');
         Route::post('/logout',[AuthController::class,'logout'])->name('logout');
         Route::apiResource('users', UserController::class,['parameters' => [
             'users' => 'token'

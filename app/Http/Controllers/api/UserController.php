@@ -114,13 +114,28 @@ class UserController extends Controller
     /**
      * retorna dados do usuario
      */
+    public function can_access(Request $request)
+    {
+        $user = $request->user();
+        // dd($user);
+        if(!$user){
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        // if (! $this->permissionService->can($user_d, 'settings.'.$this->sec.'.view', 'view')) {
+        //     return response()->json(['error' => 'Acesso negado'], 403);
+        // }
+        // if (! $this->permissionService->can($user, 'clients.view', 'view')) {
+        //     return response()->json(['error' => 'Acesso negado'], 403);
+        // }
+        return response()->json($user);
+    }
     public function perfil(Request $request)
     {
         $user = $request->user();
         // dd($user);
-        // if(!$user_d){
-        //     return response()->json(['error' => 'Acesso negado'], 403);
-        // }
+        if(!$user){
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
         // if (! $this->permissionService->can($user_d, 'settings.'.$this->sec.'.view', 'view')) {
         //     return response()->json(['error' => 'Acesso negado'], 403);
         // }
