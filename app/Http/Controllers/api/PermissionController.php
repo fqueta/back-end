@@ -18,24 +18,28 @@ class PermissionController extends Controller
     protected PermissionService $permissionService;
     public $routeName;
     public $sec;
+    public $sec1;
     public function __construct(PermissionService $permissionService)
     {
         $this->routeName = request()->route()->getName();
         $this->permissionService = $permissionService;
-        $this->sec = request()->segment(3);
+        $this->sec = request()->segment(2);
+        $this->sec1 = request()->segment(3);
     }
     /**
      * Listar todas as permissões
      */
     public function index()
     {
-        $user = Auth::user();
+        $user = request()->user();
         if(!$user){
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         $permission_id = $user->permission_id ?? null;
-        // dd($parmission_id);
-        if (! $this->permissionService->can($user, 'settings.'.$this->sec.'.view', 'view')) {
+        // dd($permission_id);
+        $url = $this->sec.'/'.$this->sec1;
+        // dd();
+        if (! $this->permissionService->can($user, $this->routeName, 'view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         return response()->json(Permission::all()->where('id','>=',$permission_id)->where('excluido','n')->where('deletado','n'), 200);
