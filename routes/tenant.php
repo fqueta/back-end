@@ -85,19 +85,16 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::apiResource('clients', ClientController::class,['parameters' => [
             'clients' => 'token'
         ]]);
-        Route::apiResource('permissions', PermissionController::class,['parameters' => [
-            'permissions' => 'token'
-        ]]);
         Route::get('metrics/filter', [DashboardMetricController::class, 'filter']);
         Route::apiResource('metrics', DashboardMetricController::class,['parameters' => [
             'metrics' => 'id'
         ]]);
         // rota flexível de filtros
         Route::get('menus', [MenuController::class, 'getMenus']);
+        Route::apiResource('permissions', PermissionController::class,['parameters' => [
+            'permissions' => 'id'
+        ]]);
         Route::prefix('permissions')->group(function () {
-            // Route::apiResource('menu-permissions', MenuPermissionController::class,['parameters' => [
-            //     'menu-permissions' => 'menuId'
-            // ]]);
             Route::put('{id}/menu-permissions', [MenuPermissionController::class, 'updatePermissions'])
                 ->name('menu-permissions.update');
             // Route::post('{id}/menus', [PermissionMenuController::class, 'update']);

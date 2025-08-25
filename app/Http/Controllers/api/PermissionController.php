@@ -152,9 +152,10 @@ class PermissionController extends Controller
             ], 422);
         }
 
-        DB::beginTransaction();
+        // DB::beginTransaction();
         try {
             $permission->update($validator->validated());
+            // dd($permission);
 
             // if ($request->has('permissions')) {
             //     // 🔑 remove permissões antigas antes de recriar
@@ -182,7 +183,7 @@ class PermissionController extends Controller
 
             return response()->json([
                 'message' => 'Permissão atualizada com sucesso',
-                'data'    => $permission->load('menuPermissions')
+                'data'    => $permission
             ], 200);
 
         } catch (\Exception $e) {

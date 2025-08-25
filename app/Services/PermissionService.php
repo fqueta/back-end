@@ -39,11 +39,12 @@ class PermissionService
      */
     public function get_id_menu_by_url($rm){
         $url = $this->get_url_by_route($rm);
+        // dd($rm);
         return Menu::where('url',$url)->first()->id;
     }
     private function get_url_by_route($name=''){
         $url = '';
-        if($name=='api.permissions.index'){
+        if($name=='api.permissions.index' || $name == 'api.permissions.update' || $name == 'api.permissions.show' || $name == 'api.permissions.store' || $name == 'api.permissions.destroy'){
             $url = '/settings/permissions';
         }
         return $url;

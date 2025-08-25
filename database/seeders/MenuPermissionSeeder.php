@@ -23,10 +23,10 @@ class MenuPermissionSeeder extends Seeder
                         'permission_id' => $group->id,
                         // 'permission_key'=> $keyBase . '.view',
                         'can_view'      => true,   // por padrão todos os grupos podem visualizar
-                        'can_create'    => false,
-                        'can_edit'      => false,
-                        'can_delete'    => false,
-                        'can_upload'    => false,
+                        'can_create'    => true,
+                        'can_edit'      => true,
+                        'can_delete'    => true,
+                        'can_upload'    => true,
                         'created_at'    => now(),
                         'updated_at'    => now(),
                     ]);
