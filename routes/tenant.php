@@ -89,6 +89,7 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::apiResource('users', ClientController::class,['parameters' => [
             'users' => 'id'
         ]]);
+        Route::get('users/trash', [UserController::class, 'trash'])->name('users.trash');
         Route::get('metrics/filter', [DashboardMetricController::class, 'filter']);
         Route::apiResource('metrics', DashboardMetricController::class,['parameters' => [
             'metrics' => 'id'

@@ -92,26 +92,40 @@ class DashboardMetricController extends Controller
 
         // ano alvo (default = ano atual)
         $ano = $request->ano ?? now()->year;
-
+        $conversasPorMes = [];
         // agrupamento por mês
         $porMes = DashboardMetric::selectRaw('MONTH(period) as mes, SUM(visitors) as total_visitors')
             ->whereYear('period', $ano)
             ->groupBy('mes')
             ->orderBy('mes')
             ->get();
-
-        // agrupamento por semana
-        $porSemana = DashboardMetric::selectRaw('WEEK(period, 1) as semana, SUM(visitors) as total_visitors')
-            ->whereYear('period', $ano)
-            ->groupBy('semana')
-            ->orderBy('semana')
-            ->get();
-
+        if ($request->filled('data_inicio') && $request->filled('data_fim')) {
+            // agrupamento por semana
+            $porSemana = DashboardMetric::selectRaw('WEEK(period, 1) as semana, SUM(visitors) as total_visitors')
+                // ->whereYear('period', $ano)
+                ->whereBetween('period', [$request->data_inicio, $request->data_fim])
+                ->groupBy('semana')
+                ->orderBy('semana')
+                ->get();
+            $conversasPorMes = DashboardMetric::selectRaw('WEEK(period, 1) as semana, SUM(human_conversations) as total_human_conversations')
+                // ->whereYear('period', $ano)
+                ->whereBetween('period', [$request->data_inicio, $request->data_fim])
+                ->groupBy('semana')
+                ->orderBy('semana')
+                ->get();
+        }else{
+            $porSemana = DashboardMetric::selectRaw('WEEK(period, 1) as semana, SUM(visitors) as total_visitors')
+                ->whereYear('period', $ano)
+                ->groupBy('semana')
+                ->orderBy('semana')
+                ->get();
+        }
         // agrupamento por ano
         $porAno = DashboardMetric::selectRaw('YEAR(period) as ano, SUM(visitors) as total_visitors')
             ->groupBy('ano')
             ->orderBy('ano')
             ->get();
+
 
         // 🔹 Totais agregados com base nos mesmos filtros aplicados
         $agregado = DashboardMetric::query();
@@ -129,6 +143,7 @@ class DashboardMetricController extends Controller
             $agregado->whereBetween('period', [$request->data_inicio, $request->data_fim]);
         }
 
+
        $totaisFiltrados = $agregado->selectRaw("
             SUM(bot_conversations) as total_bot_conversations,
             SUM(human_conversations) as total_human_conversations,
@@ -142,9 +157,17 @@ class DashboardMetricController extends Controller
         return response()->json([
             'registros' => $registros,
             'agregados' => [
-                'por_mes' => $porMes,
-                'por_semana' => $porSemana,
-                'por_ano' => $porAno,
+                'visitas'=>[
+                   'por_mes' => $porMes,
+                   'por_semana' => $porSemana,
+                   'por_ano' => $porAno,
+                ],
+                'conversas'=>[
+                   // 'por_mes' => $porMes,
+                   'por_semana' => $conversasPorMes,
+                   // 'por_ano' => $porAno,
+               ]
+
             ],
             'totais_filtrados' => $totaisFiltrados, // 👈 sempre retorna baseado no filtro aplicado
         ]);

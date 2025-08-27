@@ -154,34 +154,8 @@ class PermissionController extends Controller
             ], 422);
         }
 
-        // DB::beginTransaction();
         try {
             $permission->update($validator->validated());
-            // dd($permission);
-
-            // if ($request->has('permissions')) {
-            //     // 🔑 remove permissões antigas antes de recriar
-            //     MenuPermission::where('permission_id', $permission->id)->delete();
-
-            //     foreach ($request->permissions as $perm) {
-            //         MenuPermission::updateOrCreate(
-            //             [
-            //                 'menu_id'       => $perm['menu_id'],
-            //                 'permission_id' => $permission->id,
-            //             ],
-            //             [
-            //                 'permission_key' => $perm['permission_key'],
-            //                 'can_view'       => $perm['can_view'] ?? false,
-            //                 'can_create'     => $perm['can_create'] ?? false,
-            //                 'can_edit'       => $perm['can_edit'] ?? false,
-            //                 'can_delete'     => $perm['can_delete'] ?? false,
-            //                 'can_upload'     => $perm['can_upload'] ?? false,
-            //             ]
-            //         );
-            //     }
-            // }
-
-            // DB::commit();
 
             return response()->json([
                 'message' => 'Permissão atualizada com sucesso',
@@ -189,7 +163,7 @@ class PermissionController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            // DB::rollBack();
             return response()->json([
                 'message' => 'Erro ao atualizar permissão',
                 'error'   => $e->getMessage()

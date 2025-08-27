@@ -15,6 +15,22 @@ use function PHPUnit\Framework\isArray;
 
 class UserController extends Controller
 {
+    /**
+     * Sanitiza os dados recebidos, inclusive arrays como config
+     */
+    protected function sanitizeInput($input)
+    {
+        if (is_array($input)) {
+            $sanitized = [];
+            foreach ($input as $key => $value) {
+                $sanitized[$key] = $this->sanitizeInput($value);
+            }
+            return $sanitized;
+        } elseif (is_string($input)) {
+            return trim(strip_tags($input));
+        }
+        return $input;
+    }
     protected PermissionService $permissionService;
     public $routeName;
     public $sec;
@@ -41,7 +57,35 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $users = User::paginate(10);
+        $perPage = $request->input('per_page', 10);
+        $query = User::query();
+
+        // Não exibir registros marcados como deletados ou excluídos
+        $query->where(function($q) {
+            $q->whereNull('deletado')->orWhere('deletado', '!=', 's');
+        });
+        $query->where(function($q) {
+            $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
+        });
+
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->input('email') . '%');
+        }
+        if ($request->filled('cpf')) {
+            $query->where('cpf', 'like', '%' . $request->input('cpf') . '%');
+        }
+        if ($request->filled('cnpj')) {
+            $query->where('cnpj', 'like', '%' . $request->input('cnpj') . '%');
+        }
+
+        $users = $query->paginate($perPage);
+        // Converter config para array em cada usuário
+        $users->getCollection()->transform(function ($user) {
+            if (is_string($user->config)) {
+                $user->config = json_decode($user->config, true) ?? [];
+            }
+            return $user;
+        });
         return response()->json($users);
     }
 
@@ -50,16 +94,39 @@ class UserController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
+
     {
+        // Verifica se já existe usuário deletado com o mesmo CPF
+        if (!empty($request->cpf)) {
+            $userCpfDel = User::where('cpf', $request->cpf)
+                ->where(function($q){
+                    $q->where('deletado', 's')->orWhere('excluido', 's');
+                })->first();
+            if ($userCpfDel) {
+                return response()->json([
+                    'message' => 'Este cadastro já está em nossa base de dados, verifique na lixeira.',
+                    'errors'  => ['cpf' => ['Cadastro com este CPF está na lixeira']],
+                ], 422);
+            }
+        }
+        // Verifica se já existe usuário deletado com o mesmo EMAIL
+        if (!empty($request->email)) {
+            $userEmailDel = User::where('email', $request->email)
+                ->where(function($q){
+                    $q->where('deletado', 's')->orWhere('excluido', 's');
+                })->first();
+            if ($userEmailDel) {
+                return response()->json([
+                    'message' => 'Este cadastro já está em nossa base de dados, verifique na lixeira.',
+                    'errors'  => ['email' => ['Cadastro com este e-mail está na lixeira']],
+                ], 422);
+            }
+        }
         // $d = $request->all();
         $user = $request->user();
         if(!$user){
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        // if (! $this->permissionService->can($user, 'settings.'.$this->sec.'.view', 'create')) {
-        //     return response()->json(['error' => 'Acesso negado'], 403);
-        // }
-        // $permission_id = $user->permission_id ?? null;
         if (!$this->permissionService->isHasPermission('create')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
@@ -73,7 +140,7 @@ class UserController extends Controller
             'password'      => 'required|string|min:6',
             'status'        => ['required', Rule::in(['actived','inactived','pre_registred'])],
             'genero'        => ['required', Rule::in(['ni','m','f'])],
-            'verificado'    => ['required', Rule::in(['n','s'])],
+            // 'verificado'    => ['required', Rule::in(['n','s'])],
             'permission_id' => 'nullable|integer',
         ]);
 
@@ -84,18 +151,28 @@ class UserController extends Controller
             ], 422);
         }
 
+        // Validação extra de CPF
+        if (!empty($request->cpf) && !Qlib::validaCpf($request->cpf)) {
+            return response()->json([
+                'message' => 'Erro de validação',
+                'errors'  => ['cpf' => ['CPF inválido']],
+            ], 422);
+        }
+
         $validated = $validator->validated();
-        // dd($validated);
+        // Sanitização dos dados
+        $validated = $this->sanitizeInput($validated);
         $validated['token'] = Qlib::token();
         $validated['password'] = Hash::make($validated['password']);
         $validated['ativo'] = isset($validated['ativo']) ? $validated['ativo'] : 's';
         $validated['status'] = isset($validated['status']) ? $validated['status'] : 'actived';
         $validated['tipo_pessoa'] = isset($validated['tipo_pessoa']) ? $validated['tipo_pessoa'] : 'pf';
         $validated['permission_id'] = isset($validated['permission_id']) ? $validated['permission_id'] : 5;
-        $validated['config'] = isset($validated['config']) ? $validated['config'] : json_encode([]);
+        $validated['config'] = isset($validated['config']) ? $this->sanitizeInput($validated['config']) : [];
         if(isArray($validated['config'])){
             $validated['config'] = json_encode($validated['config']);
         }
+
         $user = User::create($validated);
         $ret['data'] = $user;
         $ret['message'] = 'Usuário criado com sucesso';
@@ -106,7 +183,7 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $token)
+    public function show(string $id)
     {
         // $d = $request->all();
         $user_d = Auth::user();
@@ -116,15 +193,8 @@ class UserController extends Controller
         if (! $this->permissionService->can($user_d, 'settings.'.$this->sec.'.view', 'view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        // if (! $this->permissionService->can($user, 'clients.view', 'view')) {
-        //     return response()->json(['error' => 'Acesso negado'], 403);
-        // }
-
-        // $user = User::findOrFail($user);
-        $user = User::where('token', $token)->firstOrFail();
-        // $user = User::findOrFail($user);
-
-        return response()->json($user);
+        $user = User::findOrFail($id);
+        return response()->json($user,201);
     }
     /**
      * retorna dados do usuario
@@ -145,21 +215,33 @@ class UserController extends Controller
         if(!$user){
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        // if (! $this->permissionService->can($user_d, 'settings.'.$this->sec.'.view', 'view')) {
-        //     return response()->json(['error' => 'Acesso negado'], 403);
-        // }
-        // if (! $this->permissionService->can($user, 'clients.view', 'view')) {
-        //     return response()->json(['error' => 'Acesso negado'], 403);
-        // }
         return response()->json($user);
     }
 
-    /**
-     * Show the form for editing the specified resource.
+     /**
+     * Lista usuários marcados como deletados/excluídos (lixeira)
      */
-    public function edit(string $id)
+    public function trash(Request $request)
     {
-        //
+        $perPage = $request->input('per_page', 10);
+        $query = User::query();
+        $query->where(function($q) {
+            $q->where('deletado', 's')->orWhere('excluido', 's');
+        });
+
+        // Filtros opcionais
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->input('email') . '%');
+        }
+        if ($request->filled('cpf')) {
+            $query->where('cpf', 'like', '%' . $request->input('cpf') . '%');
+        }
+        if ($request->filled('cnpj')) {
+            $query->where('cnpj', 'like', '%' . $request->input('cnpj') . '%');
+        }
+
+        $users = $query->paginate($perPage);
+        return response()->json($users);
     }
 
     /**
@@ -167,7 +249,127 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('edit')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        $userToUpdate = User::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'tipo_pessoa'   => ['sometimes', Rule::in(['pf','pj'])],
+            'name'          => 'sometimes|required|string|max:255',
+            'razao'         => 'nullable|string|max:255',
+            'cpf'           => ['nullable','string','max:20', Rule::unique('users','cpf')->ignore($userToUpdate->id)],
+            'cnpj'          => ['nullable','string','max:20', Rule::unique('users','cnpj')->ignore($userToUpdate->id)],
+            'email'         => ['nullable','email', Rule::unique('users','email')->ignore($userToUpdate->id)],
+            'password'      => 'nullable|string|min:6',
+            'status'        => ['sometimes', Rule::in(['actived','inactived','pre_registred'])],
+            'genero'        => ['sometimes', Rule::in(['ni','m','f'])],
+            'verificado'    => ['sometimes', Rule::in(['n','s'])],
+            'permission_id' => 'nullable|integer',
+            'config'        => 'array'
+        ]);
+
+        // validator que ignora campos unicos na lixeira
+        // $validator = Validator::make($request->all(), [
+        //     'tipo_pessoa'   => ['sometimes', Rule::in(['pf','pj'])],
+        //     'name'          => 'sometimes|required|string|max:255',
+        //     'razao'         => 'nullable|string|max:255',
+        //     'cpf'           => [
+        //         'nullable',
+        //         'string',
+        //         'max:20',
+        //         Rule::unique('users', 'cpf')
+        //             ->ignore($userToUpdate->id)
+        //             ->where(function ($query) {
+        //                 $query->where(function($q){
+        //                     $q->whereNull('deletado')->orWhere('deletado', '!=', 's');
+        //                 });
+        //                 $query->where(function($q){
+        //                     $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
+        //                 });
+        //             }),
+        //     ],
+        //     'cnpj'          => [
+        //         'nullable',
+        //         'string',
+        //         'max:20',
+        //         Rule::unique('users', 'cnpj')
+        //             ->ignore($userToUpdate->id)
+        //             ->where(function ($query) {
+        //                 $query->where(function($q){
+        //                     $q->whereNull('deletado')->orWhere('deletado', '!=', 's');
+        //                 });
+        //                 $query->where(function($q){
+        //                     $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
+        //                 });
+        //             }),
+        //     ],
+        //     'email'         => [
+        //         'nullable',
+        //         'email',
+        //         Rule::unique('users', 'email')
+        //             ->ignore($userToUpdate->id)
+        //             ->where(function ($query) {
+        //                 $query->where(function($q){
+        //                     $q->whereNull('deletado')->orWhere('deletado', '!=', 's');
+        //                 });
+        //                 $query->where(function($q){
+        //                     $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
+        //                 });
+        //             }),
+        //     ],
+        //     'password'      => 'nullable|string|min:6',
+        //     'status'        => ['sometimes', Rule::in(['actived','inactived','pre_registred'])],
+        //     'genero'        => ['sometimes', Rule::in(['ni','m','f'])],
+        //     'verificado'    => ['sometimes', Rule::in(['n','s'])],
+        //     'permission_id' => 'nullable|integer',
+        // ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'exec'=>false,
+                'message' => 'Erro de validação',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        // Validação extra de CPF
+        if (!empty($request->cpf) && !Qlib::validaCpf($request->cpf)) {
+            return response()->json([
+                'exec' => false,
+                'message' => 'Erro de validação',
+                'errors'  => ['cpf' => ['CPF inválido']],
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+        // dd($validated,$request->all());
+        // Sanitização dos dados
+        $validated = $this->sanitizeInput($validated);
+
+        if (isset($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        if (isset($validated['config']) && isArray($validated['config'])) {
+            $validated['config'] = json_encode($validated['config']);
+        }
+
+        $userToUpdate->update($validated);
+
+        return response()->json([
+            'exec' => true,
+            'data' => $userToUpdate,
+            'message' => 'Usuário atualizado com sucesso',
+            'status' => 200,
+        ]);
     }
 
     /**
@@ -175,6 +377,24 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $user = request()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('delete')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        $userToDelete = User::find($id);
+        if (!$userToDelete) {
+            return response()->json(['error' => 'Usuário não encontrado'], 404);
+        }
+        $userToDelete->update([
+            'excluido'     => 's',
+            'deletado'     => 's',
+            'reg_deletado' => now()->toDateTimeString(),
+        ]);
+        return response()->json([
+            'message' => 'Usuário marcado como deletado com sucesso'
+        ], 200);
     }
 }
