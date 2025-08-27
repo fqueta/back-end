@@ -81,14 +81,14 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::get('user/can',[UserController::class,'can_access'])->name('perfil.can');
         Route::post('/logout',[AuthController::class,'logout'])->name('logout');
         Route::apiResource('users', UserController::class,['parameters' => [
-            'users' => 'token'
-        ]]);
-        Route::apiResource('clients', ClientController::class,['parameters' => [
-            'clients' => 'token'
-        ]]);
-        Route::apiResource('users', ClientController::class,['parameters' => [
             'users' => 'id'
         ]]);
+        Route::apiResource('clients', ClientController::class,['parameters' => [
+            'clients' => 'id'
+        ]]);
+        // Route::apiResource('clients', ClientController::class,['parameters' => [
+        //     'clients' => 'id'
+        // ]]);
         Route::get('users/trash', [UserController::class, 'trash'])->name('users.trash');
         Route::get('metrics/filter', [DashboardMetricController::class, 'filter']);
         Route::apiResource('metrics', DashboardMetricController::class,['parameters' => [
