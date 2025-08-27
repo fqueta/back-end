@@ -187,7 +187,7 @@ class PermissionController extends Controller
         $permission->update([
             'excluido'     => 's',
             'deletado'     => 's',
-            'reg_deletado' => now()->toDateTimeString()
+            'reg_deletado' => ['data'=>now()->toDateTimeString(),'user_id'=>request()->user()->id]
         ]);
 
         return response()->json([

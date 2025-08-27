@@ -391,7 +391,7 @@ class UserController extends Controller
         $userToDelete->update([
             'excluido'     => 's',
             'deletado'     => 's',
-            'reg_deletado' => now()->toDateTimeString(),
+            'reg_deletado' =>['data'=>now()->toDateTimeString(),'user_id'=>request()->user()->id] ,
         ]);
         return response()->json([
             'message' => 'Usuário marcado como deletado com sucesso'
