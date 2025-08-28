@@ -151,6 +151,7 @@ class UserController extends Controller
             'genero'        => ['required', Rule::in(['ni','m','f'])],
             // 'verificado'    => ['required', Rule::in(['n','s'])],
             'permission_id' => 'nullable|integer',
+            'config'        => 'array',
         ]);
 
         if ($validator->fails()) {
