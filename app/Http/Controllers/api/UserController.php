@@ -82,10 +82,19 @@ class UserController extends Controller
         // Converter config para array em cada usuário
         $users->getCollection()->transform(function ($user) {
             if (is_string($user->config)) {
-                $user->config = json_decode($user->config, true) ?? [];
+                $configArr = json_decode($user->config, true) ?? [];
+                array_walk($configArr, function (&$value) {
+                    if (is_null($value)) {
+                        $value = (string)'';
+                        // dd($value);
+                    }
+                    // dump($value);
+                });
+                $user->config = $configArr;
             }
             return $user;
         });
+        // dd($users);
         return response()->json($users);
     }
 
@@ -138,7 +147,7 @@ class UserController extends Controller
             'cnpj'          => 'nullable|string|max:20|unique:users,cnpj',
             'email'         => 'nullable|email|unique:users,email',
             'password'      => 'required|string|min:6',
-            'status'        => ['required', Rule::in(['actived','inactived','pre_registred'])],
+            // 'status'        => ['required', Rule::in(['actived','inactived','pre_registred'])],
             'genero'        => ['required', Rule::in(['ni','m','f'])],
             // 'verificado'    => ['required', Rule::in(['n','s'])],
             'permission_id' => 'nullable|integer',
@@ -267,7 +276,7 @@ class UserController extends Controller
             'cnpj'          => ['nullable','string','max:20', Rule::unique('users','cnpj')->ignore($userToUpdate->id)],
             'email'         => ['nullable','email', Rule::unique('users','email')->ignore($userToUpdate->id)],
             'password'      => 'nullable|string|min:6',
-            'status'        => ['sometimes', Rule::in(['actived','inactived','pre_registred'])],
+            // 'status'        => ['sometimes', Rule::in(['actived','inactived','pre_registred'])],
             'genero'        => ['sometimes', Rule::in(['ni','m','f'])],
             'verificado'    => ['sometimes', Rule::in(['n','s'])],
             'permission_id' => 'nullable|integer',
