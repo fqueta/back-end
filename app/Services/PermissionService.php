@@ -16,7 +16,7 @@ class PermissionService
         // pega todos os grupos que o usuário pertence
         $groupIds = isset($user['permission_id']) ? $user['permission_id'] : 0;
         $campo = 'can_' . $action; // can_view, can_create, can_edit, can_delete, can_upload
-
+        // dd($routeName);
         // se no seu caso for hasOne ou belongsTo, só trocar.
         $get_id_menu_by_url = $this->get_id_menu_by_url($routeName);
         // dd($routeName);
@@ -39,7 +39,6 @@ class PermissionService
      */
     public function get_id_menu_by_url($rm){
         $url = $this->get_url_by_route($rm);
-        // dd($rm);
         return Menu::where('url',$url)->first()->id;
     }
     /**
@@ -64,6 +63,12 @@ class PermissionService
         }
         if($name=='api.users.index' || $name == 'api.users.update' || $name == 'api.users.show' || $name == 'api.users.store' || $name == 'api.users.destroy'){
             $url = '/settings/users';
+        }
+        if($name=='api.metrics.index' || $name == 'api.metrics.update' || $name == 'api.metrics.show' || $name == 'api.metrics.store' || $name == 'api.metrics.destroy'){
+            $url = '/settings/metrics';
+        }
+        if($name=='api.clients.index' || $name == 'api.clients.update' || $name == 'api.clients.show' || $name == 'api.clients.store' || $name == 'api.clients.destroy' || $name == 'api.clients.restore' || $name == 'api.clients.forceDelete'){
+            $url = '/clients';
         }
         return $url;
     }

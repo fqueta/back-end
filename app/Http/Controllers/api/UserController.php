@@ -57,8 +57,20 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+
+        $user = request()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('view')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
         $perPage = $request->input('per_page', 10);
-        $query = User::query();
+        $order_by = $request->input('order_by', 'created_at');
+        $order = $request->input('order', 'desc');
+        //listar usuarios com permissões dele pra cima
+        $permission_id = $request->user()->permission_id;
+        $query = User::query()->where('permission_id','>=',$permission_id)->orderBy($order_by,$order);
 
         // Não exibir registros marcados como deletados ou excluídos
         $query->where(function($q) {
@@ -105,6 +117,13 @@ class UserController extends Controller
     public function store(Request $request)
 
     {
+        $user = $request->user();
+        if(!$user){
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('create')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
         // Verifica se já existe usuário deletado com o mesmo CPF
         if (!empty($request->cpf)) {
             $userCpfDel = User::where('cpf', $request->cpf)
@@ -130,14 +149,6 @@ class UserController extends Controller
                     'errors'  => ['email' => ['Cadastro com este e-mail está na lixeira']],
                 ], 422);
             }
-        }
-        // $d = $request->all();
-        $user = $request->user();
-        if(!$user){
-            return response()->json(['error' => 'Acesso negado'], 403);
-        }
-        if (!$this->permissionService->isHasPermission('create')) {
-            return response()->json(['error' => 'Acesso negado'], 403);
         }
         $validator = Validator::make($request->all(), [
             'tipo_pessoa'   => ['required', Rule::in(['pf','pj'])],
@@ -195,12 +206,11 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        // $d = $request->all();
-        $user_d = Auth::user();
-        if(!$user_d){
+        $user = request()->user();
+        if (!$user) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        if (! $this->permissionService->can($user_d, 'settings.'.$this->sec.'.view', 'view')) {
+        if (!$this->permissionService->isHasPermission('view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         $user = User::findOrFail($id);

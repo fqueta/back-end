@@ -72,6 +72,8 @@ class DashboardMetricController extends Controller
     public function filter(Request $request)
     {
         $query = DashboardMetric::query();
+        $order_by = $request->input('order_by', 'created_at');
+        $order = $request->input('order', 'desc');
 
         // filtros opcionais
         if ($request->filled('ano')) {
@@ -88,7 +90,7 @@ class DashboardMetricController extends Controller
         }
 
         // registros detalhados filtrados
-        $registros = $query->get();
+        $registros = $query->orderBy($order_by,$order)->get();
 
         // ano alvo (default = ano atual)
         $ano = $request->ano ?? now()->year;
@@ -167,7 +169,6 @@ class DashboardMetricController extends Controller
                    'por_semana' => $conversasPorMes,
                    // 'por_ano' => $porAno,
                ]
-
             ],
             'totais_filtrados' => $totaisFiltrados, // 👈 sempre retorna baseado no filtro aplicado
         ]);
@@ -175,11 +176,11 @@ class DashboardMetricController extends Controller
 
     public function store(Request $request)
     {
-        $user = Auth::user();
+        $user = $request->user();
         if(!$user){
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        if (! $this->permissionService->can($user, 'settings.'.$this->sec.'.view', 'create')) {
+        if (!$this->permissionService->isHasPermission('create')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         $validator = Validator::make($request->all(), [
@@ -218,11 +219,11 @@ class DashboardMetricController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = Auth::user();
-        if(!$user){
+        $user = $request->user();
+        if (!$user) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        if (! $this->permissionService->can($user, 'settings.'.$this->sec.'.view', 'edit')) {
+        if (!$this->permissionService->isHasPermission('edit')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         $metric = DashboardMetric::find($id);
@@ -256,11 +257,11 @@ class DashboardMetricController extends Controller
 
     public function destroy($id)
     {
-        $user = Auth::user();
-        if(!$user){
+        $user = request()->user();
+        if (!$user) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        if (! $this->permissionService->can($user, 'settings.'.$this->sec.'.view', 'edit')) {
+        if (!$this->permissionService->isHasPermission('delete')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         $metric = DashboardMetric::find($id);

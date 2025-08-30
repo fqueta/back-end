@@ -86,6 +86,9 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::apiResource('clients', ClientController::class,['parameters' => [
             'clients' => 'id'
         ]]);
+        Route::get('clients/trash', [ClientController::class, 'trash'])->name('clients.trash');
+        Route::put('clients/{id}/restore', [ClientController::class, 'restore'])->name('clients.restore');
+        Route::delete('clients/{id}/force', [ClientController::class, 'forceDelete'])->name('clients.forceDelete');
         // Route::apiResource('clients', ClientController::class,['parameters' => [
         //     'clients' => 'id'
         // ]]);

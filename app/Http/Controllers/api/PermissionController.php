@@ -35,12 +35,13 @@ class PermissionController extends Controller
         if(!$user){
             return response()->json(['error' => 'Acesso negado'], 403);
         }
+        $order_by = request()->input('order_by', 'created_at');
+        $order = request()->input('order', 'desc');
         $permission_id = $user->permission_id ?? null;
         if (!$this->isHasPermission('view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        $d = Permission::where('id','>=',$permission_id)->where('excluido','n')->where('deletado','n')->get();
-        // dd($d);
+        $d = Permission::where('id','>=',$permission_id)->where('excluido','n')->where('deletado','n')->orderBy($order_by,$order)->get();
         return response()->json($d, 200);
     }
     /**

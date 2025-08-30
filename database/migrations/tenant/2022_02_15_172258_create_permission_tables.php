@@ -24,7 +24,7 @@ class CreatePermissionTables extends Migration
             $table->string('guard_name')->nullable()->default('web'); // For MySQL 8.0 use string('guard_name', 125);
             $table->timestamps();
             $table->enum('active',['s','n']);
-            $table->integer('autor')->nullable();
+            $table->string('autor')->nullable();
             $table->string('token','60')->nullable();
             $table->enum('excluido',['n','s']);
             $table->text('reg_excluido')->nullable();
