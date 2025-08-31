@@ -18,7 +18,7 @@ class ClientController extends Controller
     protected PermissionService $permissionService;
     public $routeName;
     public $sec;
-    
+
     public function __construct(PermissionService $permissionService)
     {
         $this->routeName = request()->route()->getName();
@@ -38,11 +38,11 @@ class ClientController extends Controller
         if (!$this->permissionService->isHasPermission('view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        
+
         $perPage = $request->input('per_page', 10);
         $order_by = $request->input('order_by', 'created_at');
         $order = $request->input('order', 'desc');
-        
+
         $query = Client::query()->orderBy($order_by, $order);
 
         // Não exibir registros marcados como deletados ou excluídos
@@ -64,7 +64,7 @@ class ClientController extends Controller
         }
 
         $clients = $query->paginate($perPage);
-        
+
         // Converter config para array em cada cliente
         $clients->getCollection()->transform(function ($client) {
             if (is_string($client->config)) {
@@ -78,7 +78,7 @@ class ClientController extends Controller
             }
             return $client;
         });
-        
+
         return response()->json($clients);
     }
 
@@ -130,7 +130,7 @@ class ClientController extends Controller
                 ], 422);
             }
         }
-        
+
         $validator = Validator::make($request->all(), [
             'tipo_pessoa'   => ['required', Rule::in(['pf','pj'])],
             'name'          => 'required|string|max:255',
@@ -138,7 +138,7 @@ class ClientController extends Controller
             'cpf'           => 'nullable|string|max:20|unique:users,cpf',
             'cnpj'          => 'nullable|string|max:20|unique:users,cnpj',
             'email'         => 'nullable|email|unique:users,email',
-            'password'      => 'required|string|min:6',
+            'password'      => 'nullable|string|min:6',
             'genero'        => ['required', Rule::in(['ni','m','f'])],
             'config'        => 'array',
         ]);
@@ -162,13 +162,15 @@ class ClientController extends Controller
         // Sanitização dos dados
         $validated = $this->sanitizeInput($validated);
         $validated['token'] = Qlib::token();
-        $validated['password'] = Hash::make($validated['password']);
+        if(isset($validated['password'])){
+            $validated['password'] = Hash::make($validated['password']);
+        }
         $validated['ativo'] = isset($validated['ativo']) ? $validated['ativo'] : 's';
         $validated['status'] = isset($validated['status']) ? $validated['status'] : 'actived';
         $validated['tipo_pessoa'] = isset($validated['tipo_pessoa']) ? $validated['tipo_pessoa'] : 'pf';
         $validated['permission_id'] = 5; // Força sempre grupo cliente
         $validated['config'] = isset($validated['config']) ? $this->sanitizeInput($validated['config']) : [];
-        
+
         if(isArray($validated['config'])){
             $validated['config'] = json_encode($validated['config']);
         }
@@ -177,7 +179,7 @@ class ClientController extends Controller
         $ret['data'] = $client;
         $ret['message'] = 'Cliente criado com sucesso';
         $ret['status'] = 201;
-        
+
         return response()->json($ret, 201);
     }
 
@@ -195,15 +197,15 @@ class ClientController extends Controller
         }
 
         $client = Client::findOrFail($id);
-        
+
         // Converter config para array
         if (is_string($client->config)) {
             $client->config = json_decode($client->config, true) ?? [];
         }
-        
+
         return response()->json($client);
     }
-    
+
     /**
      * Retorna dados do cliente
      */
@@ -261,20 +263,20 @@ class ClientController extends Controller
         }
 
         $validated = $validator->validated();
-        
+
         // Sanitização dos dados
         $validated = $this->sanitizeInput($validated);
-        
+
         // Tratar senha se fornecida
         if (isset($validated['password']) && !empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
         }
-        
+
         // Garantir que permission_id seja sempre 5 (cliente)
         $validated['permission_id'] = 5;
-        
+
         // Tratar config se fornecido
         if (isset($validated['config'])) {
             $validated['config'] = $this->sanitizeInput($validated['config']);
@@ -284,16 +286,16 @@ class ClientController extends Controller
         }
 
         $clientToUpdate->update($validated);
-        
+
         // Converter config para array na resposta
         if (is_string($clientToUpdate->config)) {
             $clientToUpdate->config = json_decode($clientToUpdate->config, true) ?? [];
         }
-        
+
         $ret['data'] = $clientToUpdate;
         $ret['message'] = 'Cliente atualizado com sucesso';
         $ret['status'] = 200;
-        
+
         return response()->json($ret);
     }
 
@@ -311,7 +313,7 @@ class ClientController extends Controller
         }
 
         $client = Client::findOrFail($id);
-        
+
         // Mover para lixeira em vez de excluir permanentemente
         $client->update([
             'deletado' => 's',
@@ -327,7 +329,7 @@ class ClientController extends Controller
             'status' => 200
         ]);
     }
-    
+
     /**
      * Listar clientes na lixeira
      */
@@ -340,11 +342,11 @@ class ClientController extends Controller
         if (!$this->permissionService->isHasPermission('view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-        
+
         $perPage = $request->input('per_page', 10);
         $order_by = $request->input('order_by', 'created_at');
         $order = $request->input('order', 'desc');
-        
+
         $query = Client::withoutGlobalScope('client')
             ->where('permission_id', 5)
             ->where('deletado', 's')
@@ -361,7 +363,7 @@ class ClientController extends Controller
         }
 
         $clients = $query->paginate($perPage);
-        
+
         // Converter config para array em cada cliente
         $clients->getCollection()->transform(function ($client) {
             if (is_string($client->config)) {
@@ -375,10 +377,10 @@ class ClientController extends Controller
             }
             return $client;
         });
-        
+
         return response()->json($clients);
     }
-    
+
     /**
      * Restaurar cliente da lixeira
      */
@@ -397,7 +399,7 @@ class ClientController extends Controller
             ->where('deletado', 's')
             ->where('permission_id', 5)
             ->firstOrFail();
-            
+
         $client->update([
             'deletado' => 'n',
             'reg_deletado' => null
@@ -408,7 +410,7 @@ class ClientController extends Controller
             'status' => 200
         ]);
     }
-    
+
     /**
      * Excluir cliente permanentemente
      */
@@ -426,7 +428,7 @@ class ClientController extends Controller
             ->where('id', $id)
             ->where('permission_id', 5)
             ->firstOrFail();
-            
+
         $client->delete();
 
         return response()->json([

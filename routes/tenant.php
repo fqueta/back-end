@@ -7,6 +7,7 @@ use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\ClientController;
 use App\Http\Controllers\Api\DashboardMetricController;
 use App\Http\Controllers\api\MenuPermissionController;
+use App\Http\Controllers\api\OptionController;
 use App\Http\Controllers\api\PermissionController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -89,6 +90,15 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::get('clients/trash', [ClientController::class, 'trash'])->name('clients.trash');
         Route::put('clients/{id}/restore', [ClientController::class, 'restore'])->name('clients.restore');
         Route::delete('clients/{id}/force', [ClientController::class, 'forceDelete'])->name('clients.forceDelete');
+        
+        // Rotas para options
+        Route::apiResource('options', OptionController::class,['parameters' => [
+            'options' => 'id'
+        ]]);
+        Route::get('options/trash', [OptionController::class, 'trash'])->name('options.trash');
+        Route::put('options/{id}/restore', [OptionController::class, 'restore'])->name('options.restore');
+        Route::delete('options/{id}/force', [OptionController::class, 'forceDelete'])->name('options.forceDelete');
+        
         // Route::apiResource('clients', ClientController::class,['parameters' => [
         //     'clients' => 'id'
         // ]]);
