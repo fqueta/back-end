@@ -15,16 +15,18 @@ return new class extends Migration {
             // $table->foreignId('user_id')->nullable();
             $table->string('user_id')->nullable();
             // Período de referência
-            $table->date('period'); // exemplo: 2025-01-01 (usaremos esse campo para ano/mês/semana)
+            $table->date('period')->nullable(); // exemplo: 2025-01-01 (usaremos esse campo para ano/mês/semana)
 
             // KPIs principais (dados brutos)
-            $table->decimal('investment', 12, 2); // investimento em mídia
-            $table->integer('visitors');
-            $table->integer('bot_conversations');
-            $table->integer('human_conversations');
-            $table->integer('proposals');
-            $table->integer('closed_deals');
-
+            $table->decimal('investment', 12, 2)->nullable(); // investimento em mídia
+            $table->integer('visitors')->nullable();
+            $table->integer('bot_conversations')->nullable();
+            $table->integer('human_conversations')->nullable();
+            $table->integer('proposals')->nullable();
+            $table->integer('closed_deals')->nullable();
+            $table->integer('campaign_id')->nullable();
+            $table->json('meta')->nullable();
+            $table->string('token')->nullable();
             $table->timestamps();
         });
     }

@@ -11,7 +11,7 @@ class DashboardMetricsSeeder extends Seeder
     public function run(): void
     {
         // Criar dados para 2024 e 2025 (mensais)
-        foreach ([2024, 2025] as $ano) {
+        foreach ([2023, 2024, 2025] as $ano) {
             for ($mes = 1; $mes <= 12; $mes++) {
                 DashboardMetric::create([
                     'user_id' => 1, // ou null se não quiser vincular

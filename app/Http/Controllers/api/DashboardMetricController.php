@@ -269,9 +269,11 @@ class DashboardMetricController extends Controller
         if (!$metric) {
             return response()->json(['message' => 'Cadastro não encontrada'], 404);
         }
-        $dashboardMetric = DashboardMetric::where('id',$id)->delete();
-        // dd($dashboardMetric);
-        // $dashboardMetric->delete();
-        return response()->json($dashboardMetric, 204);
+        try {
+            $dashboardMetric = DashboardMetric::where('id',$id)->delete();
+            return response()->json(['exec'=>true,'data'=>$dashboardMetric,'message'=>'Registro deletado com sucesso!!'], 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erro ao excluir'], 400);
+        }
     }
 }

@@ -325,6 +325,7 @@ class ClientController extends Controller
         ]);
 
         return response()->json([
+            'exec'=>true,
             'message' => 'Cliente movido para a lixeira com sucesso',
             'status' => 200
         ]);

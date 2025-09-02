@@ -18,5 +18,8 @@ class DashboardMetric extends Model
         'human_conversations',
         'proposals',
         'closed_deals',
+        'campaing_id',
+        'meta',
+        'token',
     ];
 }
