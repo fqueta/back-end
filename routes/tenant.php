@@ -5,13 +5,13 @@ declare(strict_types=1);
 use App\Http\Controllers\admin\DashboardController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\ClientController;
-use App\Http\Controllers\Api\DashboardMetricController;
 use App\Http\Controllers\api\MenuPermissionController;
 use App\Http\Controllers\api\OptionController;
 use App\Http\Controllers\api\PermissionController;
 use App\Http\Controllers\api\PostController;
 use App\Http\Controllers\api\AircraftController;
 use App\Http\Controllers\api\CategoryController;
+use App\Http\Controllers\api\MetricasController;
 use App\Http\Controllers\api\ProductUnitController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -142,8 +142,8 @@ Route::name('api.')->prefix('api/v1')->middleware([
         //     'clients' => 'id'
         // ]]);
         Route::get('users/trash', [UserController::class, 'trash'])->name('users.trash');
-        Route::get('metrics/filter', [DashboardMetricController::class, 'filter']);
-        Route::apiResource('metrics', DashboardMetricController::class,['parameters' => [
+        Route::get('metrics/filter', [MetricasController::class, 'filter']);
+        Route::apiResource('metrics', MetricasController::class,['parameters' => [
             'metrics' => 'id'
         ]]);
         // rota flexível de filtros
