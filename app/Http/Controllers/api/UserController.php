@@ -41,18 +41,6 @@ class UserController extends Controller
         $this->sec = request()->segment(3);
     }
     /**
-     * Metodo para veriricar se o usuario tem permissão para executar ao acessar esse recurso atraves de ''
-     * @params string 'view | create | edit | delete'
-     */
-    // private function isHasPermission($permissao=''){
-    //     $user = request()->user();
-    //     if ($this->permissionService->can($user, $this->routeName, $permissao)) {
-    //         return true;
-    //     }else{
-    //         return false;
-    //     }
-    // }
-    /**
      * Listar todos os usuários
      */
     public function index(Request $request)

@@ -2755,4 +2755,11 @@ class Qlib
             return (string) Str::random(60);
         }
     }
+    static function get_user_name($id){
+        $ret = false;
+        if($id){
+            return self::buscaValorDb('users','id',$id,'name');
+        }
+        return $ret;
+    }
 }

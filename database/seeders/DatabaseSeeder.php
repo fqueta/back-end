@@ -24,11 +24,11 @@ class DatabaseSeeder extends Seeder
             // escolaridadeSeeder::class,
             // estadocivilSeeder::class,
             // ProfissaoSeeder::class,
-            // DocumentSeeder::class,
             MenuSeeder::class,
             PermissionSeeder::class,
             MenuPermissionSeeder::class,
             DashboardMetricsSeeder::class,
+            CategorySeeder::class,
             // QoptionSeeder::class,
         ]);
     }

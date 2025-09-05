@@ -39,7 +39,13 @@ class PermissionService
      */
     public function get_id_menu_by_url($rm){
         $url = $this->get_url_by_route($rm);
-        return Menu::where('url',$url)->first()->id;
+        $menu_exist = Menu::where('url',$url)->first();
+        if($menu_exist){
+            return $menu_exist->id;
+        }else{
+            return 0;
+        }
+        // return Menu::where('url',$url)->first()->id;
     }
     /**
      * Metodo para veriricar se o usuario tem permissão para executar ao acessar esse recurso atraves de ''
@@ -48,7 +54,6 @@ class PermissionService
     public function isHasPermission($permissao=''){
         $user = request()->user();
         $routeName = request()->route()->getName();
-        // dd($routeName);
         if ($this->can($user, $routeName, $permissao)) {
             return true;
         }else{
@@ -72,6 +77,26 @@ class PermissionService
         }
         if($name=='api.options.index' || $name == 'api.options.update' || $name == 'api.options.show' || $name == 'api.options.store' || $name == 'api.options.destroy' || $name == 'api.options.restore' || $name == 'api.options.forceDelete' || $name == 'api.options.trash'){
             $url = '/options';
+        }
+        if($name=='api.posts.index' || $name == 'api.posts.update' || $name == 'api.posts.show' || $name == 'api.posts.store' || $name == 'api.posts.destroy' || $name == 'api.posts.restore' || $name == 'api.posts.forceDelete' || $name == 'api.posts.trash'){
+            $url = '/posts';
+        }
+        if($name=='api.aircraft.index' || $name == 'api.aircraft.update' || $name == 'api.aircraft.show' || $name == 'api.aircraft.store' || $name == 'api.aircraft.destroy' || $name == 'api.aircraft.restore' || $name == 'api.aircraft.forceDelete' || $name == 'api.aircraft.trash'){
+            $url = '/aircraft';
+        }
+        if($name=='api.categories.index' || $name == 'api.categories.update' || $name == 'api.categories.show' || $name == 'api.categories.store' || $name == 'api.categories.destroy' || $name == 'api.categories.restore' || $name == 'api.categories.forceDelete' || $name == 'api.categories.trash' || $name == 'api.categories.tree'){
+            $url = '/categories';
+        }
+        if($name=='api.product-categories'){
+            $url = '/categories';
+        }
+        // dd($name);
+        if($name=='api.service-categories'){
+            $url = '/categories';
+        }
+        if($name=='api.product-units.index' || $name == 'api.product-units.update' || $name == 'api.product-units.show' || $name == 'api.product-units.store' || $name == 'api.product-units.destroy' || $name == 'api.product-units.restore' || $name == 'api.product-units.forceDelete' || $name == 'api.product-units.trash'){
+            // $url = '/product-units';
+            $url = '/products';
         }
         return $url;
     }

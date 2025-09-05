@@ -25,10 +25,15 @@ class MenuSeeder extends Seeder
 
         // Objetos do Serviço
         Menu::create([
-            'title' => 'Objetos do Serviço',
-            'url'   => '/service-objects',
-            'icon'  => 'Wrench',
+            'title' => 'Aeronaves',
+            'url'   => '/aircraft',
+            'icon'  => 'Plane',
         ]);
+        // Menu::create([
+        //     'title' => 'Objetos do Serviço',
+        //     'url'   => '/service-objects',
+        //     'icon'  => 'Wrench',
+        // ]);
 
         // ----------------------------
         // Catálogo (pai + filhos)
