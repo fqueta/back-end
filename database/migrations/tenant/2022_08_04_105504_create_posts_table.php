@@ -30,6 +30,8 @@ class CreatePostsTable extends Migration
             $table->bigInteger('post_parent')->nullable();
             $table->string('guid',255)->nullable();
             $table->integer('menu_order')->nullable();
+            $table->double('post_value1',10,2)->nullable();
+            $table->double('post_value2',10,2)->nullable();
             $table->string('post_type',20)->nullable();
             $table->string('post_mime_type',100)->nullable();
             $table->bigInteger('comment_count')->nullable();

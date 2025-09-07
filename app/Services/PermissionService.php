@@ -98,6 +98,12 @@ class PermissionService
             // $url = '/product-units';
             $url = '/products';
         }
+        if($name=='api.products.index' || $name == 'api.products.update' || $name == 'api.products.show' || $name == 'api.products.store' || $name == 'api.products.destroy' || $name == 'api.products.restore' || $name == 'api.products.forceDelete' || $name == 'api.products.trash'){
+            $url = '/products';
+        }
+        if($name=='api.dashboard-metrics.index' || $name == 'api.dashboard-metrics.update' || $name == 'api.dashboard-metrics.show' || $name == 'api.dashboard-metrics.store' || $name == 'api.dashboard-metrics.destroy' || $name == 'api.dashboard-metrics.import-aeroclube'){
+            $url = '/settings/metrics';
+        }
         return $url;
     }
 }

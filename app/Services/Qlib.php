@@ -10,6 +10,7 @@ use App\Http\Controllers\admin\EventController;
 use App\Http\Controllers\MatriculasController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\UserController;
+use App\Models\Option;
 // use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -133,33 +134,27 @@ class Qlib
         //type é o tipo de respsta
 		$ret = false;
 		if($valor){
-			//if($valor=='dominio_site'){
-			//	$ret = dominio();
-			//}elseif($valor==''){
-			//	$ret = dominio().'/admin';
-			//}else{
-				//$sql = "SELECT valor FROM qoptions WHERE url = '$valor' AND ativo='s' AND excluido='n' AND deletado='n'";
-
-                //$result = self::dados_tab('qoptions',['sql'=>$sql]);
-            $result = Qoption::where('option_name','=',$valor)->
-            //    where('autoload','=','yes')->
-               where('excluido','=','n')->
-               where('deletado','=','n')->
-               select('option_value')->
-               get();
-               if(isset($result[0]['option_value'])) {
+			$result = Option::where('url','=',$valor)->
+               where('excluido','=','n')
+               ->where('deletado','=','n')
+               ->where('ativo','=','s')
+               ->select('value')
+               ->first();
+            //    ->toArray();
+            //    dd($valor,$result['value']);
+               if(isset($result['value'])) {
                    // output data of each row
-                   $ret = $result[0]['option_value'];
-					if($valor=='urlroot'){
-						$ret = str_replace('/home/ctloja/public_html/lojas/','/home/ctdelive/lojas/',$ret);
-					}
-                       if($type=='array'){
-                           $ret = self::lib_json_array($ret);
-                       }
-                       if($type=='json'){
-                           $ret = self::lib_array_json($ret);
-                       }
-			}
+                   $ret = $result['value'];
+					// if($valor=='urlroot'){
+					// 	$ret = str_replace('/home/ctloja/public_html/lojas/','/home/ctdelive/lojas/',$ret);
+					// }
+                    if($type=='array'){
+                        $ret = self::lib_json_array($ret);
+                    }
+                    if($type=='json'){
+                        $ret = self::lib_array_json($ret);
+                    }
+			    }
 			//}
 		}
 		return $ret;
@@ -1696,22 +1691,22 @@ class Qlib
     /**
      * Salva ou atualiza uma configuração na tabela de configuração qoption_remoto
      */
-    static function update_config($option_name,$option_value=null,$obs=false)
+    static function update_config($name,$value=null,$obs=false)
     {
         $ret = false;
         $tab = 'qoptions_remoto';
-        if($option_name&&$option_value){
-            $verf = self::totalReg($tab,"WHERE option_name='$option_name'");
+        if($name&&$value){
+            $verf = self::totalReg($tab,"WHERE name='$name'");
             if($verf){
-                $ret=DB::table($tab)->where('option_name',$option_name)->update([
-                    'option_value'=>$option_value,
+                $ret=DB::table($tab)->where('name',$name)->update([
+                    'value'=>$value,
                     'obs'=>$obs,
                     // 'updated_at'=>self::dataBanco(),
                 ]);
             }else{
                 $ret=DB::table($tab)->insert([
-                    'option_name'=>$option_name,
-                    'option_value'=>$option_value,
+                    'name'=>$name,
+                    'value'=>$value,
                     'obs'=>$obs,
                     // 'meta_key'=>$meta_key,
                     // 'created_at'=>self::dataBanco(),

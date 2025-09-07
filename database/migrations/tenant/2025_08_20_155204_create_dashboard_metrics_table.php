@@ -24,7 +24,7 @@ return new class extends Migration {
             $table->integer('human_conversations')->nullable();
             $table->integer('proposals')->nullable();
             $table->integer('closed_deals')->nullable();
-            $table->integer('campaign_id')->nullable();
+            $table->text('campaign_id')->nullable();
             $table->json('meta')->nullable();
             $table->string('token')->nullable();
             $table->timestamps();

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Aircraft;
+use App\Models\ProductUnit;
 use App\Services\PermissionService;
 use App\Services\Qlib;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ class ProductUnitController extends Controller
     protected PermissionService $permissionService;
     public $routeName;
     public $sec;
-
+    public $post_type;
     /**
      * Construtor do controlador
      */
@@ -25,6 +25,7 @@ class ProductUnitController extends Controller
         $this->routeName = request()->route()->getName();
         $this->permissionService = $permissionService;
         $this->sec = request()->segment(3);
+        $this->post_type = 'product-units';
     }
 
     /**
@@ -77,8 +78,7 @@ class ProductUnitController extends Controller
         $order_by = $request->input('order_by', 'created_at');
         $order = $request->input('order', 'desc');
 
-        $query = Aircraft::query()
-            ->where('post_type', 'product-units')
+        $query = ProductUnit::query()
             ->orderBy($order_by, $order);
 
         // Filtros opcionais
@@ -94,7 +94,6 @@ class ProductUnitController extends Controller
         }
 
         $productUnits = $query->paginate($perPage);
-
         // Transformar dados para o formato do frontend
         $productUnits->getCollection()->transform(function ($item) {
             return [
@@ -125,7 +124,7 @@ class ProductUnitController extends Controller
 
         // Verifica se já existe unidade deletada com o mesmo value
         if (!empty($request->value)) {
-            $productUnitValueDel = Aircraft::withoutGlobalScope('notDeleted')
+            $productUnitValueDel = ProductUnit::withoutGlobalScope('notDeleted')
                 ->where('post_name', $request->value)
                 ->where('post_type', 'product-units')
                 ->where(function($q){
@@ -180,7 +179,7 @@ class ProductUnitController extends Controller
         $mappedData['excluido'] = 'n';
         $mappedData['deletado'] = 'n';
 
-        $productUnit = Aircraft::create($mappedData);
+        $productUnit = ProductUnit::create($mappedData);
 
         // Preparar resposta no formato do frontend
         $responseData = [
@@ -212,8 +211,8 @@ class ProductUnitController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $productUnit = Aircraft::where('post_type', 'product-units')->findOrFail($id);
-        
+        $productUnit = ProductUnit::findOrFail($id);
+
         // Preparar resposta no formato do frontend
         $responseData = [
             'id' => $productUnit->ID,
@@ -244,8 +243,8 @@ class ProductUnitController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $productUnitToUpdate = Aircraft::where('post_type', 'product-units')->findOrFail($id);
-        
+        $productUnitToUpdate = ProductUnit::findOrFail($id);
+
         $validator = Validator::make($request->all(), [
             'label' => 'sometimes|required|string|max:255',
             'value' => ['sometimes', 'required', 'string', 'max:200', Rule::unique('posts', 'post_name')->ignore($productUnitToUpdate->ID, 'ID')],
@@ -314,7 +313,7 @@ class ProductUnitController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $productUnitToDelete = Aircraft::where('post_type', 'product-units')->find($id);
+        $productUnitToDelete = ProductUnit::find($id);
         if (!$productUnitToDelete) {
             return response()->json(['error' => 'Unidade de produto não encontrada'], 404);
         }
@@ -350,8 +349,7 @@ class ProductUnitController extends Controller
         $order_by = $request->input('order_by', 'created_at');
         $order = $request->input('order', 'desc');
 
-        $query = Aircraft::onlyTrashed()
-            ->where('post_type', 'product-units')
+        $query = ProductUnit::onlyTrashed()
             ->orderBy($order_by, $order);
 
         // Filtros opcionais
@@ -392,7 +390,7 @@ class ProductUnitController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $productUnit = Aircraft::withoutGlobalScope('notDeleted')
+        $productUnit = ProductUnit::withoutGlobalScope('notDeleted')
                    ->where('ID', $id)
                    ->where('post_type', 'product-units')
                    ->where(function($q) {
@@ -429,7 +427,7 @@ class ProductUnitController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $productUnit = Aircraft::withoutGlobalScope('notDeleted')
+        $productUnit = ProductUnit::withoutGlobalScope('notDeleted')
                    ->where('ID', $id)
                    ->where('post_type', 'product-units')
                    ->where(function($q) {

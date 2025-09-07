@@ -26,14 +26,16 @@ class TesteController extends Controller
         //     // $ret = Escola::adiciona_presenca_atividades_cronograma($id_turma);
         //     // dd($ret);
         // }
-        $pid = $request->get('id');
-        if($pid){
-            $ret = (new MenuController)->getMenus($pid);
-            // dd($ret);
-            return response()->json($ret);
-        }
+        $ret = Qlib::qoption('url_api_aeroclube');
+        // dd($ret);
+        // $pid = $request->get('id');
+        // if($pid){
+        //     $ret = (new MenuController)->getMenus($pid);
+        //     // dd($ret);
+        //     return response()->json($ret);
+        // }
         // $ret = (new MenuController)->getMenus(1);
-        $ret = Qlib::token();
+        // $ret = Qlib::token();
         return $ret;
     }
 }

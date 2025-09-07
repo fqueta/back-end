@@ -12,7 +12,9 @@ use App\Http\Controllers\api\PostController;
 use App\Http\Controllers\api\AircraftController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\MetricasController;
+use App\Http\Controllers\api\DashboardMetricController;
 use App\Http\Controllers\api\ProductUnitController;
+use App\Http\Controllers\api\ProductController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -137,6 +139,20 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::get('product-units/trash', [ProductUnitController::class, 'trash'])->name('product-units.trash');
         Route::put('product-units/{id}/restore', [ProductUnitController::class, 'restore'])->name('product-units.restore');
         Route::delete('product-units/{id}/force', [ProductUnitController::class, 'forceDelete'])->name('product-units.forceDelete');
+
+        // Rotas para products
+        Route::apiResource('products', ProductController::class,['parameters' => [
+            'products' => 'id'
+        ]]);
+        Route::get('products/trash', [ProductController::class, 'trash'])->name('products.trash');
+        Route::put('products/{id}/restore', [ProductController::class, 'restore'])->name('products.restore');
+        Route::delete('products/{id}/force', [ProductController::class, 'forceDelete'])->name('products.forceDelete');
+
+        // Rotas para dashboard-metrics
+        Route::apiResource('dashboard-metrics', MetricasController::class,['parameters' => [
+            'dashboard-metrics' => 'id'
+        ]]);
+        Route::post('dashboard-metrics/import-aeroclube', [MetricasController::class, 'importFromAeroclube'])->name('dashboard-metrics.import-aeroclube');
 
         // Route::apiResource('clients', ClientController::class,['parameters' => [
         //     'clients' => 'id'

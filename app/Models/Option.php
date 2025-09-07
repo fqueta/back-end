@@ -23,9 +23,9 @@ class Option extends Model
         'reg_deletado',
     ];
 
-    protected $casts = [
-        'value' => 'array',
-    ];
+    // protected $casts = [
+    //     'value' => 'array',
+    // ];
 
     public $incrementing = false;   // 👈 precisa porque o id não é int
     protected $keyType = 'string';  // 👈 precisa porque UUID é string
