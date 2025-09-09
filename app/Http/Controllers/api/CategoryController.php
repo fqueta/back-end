@@ -108,7 +108,6 @@ class CategoryController extends Controller
         }
         return $data;
     }
-
     /**
      * Criar uma nova categoria
      */
@@ -508,7 +507,6 @@ class CategoryController extends Controller
                 return $this->formatCategoryTree($child);
             });
         }
-
         return $formatted;
     }
 }

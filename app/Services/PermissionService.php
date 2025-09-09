@@ -16,10 +16,9 @@ class PermissionService
         // pega todos os grupos que o usuário pertence
         $groupIds = isset($user['permission_id']) ? $user['permission_id'] : 0;
         $campo = 'can_' . $action; // can_view, can_create, can_edit, can_delete, can_upload
-        // dd($routeName);
         // se no seu caso for hasOne ou belongsTo, só trocar.
         $get_id_menu_by_url = $this->get_id_menu_by_url($routeName);
-        // dd($routeName);
+        // dd($get_id_menu_by_url,$routeName,$action);
         $perm = MenuPermission::where('permission_id', $groupIds)
                 ->where('menu_id', $get_id_menu_by_url)
                 //   ->where($campo,1)
@@ -90,16 +89,23 @@ class PermissionService
         if($name=='api.product-categories'){
             $url = '/categories';
         }
-        // dd($name);
         if($name=='api.service-categories'){
             $url = '/categories';
         }
         if($name=='api.product-units.index' || $name == 'api.product-units.update' || $name == 'api.product-units.show' || $name == 'api.product-units.store' || $name == 'api.product-units.destroy' || $name == 'api.product-units.restore' || $name == 'api.product-units.forceDelete' || $name == 'api.product-units.trash'){
-            // $url = '/product-units';
             $url = '/products';
         }
         if($name=='api.products.index' || $name == 'api.products.update' || $name == 'api.products.show' || $name == 'api.products.store' || $name == 'api.products.destroy' || $name == 'api.products.restore' || $name == 'api.products.forceDelete' || $name == 'api.products.trash'){
             $url = '/products';
+        }
+        if($name=='api.services.index' || $name == 'api.services.update' || $name == 'api.services.show' || $name == 'api.services.store' || $name == 'api.services.destroy' || $name == 'api.services.restore' || $name == 'api.services.forceDelete' || $name == 'api.services.trash'){
+            $url = '/services';
+        }
+        if($name=='api.service-units.index' || $name == 'api.service-units.update' || $name == 'api.service-units.show' || $name == 'api.service-units.store' || $name == 'api.service-units.destroy' || $name == 'api.service-units.restore' || $name == 'api.service-units.forceDelete' || $name == 'api.service-units.trash'){
+            $url = '/services';
+        }
+        if($name=='api.service-orders.index' || $name == 'api.service-orders.update' || $name == 'api.service-orders.show' || $name == 'api.service-orders.store' || $name == 'api.service-orders.destroy' || $name == 'api.service-orders.restore' || $name == 'api.service-orders.forceDelete' || $name == 'api.service-orders.trash'){
+            $url = '/service-orders';
         }
         if($name=='api.dashboard-metrics.index' || $name == 'api.dashboard-metrics.update' || $name == 'api.dashboard-metrics.show' || $name == 'api.dashboard-metrics.store' || $name == 'api.dashboard-metrics.destroy' || $name == 'api.dashboard-metrics.import-aeroclube'){
             $url = '/settings/metrics';

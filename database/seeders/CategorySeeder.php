@@ -21,6 +21,7 @@ class CategorySeeder extends Seeder
             'Freios',
             'Suspensão',
             'Motor',
+            'Diversos',
         ];
 
         // Categorias da entidade SERVIÇOS

@@ -78,20 +78,24 @@ class AircraftController extends Controller
 
         // Transformar dados para o formato do frontend
         $aircraft->getCollection()->transform(function ($item) {
-            return [
-                'id' => $item->ID,
-                'client' => ['name'=>Qlib::get_user_name($item->guid)],
-                'client_id' => $item->guid,
-                'config' => $item->config, // Manter como JSON string
-                'description' => $item->post_content,
-                'matricula' => $item->post_title,
-                'created_at' => $item->created_at,
-                'updated_at' => $item->updated_at,
-                'active' => $this->decode_status($item->post_status),
-            ];
+            return $this->map_aircraft($item);
         });
 
         return response()->json($aircraft);
+    }
+    public function map_aircraft($item){
+        return [
+            'id' => $item->ID,
+            'client' => Qlib::get_client_by_id($item->guid),
+            'client_name' => Qlib::get_client_by_id($item->guid)->name,
+            'client_id' => $item->guid,
+            'config' => $item->config, // Manter como JSON string
+            'description' => $item->post_content,
+            'matricula' => $item->post_title,
+            'created_at' => $item->created_at,
+            'updated_at' => $item->updated_at,
+            'active' => $this->decode_status($item->post_status),
+        ];
     }
 
     /**
@@ -213,18 +217,7 @@ class AircraftController extends Controller
         $aircraft = Aircraft::create($mappedData);
 
         // Preparar resposta no formato do frontend
-        $responseData = [
-            'id'        => $aircraft->ID,
-            'token'     => $aircraft->token,
-            'client'    => ['name'=>Qlib::get_user_name($aircraft->guid)],
-            'client_id' => $aircraft->guid,
-            'config'    => $aircraft->config, // Manter como JSON string
-            'description' => $aircraft->post_content,
-            'matricula'     => $aircraft->post_title,
-            'created_at'    => $aircraft->created_at,
-            'updated_at'    => $aircraft->updated_at,
-            'active'        => $this->decode_status($aircraft->post_status),
-        ];
+        $responseData = $this->map_aircraft($aircraft);
 
         return response()->json([
             'data' => $responseData,
@@ -367,16 +360,7 @@ class AircraftController extends Controller
         $aircraftToUpdate->update($mappedData);
 
         // Preparar resposta no formato do frontend
-        $responseData = [
-            'id' => $aircraftToUpdate->ID,
-            'active' => $this->decode_status($aircraftToUpdate->post_status),
-            'client_id' => $aircraftToUpdate->guid,
-            'config' => $aircraftToUpdate->config, // Manter como JSON string
-            'description' => $aircraftToUpdate->post_content,
-            'matricula' => $aircraftToUpdate->post_title,
-            'created_at' => $aircraftToUpdate->created_at,
-            'updated_at' => $aircraftToUpdate->updated_at,
-        ];
+        $responseData = $this->map_aircraft($aircraftToUpdate);
 
         return response()->json([
             'exec' => true,

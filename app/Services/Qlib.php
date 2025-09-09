@@ -5,6 +5,8 @@
 // namespace App\Qlib;
 namespace App\Services;
 use App\Http\Controllers\admin\EventController;
+use App\Http\Controllers\api\ProductController;
+use App\Http\Controllers\Api\ProductUnitController;
 // use App\Http\Controllers\admin\PostController;
 // use App\Http\Controllers\LeilaoController;
 use App\Http\Controllers\MatriculasController;
@@ -19,12 +21,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Models\Permission;
 use App\Models\Post;
-use App\Models\Qoption;
 use App\Models\Tenant;
 use DateTime;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Models\Category;
+use App\Models\Client;
+use App\Models\ProductUnit;
 class Qlib
 {
     static $RAIZ;
@@ -2233,7 +2237,7 @@ class Qlib
 
 						]);
 
-						$salvar = lib_json_array($sl);
+						$salvar = self::lib_json_array($sl);
 
 						if(isset($salvar['exec'])&& $salvar['exec']){
 
@@ -2756,5 +2760,32 @@ class Qlib
             return self::buscaValorDb('users','id',$id,'name');
         }
         return $ret;
+    }
+    /**
+     * Metodo para retornado todos os dado de uma categoria atravez do id
+     *
+     * @param int $id
+     * @return json
+     */
+    static function get_category_by_id($id){
+        $category = Category::findOrFail($id);
+        return $category;
+    }
+    /**
+     * retorna os dados de uma unidade de medida
+     */
+    static function get_unit_by_id($id){
+        $unit = ProductUnit::findOrFail($id);
+        $unitMap = (new ProductUnitController())->map_product_unit($unit);
+        // dd($unitMap);
+        return $unitMap;
+    }
+    static function get_client_by_id($id){
+        $client = Client::findOrFail($id);
+        // Converter config para array
+        if (is_string($client->config)) {
+            $client->config = json_decode($client->config, true) ?? [];
+        }
+        return $client;
     }
 }

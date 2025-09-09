@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
+use App\Models\Service;
 use App\Services\PermissionService;
 use App\Services\Qlib;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class ProductController extends Controller
+class ServiceController extends Controller
 {
     protected $permissionService;
     protected $post_type;
@@ -21,7 +21,7 @@ class ProductController extends Controller
     public function __construct()
     {
         $this->permissionService = new PermissionService();
-        $this->post_type = 'products';
+        $this->post_type = 'service';
     }
 
     /**
@@ -54,7 +54,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Listar todos os produtos
+     * Listar todos os serviços
      */
     public function index(Request $request)
     {
@@ -70,7 +70,7 @@ class ProductController extends Controller
         $order_by = $request->input('order_by', 'created_at');
         $order = $request->input('order', 'desc');
 
-        $query = Product::query()
+        $query = Service::query()
             ->orderBy($order_by, $order);
 
         // Filtros opcionais
@@ -88,54 +88,61 @@ class ProductController extends Controller
             $query->where('guid', $request->input('category'));
         }
 
-        $products = $query->paginate($perPage);
-        // Transformar dados para o formato do frontend
-        $products->getCollection()->transform(function ($item) {
-            // dd($item);
-            return $this->map_product($item);
-        });
-        // dd($products);
+        $services = $query->paginate($perPage);
 
-        return response()->json($products);
+        // Transformar dados para o formato do frontend
+        $services->getCollection()->transform(function ($item) {
+            return $this->map_service($item);
+        });
+
+        return response()->json($services);
     }
+
     /**
-     * Mapeia um produto para o formato do frontend     *
-     * @param Product $product
+     * Mapeia um serviço para o formato do frontend
+     * @param Service $service
      * @return array
      */
-    public function map_product($product)
+    public function map_service($service)
     {
         return [
-            'id' => $product->ID,
-            'name' => $product->post_title,
-            'description' => $product->post_content,
-            'slug' => $product->post_name,
-            'active' => $this->decode_status($product->post_status),
-            'category' => $product->guid,
-            'costPrice' => $product->post_value1,
-            'salePrice' => $product->post_value2,
-            'stock' => $product->comment_count,
-            'categoryData' => Qlib::get_category_by_id($product->guid),
-            'unitData' => Qlib::get_unit_by_id($product->config['unit'] ?? null),
-            'unit' => $product->config['unit'] ?? null,
-            'created_at' => $product->created_at,
-            'updated_at' => $product->updated_at,
+            'id' => $service->ID,
+            'name' => $service->post_title,
+            'description' => $service->post_content,
+            'slug' => $service->post_name,
+            'active' => $this->decode_status($service->post_status),
+            'category' => $service->guid,
+            'price' => $service->post_value1,
+            'estimatedDuration' => $service->config['estimatedDuration'] ?? null,
+            'unit' => $service->config['unit'] ?? null,
+            'requiresMaterials' => $service->config['requiresMaterials'] ?? false,
+            'skillLevel' => $service->config['skillLevel'] ?? null,
+            'categoryData' => Qlib::get_category_by_id($service->guid),
+            'created_at' => $service->created_at,
+            'updated_at' => $service->updated_at,
         ];
     }
-    public function array_filder_validate(){
+
+    /**
+     * Regras de validação para serviços
+     */
+    public function array_filder_validate()
+    {
         return [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'active' => 'boolean',
             'category' => 'nullable|string|max:255',
-            'costPrice' => 'nullable|numeric|min:0',
-            'salePrice' => 'nullable|numeric|min:0',
-            'stock' => 'nullable|integer|min:0',
+            'price' => 'nullable|numeric|min:0',
+            'estimatedDuration' => 'nullable',
             'unit' => 'nullable|string|max:100',
+            'requiresMaterials' => 'boolean',
+            'skillLevel' => 'nullable|string|max:100',
         ];
     }
+
     /**
-     * Criar um novo produto
+     * Criar um novo serviço
      */
     public function store(Request $request)
     {
@@ -159,45 +166,21 @@ class ProductController extends Controller
 
         $validated = $validator->validated();
 
-        // Verificar se já existe um produto deletado com o mesmo nome
-        $existingProduct = Product::withoutGlobalScope('notDeleted')
+        // Verificar se já existe um serviço deletado com o mesmo nome
+        $existingService = Service::withoutGlobalScope('notDeleted')
             ->where('post_title', $validated['name'])
             ->where(function($query) {
                 $query->where('excluido', 's')->orWhere('deletado', 's');
             })
             ->first();
 
-        if ($existingProduct) {
+        if ($existingService) {
             return response()->json([
-                'message' => 'Já existe um produto com este nome que foi excluído. Restaure-o ou use outro nome.',
+                'message' => 'Já existe um serviço com este nome que foi excluído. Restaure-o ou use outro nome.',
                 'error' => 'duplicate_name'
             ], 409);
         }
-        $validator = Validator::make($request->all(), $this->array_filder_validate());
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Erro de validação',
-                'errors'  => $validator->errors(),
-            ], 422);
-        }
-
-        $validated = $validator->validated();
-
-        // Verificar se já existe um produto deletado com o mesmo nome
-        $existingProduct = Product::withoutGlobalScope('notDeleted')
-            ->where('post_title', $validated['name'])
-            ->where(function($query) {
-                $query->where('excluido', 's')->orWhere('deletado', 's');
-            })
-            ->first();
-
-        if ($existingProduct) {
-            return response()->json([
-                'message' => 'Já existe um produto com este nome que foi excluído. Restaure-o ou use outro nome.',
-                'error' => 'duplicate_name'
-            ], 409);
-        }
+        // dd($validated);
 
         // Mapear campos do frontend para campos do banco
         $mappedData = [
@@ -205,18 +188,30 @@ class ProductController extends Controller
             'post_content' => $validated['description'] ?? '', // description -> post_content
             'post_status' => $this->get_status($validated['active'] ?? true), // active -> post_status
             'guid' => $validated['category'] ?? null, // category -> guid
-            'post_value1' => $validated['costPrice'] ?? 0, // costPrice -> post_value1
-            'post_value2' => $validated['salePrice'] ?? 0, // salePrice -> post_value2
-            'comment_count' => $validated['stock'] ?? 0, // stock -> comment_count
+            'post_value1' => $validated['price'] ?? 0, // price -> post_value1
         ];
 
-        // Configurar unidade no campo config
+        // Configurar campos específicos do serviço no campo config
+        $config = [];
+        if (isset($validated['estimatedDuration'])) {
+            $config['estimatedDuration'] = $validated['estimatedDuration'];
+        }
         if (isset($validated['unit'])) {
-            $mappedData['config'] = ['unit' => $validated['unit']];
+            $config['unit'] = $validated['unit'];
+        }
+        if (isset($validated['requiresMaterials'])) {
+            $config['requiresMaterials'] = $validated['requiresMaterials'];
+        }
+        if (isset($validated['skillLevel'])) {
+            $config['skillLevel'] = $validated['skillLevel'];
+        }
+
+        if (!empty($config)) {
+            $mappedData['config'] = $config;
         }
 
         // Gerar slug automaticamente
-        $mappedData['post_name'] = (new Product())->generateSlug($validated['name']);
+        $mappedData['post_name'] = (new Service())->generateSlug($validated['name']);
 
         // Sanitização dos dados
         $mappedData = $this->sanitizeInput($mappedData);
@@ -230,25 +225,26 @@ class ProductController extends Controller
         // Valores padrão
         $mappedData['comment_status'] = 'closed';
         $mappedData['ping_status'] = 'closed';
-        $mappedData['post_type'] = $this->post_type; // Forçar tipo products
+        $mappedData['post_type'] = $this->post_type; // Forçar tipo service
         $mappedData['menu_order'] = 0;
         $mappedData['to_ping'] = 's';
         $mappedData['excluido'] = 'n';
         $mappedData['deletado'] = 'n';
 
-        $product = Product::create($mappedData);
+        $service = Service::create($mappedData);
 
         // Preparar resposta no formato do frontend
-        $responseData = $this->map_product($product);
+        $responseData = $this->map_service($service);
 
         return response()->json([
             'data' => $responseData,
-            'message' => 'Produto criado com sucesso',
+            'message' => 'Serviço criado com sucesso',
             'status' => 201,
         ], 201);
     }
+
     /**
-     * Exibir um produto específico
+     * Exibir um serviço específico
      */
     public function show(string $id)
     {
@@ -260,20 +256,20 @@ class ProductController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $product = Product::findOrFail($id);
+        $service = Service::findOrFail($id);
 
         // Preparar resposta no formato do frontend
-        $responseData = $this->map_product($product);
+        $responseData = $this->map_service($service);
 
         return response()->json([
             'data' => $responseData,
-            'message' => 'Produto encontrado com sucesso',
+            'message' => 'Serviço encontrado com sucesso',
             'status' => 200,
         ], 200);
     }
 
     /**
-     * Atualizar um produto
+     * Atualizar um serviço
      */
     public function update(Request $request, string $id)
     {
@@ -286,16 +282,7 @@ class ProductController extends Controller
         }
 
         // Validação dos dados
-        $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'active' => 'boolean',
-            'category' => 'nullable|string|max:255',
-            'costPrice' => 'nullable|numeric|min:0',
-            'salePrice' => 'nullable|numeric|min:0',
-            'stock' => 'nullable|integer|min:0',
-            'unit' => 'nullable|string|max:100',
-        ]);
+        $validator = Validator::make($request->all(), $this->array_filder_validate());
 
         if ($validator->fails()) {
             return response()->json([
@@ -305,14 +292,14 @@ class ProductController extends Controller
         }
 
         $validated = $validator->validated();
-        $productToUpdate = Product::findOrFail($id);
+        $serviceToUpdate = Service::findOrFail($id);
 
         // Mapear campos do frontend para campos do banco
         $mappedData = [];
 
         if (isset($validated['name'])) {
             $mappedData['post_title'] = $validated['name']; // name -> post_title
-            $mappedData['post_name'] = $productToUpdate->generateSlug($validated['name']); // Gerar novo slug
+            $mappedData['post_name'] = $serviceToUpdate->generateSlug($validated['name']); // Gerar novo slug
         }
         if (isset($validated['description'])) {
             $mappedData['post_content'] = $validated['description']; // description -> post_content
@@ -320,47 +307,53 @@ class ProductController extends Controller
         if (isset($validated['category'])) {
             $mappedData['guid'] = $validated['category']; // category -> guid
         }
-        if (isset($validated['costPrice'])) {
-            $mappedData['post_value1'] = $validated['costPrice']; // costPrice -> post_value1
-        }
-        if (isset($validated['salePrice'])) {
-            $mappedData['post_value2'] = $validated['salePrice']; // salePrice -> post_value2
-        }
-        if (isset($validated['stock'])) {
-            $mappedData['comment_count'] = $validated['stock']; // stock -> comment_count
+        if (isset($validated['price'])) {
+            $mappedData['post_value1'] = $validated['price']; // price -> post_value1
         }
         if (isset($validated['active'])) {
             $mappedData['post_status'] = $this->get_status($validated['active']); // active -> post_status
         }
 
-        // Configurar unidade no campo config
+        // Configurar campos específicos do serviço no campo config
+        $config = $serviceToUpdate->config ?? [];
+        if (isset($validated['estimatedDuration'])) {
+            $config['estimatedDuration'] = $validated['estimatedDuration'];
+        }
         if (isset($validated['unit'])) {
-            $config = $productToUpdate->config ?? [];
             $config['unit'] = $validated['unit'];
+        }
+        if (isset($validated['requiresMaterials'])) {
+            $config['requiresMaterials'] = $validated['requiresMaterials'];
+        }
+        if (isset($validated['skillLevel'])) {
+            $config['skillLevel'] = $validated['skillLevel'];
+        }
+
+        if (!empty($config)) {
             $mappedData['config'] = $config;
         }
 
         // Sanitização dos dados
         $mappedData = $this->sanitizeInput($mappedData);
 
-        // Garantir que o post_type permaneça como products
+        // Garantir que o post_type permaneça como service
         $mappedData['post_type'] = $this->post_type;
 
-        $productToUpdate->update($mappedData);
+        $serviceToUpdate->update($mappedData);
 
         // Preparar resposta no formato do frontend
-        $responseData = $this->map_product($productToUpdate);
+        $responseData = $this->map_service($serviceToUpdate);
 
         return response()->json([
             'exec' => true,
             'data' => $responseData,
-            'message' => 'Produto atualizado com sucesso',
+            'message' => 'Serviço atualizado com sucesso',
             'status' => 200,
         ]);
     }
 
     /**
-     * Excluir um produto (soft delete)
+     * Excluir um serviço (soft delete)
      */
     public function destroy(string $id)
     {
@@ -372,17 +365,17 @@ class ProductController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $productToDelete = Product::find($id);
+        $serviceToDelete = Service::find($id);
 
-        if (!$productToDelete) {
+        if (!$serviceToDelete) {
             return response()->json([
-                'message' => 'Produto não encontrado',
+                'message' => 'Serviço não encontrado',
                 'status' => 404,
             ], 404);
         }
 
         // Soft delete - marcar como excluído
-        $productToDelete->update([
+        $serviceToDelete->update([
             'excluido' => 's',
             'reg_excluido' => json_encode([
                 'excluido_por' => $user->id,
@@ -393,13 +386,13 @@ class ProductController extends Controller
 
         return response()->json([
             'exec' => true,
-            'message' => 'Produto excluído com sucesso',
+            'message' => 'Serviço excluído com sucesso',
             'status' => 200,
         ]);
     }
 
     /**
-     * Listar produtos na lixeira
+     * Listar serviços na lixeira
      */
     public function trash(Request $request)
     {
@@ -415,7 +408,7 @@ class ProductController extends Controller
         $order_by = $request->input('order_by', 'updated_at');
         $order = $request->input('order', 'desc');
 
-        $products = Product::withoutGlobalScope('notDeleted')
+        $services = Service::withoutGlobalScope('notDeleted')
             ->where(function($query) {
                 $query->where('excluido', 's')->orWhere('deletado', 's');
             })
@@ -423,15 +416,15 @@ class ProductController extends Controller
             ->paginate($perPage);
 
         // Transformar dados para o formato do frontend
-        $products->getCollection()->transform(function ($item) {
-            return $this->map_product($item);
+        $services->getCollection()->transform(function ($item) {
+            return $this->map_service($item);
         });
 
-        return response()->json($products);
+        return response()->json($services);
     }
 
     /**
-     * Restaurar um produto da lixeira
+     * Restaurar um serviço da lixeira
      */
     public function restore(string $id)
     {
@@ -443,22 +436,22 @@ class ProductController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $product = Product::withoutGlobalScope('notDeleted')
+        $service = Service::withoutGlobalScope('notDeleted')
             ->where('ID', $id)
             ->where(function($query) {
                 $query->where('excluido', 's')->orWhere('deletado', 's');
             })
             ->first();
 
-        if (!$product) {
+        if (!$service) {
             return response()->json([
-                'message' => 'Produto não encontrado na lixeira',
+                'message' => 'Serviço não encontrado na lixeira',
                 'status' => 404,
             ], 404);
         }
 
-        // Restaurar produto
-        $product->update([
+        // Restaurar serviço
+        $service->update([
             'excluido' => 'n',
             'deletado' => 'n',
             'reg_excluido' => null,
@@ -467,13 +460,13 @@ class ProductController extends Controller
 
         return response()->json([
             'exec' => true,
-            'message' => 'Produto restaurado com sucesso',
+            'message' => 'Serviço restaurado com sucesso',
             'status' => 200,
         ]);
     }
 
     /**
-     * Excluir permanentemente um produto
+     * Excluir permanentemente um serviço
      */
     public function forceDelete(string $id)
     {
@@ -485,26 +478,26 @@ class ProductController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $product = Product::withoutGlobalScope('notDeleted')
+        $service = Service::withoutGlobalScope('notDeleted')
             ->where('ID', $id)
             ->where(function($query) {
                 $query->where('excluido', 's')->orWhere('deletado', 's');
             })
             ->first();
 
-        if (!$product) {
+        if (!$service) {
             return response()->json([
-                'message' => 'Produto não encontrado na lixeira',
+                'message' => 'Serviço não encontrado na lixeira',
                 'status' => 404,
             ], 404);
         }
 
         // Excluir permanentemente
-        $product->forceDelete();
+        $service->forceDelete();
 
         return response()->json([
             'exec' => true,
-            'message' => 'Produto excluído permanentemente',
+            'message' => 'Serviço excluído permanentemente',
             'status' => 200,
         ]);
     }
