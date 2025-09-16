@@ -37,7 +37,7 @@ class OptionController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
 
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 100);
         $order_by = $request->input('order_by', 'created_at');
         $order = $request->input('order', 'desc');
 
@@ -59,22 +59,38 @@ class OptionController extends Controller
         }
 
         $options = $query->paginate($perPage);
-
         // Converter value para array em cada opção
-        $options->getCollection()->transform(function ($option) {
-            if (is_string($option->value)) {
-                $valueArr = json_decode($option->value, true) ?? [];
-                array_walk($valueArr, function (&$value) {
-                    if (is_null($value)) {
-                        $value = (string)'';
-                    }
-                });
-                $option->value = $valueArr;
-            }
-            return $option;
-        });
+        // $options->getCollection()->transform(function ($option) {
+        //     if (is_string($option->value)) {
+        //         $valueArr = json_decode($option->value, true) ?? [];
+        //         dd($valueArr);
+        //         array_walk($valueArr, function (&$value) {
+        //             if (is_null($value)) {
+        //                 $value = (string)'';
+        //             }
+        //         });
+        //         $option->value = $valueArr;
+        //     }
+        //     return $option;
+        // });
+        $ret = $this->AdvancedInputSettings($options);
 
-        return response()->json($options);
+        return response()->json(['data'=>$ret]);
+    }
+    /**
+     * Metodo para expor dados para a api
+     */
+    public function AdvancedInputSettings($options=[]){
+        $ret = [];
+        if(is_object($options)){
+            foreach($options as $key => $value){
+                if(isset($value['url']) && !empty($value['url']) && ($url = $value['url'])){
+                    $ret[$url] = $value['value'];
+                }
+            }
+            // dd($options,$ret);
+        }
+        return $ret;
     }
 
     /**
