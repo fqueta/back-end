@@ -282,61 +282,6 @@ class UserController extends Controller
             'config'        => 'array'
         ]);
 
-        // validator que ignora campos unicos na lixeira
-        // $validator = Validator::make($request->all(), [
-        //     'tipo_pessoa'   => ['sometimes', Rule::in(['pf','pj'])],
-        //     'name'          => 'sometimes|required|string|max:255',
-        //     'razao'         => 'nullable|string|max:255',
-        //     'cpf'           => [
-        //         'nullable',
-        //         'string',
-        //         'max:20',
-        //         Rule::unique('users', 'cpf')
-        //             ->ignore($userToUpdate->id)
-        //             ->where(function ($query) {
-        //                 $query->where(function($q){
-        //                     $q->whereNull('deletado')->orWhere('deletado', '!=', 's');
-        //                 });
-        //                 $query->where(function($q){
-        //                     $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
-        //                 });
-        //             }),
-        //     ],
-        //     'cnpj'          => [
-        //         'nullable',
-        //         'string',
-        //         'max:20',
-        //         Rule::unique('users', 'cnpj')
-        //             ->ignore($userToUpdate->id)
-        //             ->where(function ($query) {
-        //                 $query->where(function($q){
-        //                     $q->whereNull('deletado')->orWhere('deletado', '!=', 's');
-        //                 });
-        //                 $query->where(function($q){
-        //                     $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
-        //                 });
-        //             }),
-        //     ],
-        //     'email'         => [
-        //         'nullable',
-        //         'email',
-        //         Rule::unique('users', 'email')
-        //             ->ignore($userToUpdate->id)
-        //             ->where(function ($query) {
-        //                 $query->where(function($q){
-        //                     $q->whereNull('deletado')->orWhere('deletado', '!=', 's');
-        //                 });
-        //                 $query->where(function($q){
-        //                     $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
-        //                 });
-        //             }),
-        //     ],
-        //     'password'      => 'nullable|string|min:6',
-        //     'status'        => ['sometimes', Rule::in(['actived','inactived','pre_registred'])],
-        //     'genero'        => ['sometimes', Rule::in(['ni','m','f'])],
-        //     'verificado'    => ['sometimes', Rule::in(['n','s'])],
-        //     'permission_id' => 'nullable|integer',
-        // ]);
 
         if ($validator->fails()) {
             return response()->json([

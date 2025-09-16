@@ -103,6 +103,7 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::apiResource('options', OptionController::class,['parameters' => [
             'options' => 'id'
         ]]);
+        Route::post('options/all', [OptionController::class, 'fast_update_all'])->name('options.all');
         Route::get('options/trash', [OptionController::class, 'trash'])->name('options.trash');
         Route::put('options/{id}/restore', [OptionController::class, 'restore'])->name('options.restore');
         Route::delete('options/{id}/force', [OptionController::class, 'forceDelete'])->name('options.forceDelete');
@@ -158,7 +159,7 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::get('services/trash', [ServiceController::class, 'trash'])->name('services.trash');
         Route::put('services/{id}/restore', [ServiceController::class, 'restore'])->name('services.restore');
         Route::delete('services/{id}/force', [ServiceController::class, 'forceDelete'])->name('services.forceDelete');
- 
+
          // Rotas para service-units
          Route::apiResource('service-units', ServiceUnitController::class,['parameters' => [
              'service-units' => 'id'
@@ -173,8 +174,9 @@ Route::name('api.')->prefix('api/v1')->middleware([
          ]]);
          Route::get('service-orders/trash', [ServiceOrderController::class, 'trash'])->name('service-orders.trash');
          Route::put('service-orders/{id}/restore', [ServiceOrderController::class, 'restore'])->name('service-orders.restore');
+         Route::put('service-orders/{id}/status ', [ServiceOrderController::class, 'updateStatus'])->name('service-orders.update-status');
          Route::delete('service-orders/{id}/force', [ServiceOrderController::class, 'forceDelete'])->name('service-orders.forceDelete');
- 
+
          // Rotas para dashboard-metrics
         Route::apiResource('dashboard-metrics', MetricasController::class,['parameters' => [
             'dashboard-metrics' => 'id'

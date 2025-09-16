@@ -74,6 +74,11 @@ class ServiceController extends Controller
             ->orderBy($order_by, $order);
 
         // Filtros opcionais
+        if($search = $request->get('search')){
+            $query->where('post_title', 'like', '%' . $search . '%');
+            $query->orWhere('post_content', 'like', '%' . $search . '%');
+            $query->orWhere('post_excerpt', 'like', '%' . $search . '%');
+        }
         if ($request->filled('name')) {
             $query->where('post_title', 'like', '%' . $request->input('name') . '%');
         }
@@ -105,6 +110,9 @@ class ServiceController extends Controller
      */
     public function map_service($service)
     {
+        if(is_array($service)){
+            $service = (object)$service;
+        }
         return [
             'id' => $service->ID,
             'name' => $service->post_title,

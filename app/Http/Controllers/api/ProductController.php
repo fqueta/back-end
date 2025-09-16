@@ -105,6 +105,9 @@ class ProductController extends Controller
      */
     public function map_product($product)
     {
+        if(is_array($product)){
+            $product = (object)$product;
+        }
         return [
             'id' => $product->ID,
             'name' => $product->post_title,

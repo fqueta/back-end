@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\User;
+use App\Services\Qlib;
 
 class Client extends User
 {
@@ -12,12 +13,13 @@ class Client extends User
     // Sempre traz só usuários com permission_id = 5
     protected static function booted()
     {
-        static::creating(function ($client) {
-            $client->permission_id = 5; // força sempre grupo cliente
+        $cliente_permission_id = Qlib::qoption('cliente_permission_id')??5;
+        static::creating(function ($client) use ($cliente_permission_id) {
+            $client->permission_id = $cliente_permission_id; // força sempre grupo cliente
         });
 
-        static::addGlobalScope('client', function (Builder $builder) {
-            $builder->where('permission_id', 5);
+        static::addGlobalScope('client', function (Builder $builder) use ($cliente_permission_id) {
+            $builder->where('permission_id', $cliente_permission_id);
         });
     }
 

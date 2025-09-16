@@ -108,11 +108,15 @@ class OptionController extends Controller
         if (!$this->permissionService->isHasPermission('create')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-
+        if(!$request->filled('name') && $request->filled('url')){
+            $request->merge([
+                'name' => $request->get('url'),
+            ]);
+        }
         // Verificar se o nome já existe na lixeira
         if ($request->filled('name')) {
             $existingOption = Option::withoutGlobalScope('active')
-                ->where('name', $request->name)
+                ->where('url', $request->url)
                 ->where(function($q) {
                     $q->where('deletado', 's')->orWhere('excluido', 's');
                 })
@@ -146,15 +150,73 @@ class OptionController extends Controller
         $validated = $this->sanitizeInput($validated);
         $validated['token'] = Qlib::token();
         $validated['ativo'] = isset($validated['ativo']) ? $validated['ativo'] : 's';
-        
+
         // Converter value para JSON se for array
         if (isset($validated['value']) && is_array($validated['value'])) {
             $validated['value'] = json_encode($validated['value']);
         }
 
-        $option = Option::create($validated);
+        // $option = Option::create($validated);
+        $option = Option::updateOrInsert(
+            [
+                'name' => $validated['name'],
+            ],
+            [
+                'url'      => $validated['url'],
+                'value'     => $validated['value'],
+                'ativo'     => $validated['ativo'],
+                'obs'     => $validated['obs'],
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]
+        );
         $ret['data'] = $option;
         $ret['message'] = 'Opção criada com sucesso';
+        $ret['status'] = 201;
+
+        return response()->json($ret, 201);
+    }
+    public function fast_update_all(Request $request)
+    {
+        $user = request()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('create')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        $option = null;
+        // dd($request->all());
+        foreach($request->all() as $key => $value){
+            if(!empty($key) && !empty($value)){
+                if(is_bool($value)){
+                    $value = (string)$value;
+                }
+                $data_salv = [
+                    'name' => ucwords(str_replace('_',' ',$key)),
+                    'url' => $key,
+                    'value' => $value,
+                    'ativo' => 's',
+                    'excluido' => 'n',
+                    'deletado' => 'n',
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ];
+                // dd($data_salv);
+                // $option[$key] = Option::updateOrInsert(
+                //     [
+                //         'value' => $value,
+                //     ],
+                //     $data_salv
+                // );
+                $option[$key] = Qlib::update_tab('options', $data_salv, "WHERE url = '$key'");
+            }
+        }
+        // dd($option);
+        // dd($validated);
+        // $option = Option::create($validated);
+        $ret['data'] = $option;
+        $ret['message'] = 'Opções atualizadas com sucesso';
         $ret['status'] = 201;
 
         return response()->json($ret, 201);

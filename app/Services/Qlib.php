@@ -2445,6 +2445,7 @@ class Qlib
             if(count($customDefaults)==0){
                 $customDefaults = ['data'=>now()];
             }
+            // dd($dados);
             if(is_array($dados)){
                 // 1. Filtrar o $data para remover chaves que não existem nas colunas
                 $filteredData = self::filterDataByTableColumns($tab, $dados,$customDefaults);

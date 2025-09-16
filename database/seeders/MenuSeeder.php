@@ -63,15 +63,15 @@ class MenuSeeder extends Seeder
         ]);
 
         // Orçamentos
-        Menu::create([
-            'title' => 'Orçamentos',
-            'url'   => '/budgets',
-            'icon'  => 'FileText',
-        ]);
+        // Menu::create([
+        //     'title' => 'Orçamentos',
+        //     'url'   => '/budgets',
+        //     'icon'  => 'FileText',
+        // ]);
 
         // Ordens de Serviço
         Menu::create([
-            'title' => 'Ordens de Serviço',
+            'title' => 'Propostas',
             'url'   => '/service-orders',
             'icon'  => 'ClipboardList',
         ]);

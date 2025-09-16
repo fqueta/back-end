@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('service_orders', function (Blueprint $table) {
             $table->id();
+            $table->text('doc_type')->nullable(); // tipo de documento pode ser os para ordem de serviço, orc para orçamentos, etc.
             $table->string('title'); // Título da ordem de serviço
             $table->text('description')->nullable(); // Descrição da ordem
             $table->unsignedBigInteger('object_id'); // ID do objeto (aeronave, equipamento, etc.)
@@ -28,10 +29,14 @@ return new class extends Migration
             $table->text('notes')->nullable(); // Notas públicas
             $table->text('internal_notes')->nullable(); // Notas internas
             $table->string('token')->nullable();
-            $table->json('config')->nullable();
+            $table->json('config')->nullable(); //Para registro de meta campos
             $table->decimal('total_amount', 10, 2)->default(0); // Valor total da ordem
+            $table->enum('excluido',['n','s']);
+            $table->text('reg_excluido')->nullable();
+            $table->enum('deletado',['n','s']);
+            $table->text('reg_deletado')->nullable();
             $table->timestamps();
-+            $table->softDeletes();
+            $table->softDeletes();
 
             // Índices para melhor performance
             $table->index(['object_id']);

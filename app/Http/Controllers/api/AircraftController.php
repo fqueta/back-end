@@ -20,10 +20,10 @@ class AircraftController extends Controller
     /**
      * Construtor do controlador
      */
-    public function __construct(PermissionService $permissionService)
+    public function __construct()
     {
         $this->routeName = request()->route()->getName();
-        $this->permissionService = $permissionService;
+        $this->permissionService = new PermissionService();
         $this->sec = request()->segment(3);
     }
 
@@ -84,6 +84,17 @@ class AircraftController extends Controller
         return response()->json($aircraft);
     }
     public function map_aircraft($item){
+        if(isset($item->config) && !empty($item->config)){
+            $arr_config = json_decode($item->config, true);
+        }else{
+            $arr_config = [];
+        }
+        if(is_array($item)){
+            $item = (object)$item;
+        }
+        // if(!isset($item->ID)){
+        //     $item->ID = 0;
+        // }
         return [
             'id' => $item->ID,
             'client' => Qlib::get_client_by_id($item->guid),
@@ -92,10 +103,12 @@ class AircraftController extends Controller
             'config' => $item->config, // Manter como JSON string
             'description' => $item->post_content,
             'matricula' => $item->post_title,
+            'rab' => $arr_config,
             'created_at' => $item->created_at,
             'updated_at' => $item->updated_at,
             'active' => $this->decode_status($item->post_status),
         ];
+
     }
 
     /**

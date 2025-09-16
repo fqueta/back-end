@@ -18,6 +18,7 @@ class ServiceOrder extends Model
      */
     protected $fillable = [
         'title',
+        'doc_type',
         'description',
         'object_id',
         'object_type',
@@ -30,6 +31,8 @@ class ServiceOrder extends Model
         'actual_start_date',
         'actual_end_date',
         'notes',
+        'token',
+        'config',
         'internal_notes',
         'total_amount',
     ];
@@ -43,6 +46,7 @@ class ServiceOrder extends Model
         'actual_start_date' => 'date',
         'actual_end_date' => 'date',
         'total_amount' => 'decimal:2',
+        'config' => 'array',
     ];
 
     /**

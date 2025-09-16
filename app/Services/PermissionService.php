@@ -104,11 +104,14 @@ class PermissionService
         if($name=='api.service-units.index' || $name == 'api.service-units.update' || $name == 'api.service-units.show' || $name == 'api.service-units.store' || $name == 'api.service-units.destroy' || $name == 'api.service-units.restore' || $name == 'api.service-units.forceDelete' || $name == 'api.service-units.trash'){
             $url = '/services';
         }
-        if($name=='api.service-orders.index' || $name == 'api.service-orders.update' || $name == 'api.service-orders.show' || $name == 'api.service-orders.store' || $name == 'api.service-orders.destroy' || $name == 'api.service-orders.restore' || $name == 'api.service-orders.forceDelete' || $name == 'api.service-orders.trash'){
+        if($name=='api.service-orders.index' || $name == 'api.service-orders.update' || $name == 'api.service-orders.show' || $name == 'api.service-orders.store' || $name == 'api.service-orders.destroy' || $name == 'api.service-orders.restore' || $name == 'api.service-orders.forceDelete' || $name == 'api.service-orders.trash' || $name == 'api.service-orders.update-status'){
             $url = '/service-orders';
         }
         if($name=='api.dashboard-metrics.index' || $name == 'api.dashboard-metrics.update' || $name == 'api.dashboard-metrics.show' || $name == 'api.dashboard-metrics.store' || $name == 'api.dashboard-metrics.destroy' || $name == 'api.dashboard-metrics.import-aeroclube'){
             $url = '/settings/metrics';
+        }
+        if($name=='api.options.index' || $name == 'api.options.update' || $name == 'api.options.show' || $name == 'api.options.store' || $name == 'api.options.destroy' || $name == 'api.options.all'){
+            $url = '/settings/system';
         }
         return $url;
     }

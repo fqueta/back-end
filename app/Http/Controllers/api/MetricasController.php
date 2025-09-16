@@ -136,6 +136,8 @@ class MetricasController extends Controller
             SUM(visitors) as total_visitors
         ")->first();
 
+        // Calcular variações percentuais
+        $variacoes = $this->calcularVariacoes($request);
 
         return response()->json([
             'registros' => $registros,
@@ -152,7 +154,86 @@ class MetricasController extends Controller
                ]
             ],
             'totais_filtrados' => $totaisFiltrados, // 👈 sempre retorna baseado no filtro aplicado
+            'variacoes' => $variacoes
         ]);
+    }
+
+    /**
+     * Calcula as variações percentuais baseadas nos filtros aplicados
+     *
+     * @param Request $request
+     * @param string|null $dataInicio
+     * @param string|null $dataFim
+     * @return array
+     */
+    private function calcularVariacoes(Request $request, $dataInicio = null, $dataFim = null)
+    {
+        $agregado = DashboardMetric::query();
+
+        // Usar datas específicas se fornecidas, senão usar filtros da request
+        if ($dataInicio && $dataFim) {
+            $agregado->whereBetween('period', [$dataInicio, $dataFim]);
+        } else {
+            // Aplicar filtros da request
+            if ($request->filled('ano')) {
+                $agregado->whereYear('period', $request->ano);
+            }
+            if ($request->filled('mes')) {
+                $agregado->whereMonth('period', $request->mes);
+            }
+            if ($request->filled('semana')) {
+                $agregado->whereRaw('WEEK(period, 1) = ?', [$request->semana]);
+            }
+            if ($request->filled('data_inicio') && $request->filled('data_fim')) {
+                $agregado->whereBetween('period', [$request->data_inicio, $request->data_fim]);
+            }
+        }
+
+        $totais = $agregado->selectRaw("
+            SUM(bot_conversations) as total_bot_conversations,
+            SUM(human_conversations) as total_human_conversations,
+            SUM(closed_deals) as total_closed_deals,
+            SUM(investment) as total_investment,
+            SUM(proposals) as total_proposals,
+            SUM(visitors) as total_visitors
+        ")->first();
+
+        $variacoes = [
+            'taxa_fechamento' => 0,
+            'cpf' => 0,
+            'propostas' => 0,
+            'conversas_humanas' => 0,
+            'taxa_transbordo' => 0
+        ];
+
+        if ($totais) {
+            // Taxa de fechamento: (closed_deals / proposals) * 100
+            if ($totais->total_proposals > 0) {
+                $variacoes['taxa_fechamento'] = round(($totais->total_closed_deals / $totais->total_proposals) * 100, 1);
+            }
+
+            // CPF: investment / closed_deals
+            if ($totais->total_closed_deals > 0) {
+                $variacoes['cpf'] = round($totais->total_investment / $totais->total_closed_deals, 1);
+            }
+
+            // Taxa de transbordo: (human_conversations / bot_conversations) * 100
+            if ($totais->total_bot_conversations > 0) {
+                $variacoes['taxa_transbordo'] = round(($totais->total_human_conversations / $totais->total_bot_conversations) * 100, 1);
+            }
+
+            // Porcentagem de propostas (assumindo base de visitors)
+            if ($totais->total_visitors > 0) {
+                $variacoes['propostas'] = round(($totais->total_proposals / $totais->total_visitors) * 100, 1);
+            }
+
+            // Porcentagem de conversas humanas (assumindo base de bot_conversations)
+            if ($totais->total_bot_conversations > 0) {
+                $variacoes['conversas_humanas'] = round(($totais->total_human_conversations / $totais->total_bot_conversations) * 100, 1);
+            }
+        }
+
+        return $variacoes;
     }
 
     public function store(Request $request)
@@ -268,12 +349,13 @@ class MetricasController extends Controller
         if (!$this->permissionService->isHasPermission('create')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-
         // Validação dos parâmetros
         $validator = Validator::make($request->all(), [
-            'ano' => 'required|integer|min:2020|max:2030',
-            'numero' => 'required|integer|min:1|max:53',
-            'tipo' => 'required|string|in:semana,mes,ano'
+            'ano' => 'nullable|integer|min:2020|max:2030',
+            'inicio' => 'nullable',
+            'fim' => 'nullable',
+            'numero' => 'nullable|integer|min:1|max:53',
+            'tipo' => 'nullable|string|in:semana,mes,ano'
         ]);
 
         if ($validator->fails()) {
@@ -284,18 +366,28 @@ class MetricasController extends Controller
         }
 
         $validated = $validator->validated();
-
         try {
             // Fazer requisição para a API externa com autenticação
             // dd($this->token_api_aeroclube,$this->url_api_aeroclube);
-            $response = Http::timeout(30)
-                ->withToken($this->token_api_aeroclube)
-                ->get($this->url_api_aeroclube, [
-                    'ano' => $validated['ano'],
-                    'numero' => $validated['numero'],
-                    'tipo' => $validated['tipo']
+            if(isset($validated['ano']) && isset($validated['numero']) && isset($validated['tipo'])){
+                $response = Http::timeout(30)
+                    ->withToken($this->token_api_aeroclube)
+                    ->get($this->url_api_aeroclube, [
+                        'ano' => $validated['ano'],
+                        'numero' => $validated['numero'],
+                        'tipo' => $validated['tipo']
+                    ]);
+            }
+            if(isset($validated['inicio']) && isset($validated['fim'])){
+                $response = Http::timeout(30)
+                    ->withToken($this->token_api_aeroclube)
+                    ->get($this->url_api_aeroclube, [
+                    'inicio' => $validated['inicio'],
+                    'fim' => $validated['fim'],
                 ]);
+            }
 
+            // dd($response->json());
             if (!$response->successful()) {
                 Log::error('Erro na requisição para API do Aeroclube', [
                     'status' => $response->status(),
@@ -306,7 +398,6 @@ class MetricasController extends Controller
                     'status' => $response->status()
                 ], 500);
             }
-
             $data = $response->json();
 
             // Verificar se a resposta tem a estrutura esperada
@@ -385,6 +476,21 @@ class MetricasController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+    /**
+     * Metodo para importar todas as metrica do aeroclube
+     * Aeroclube/Interajai/Google Analitcs/Google Ads/Meta ADs
+     */
+    public function importAllMetrics(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('create')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        $ret['aeroclube'] = $this->importFromAeroclube($request);
     }
 }
 

@@ -18,11 +18,12 @@ class ClientController extends Controller
     protected PermissionService $permissionService;
     public $routeName;
     public $sec;
-
-    public function __construct(PermissionService $permissionService)
+    public $cliente_permission_id;
+    public function __construct()
     {
+        $this->cliente_permission_id = Qlib::qoption('cliente_permission_id')??5;
         $this->routeName = request()->route()->getName();
-        $this->permissionService = $permissionService;
+        $this->permissionService = new PermissionService();
         $this->sec = request()->segment(3);
     }
 
@@ -130,6 +131,29 @@ class ClientController extends Controller
                 ], 422);
             }
         }
+        // Verificar se o CPF ou CNPJ já existe na lixeira
+        if ($request->filled('cpf') || $request->filled('cnpj')) {
+            $existingUser = Client::withoutGlobalScope('client')
+                ->where(function($q) use ($request) {
+                    $q->where('cpf', $request->cpf)->orWhere('cnpj', $request->cnpj);
+                })
+                ->where(function($q) {
+                    $q->where('deletado', 's')->orWhere('excluido', 's');
+                })
+                ->first();
+
+            if ($existingUser) {
+                return response()->json([
+                    'message' => 'Este cadastro já está em nossa base de dados, verifique na lixeira.',
+                    'errors'  => ['cpf' => ['Cadastro com este CPF está na lixeira'], 'cnpj' => ['Cadastro com este CNPJ está na lixeira']],
+                ], 422);
+            }
+        }
+
+        $request->merge([
+            'tipo_pessoa' => $request->get('tipo_pessoa') ? $request->get('tipo_pessoa') : 'pf',
+            'genero' => $request->get('genero') ? $request->get('genero') : 'ni',
+        ]);
 
         $validator = Validator::make($request->all(), [
             'tipo_pessoa'   => ['required', Rule::in(['pf','pj'])],
@@ -168,7 +192,7 @@ class ClientController extends Controller
         $validated['ativo'] = isset($validated['ativo']) ? $validated['ativo'] : 's';
         $validated['status'] = isset($validated['status']) ? $validated['status'] : 'actived';
         $validated['tipo_pessoa'] = isset($validated['tipo_pessoa']) ? $validated['tipo_pessoa'] : 'pf';
-        $validated['permission_id'] = 5; // Força sempre grupo cliente
+        $validated['permission_id'] = $this->cliente_permission_id; // Força sempre grupo cliente
         $validated['config'] = isset($validated['config']) ? $this->sanitizeInput($validated['config']) : [];
 
         if(isArray($validated['config'])){
@@ -275,7 +299,7 @@ class ClientController extends Controller
         }
 
         // Garantir que permission_id seja sempre 5 (cliente)
-        $validated['permission_id'] = 5;
+        $validated['permission_id'] = $this->cliente_permission_id;
 
         // Tratar config se fornecido
         if (isset($validated['config'])) {
@@ -349,7 +373,7 @@ class ClientController extends Controller
         $order = $request->input('order', 'desc');
 
         $query = Client::withoutGlobalScope('client')
-            ->where('permission_id', 5)
+            ->where('permission_id', $this->cliente_permission_id)
             ->where('deletado', 's')
             ->orderBy($order_by, $order);
 
@@ -398,7 +422,7 @@ class ClientController extends Controller
         $client = Client::withoutGlobalScope('client')
             ->where('id', $id)
             ->where('deletado', 's')
-            ->where('permission_id', 5)
+            ->where('permission_id', $this->cliente_permission_id)
             ->firstOrFail();
 
         $client->update([
@@ -427,7 +451,7 @@ class ClientController extends Controller
 
         $client = Client::withoutGlobalScope('client')
             ->where('id', $id)
-            ->where('permission_id', 5)
+            ->where('permission_id', $this->cliente_permission_id)
             ->firstOrFail();
 
         $client->delete();
