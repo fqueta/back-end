@@ -94,7 +94,7 @@ class ServiceController extends Controller
         }
 
         $services = $query->paginate($perPage);
-
+        dd($services);
         // Transformar dados para o formato do frontend
         $services->getCollection()->transform(function ($item) {
             return $this->map_service($item);
@@ -374,12 +374,24 @@ class ServiceController extends Controller
         }
 
         $serviceToDelete = Service::find($id);
-
         if (!$serviceToDelete) {
             return response()->json([
                 'message' => 'Serviço não encontrado',
                 'status' => 404,
             ], 404);
+        }
+        if($serviceToDelete->post_type != $this->post_type){
+            return response()->json([
+                'message' => 'Serviço não encontrado ou tipo inválido',
+                'status' => 404,
+            ], 404);
+        }
+
+        if($serviceToDelete->excluido == 's'){
+            return response()->json([
+                'message' => 'Serviço já excluído',
+                'status' => 400,
+            ], 400);
         }
 
         // Soft delete - marcar como excluído

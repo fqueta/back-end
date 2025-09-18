@@ -11,6 +11,7 @@ use App\Http\Controllers\api\PermissionController;
 use App\Http\Controllers\api\PostController;
 use App\Http\Controllers\api\AircraftController;
 use App\Http\Controllers\api\CategoryController;
+use App\Http\Controllers\api\FinancialCategoryController;
 use App\Http\Controllers\api\MetricasController;
 use App\Http\Controllers\api\DashboardMetricController;
 use App\Http\Controllers\api\ProductUnitController;
@@ -136,6 +137,21 @@ Route::name('api.')->prefix('api/v1')->middleware([
         /**Rota para o cadasto de produto */
         Route::get('product-categories', [CategoryController::class, 'index'])->name('product-categories');
 
+        // Rotas para financial/categories
+        Route::apiResource('financial/categories', FinancialCategoryController::class,[
+            'parameters' => ['categories' => 'id'],
+            'names' => [
+                'index' => 'financial.categories.index',
+                'store' => 'financial.categories.store',
+                'show' => 'financial.categories.show',
+                'update' => 'financial.categories.update',
+                'destroy' => 'financial.categories.destroy'
+            ]
+        ]);
+        Route::get('financial/categories/trash', [FinancialCategoryController::class, 'trash'])->name('financial.categories.trash');
+        Route::put('financial/categories/{id}/restore', [FinancialCategoryController::class, 'restore'])->name('financial.categories.restore');
+        Route::delete('financial/categories/{id}/force', [FinancialCategoryController::class, 'forceDelete'])->name('financial.categories.forceDelete');
+
         // Rotas para product-units
         Route::apiResource('product-units', ProductUnitController::class,['parameters' => [
             'product-units' => 'id'
@@ -145,12 +161,12 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::delete('product-units/{id}/force', [ProductUnitController::class, 'forceDelete'])->name('product-units.forceDelete');
 
         // Rotas para products
-        Route::apiResource('products', ProductController::class,['parameters' => [
-            'products' => 'id'
-        ]]);
         Route::get('products/trash', [ProductController::class, 'trash'])->name('products.trash');
         Route::put('products/{id}/restore', [ProductController::class, 'restore'])->name('products.restore');
         Route::delete('products/{id}/force', [ProductController::class, 'forceDelete'])->name('products.forceDelete');
+        Route::apiResource('products', ProductController::class,['parameters' => [
+            'products' => 'id'
+        ]]);
 
         // Rotas para services
         Route::apiResource('services', ServiceController::class,['parameters' => [

@@ -16,9 +16,9 @@ return new class extends Migration
                   ->default('outros')
                   ->after('active')
                   ->comment('Tipo de entidade da categoria: servicos, produtos, financeiro, outros');
-            
             // Adicionar índice para otimizar consultas por entidade
             $table->index(['entidade', 'active']);
+
         });
     }
 

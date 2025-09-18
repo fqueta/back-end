@@ -47,18 +47,4 @@ class MenuPermissionSeeder extends Seeder
             }
         }
     }
-
-    private function generateKey(Menu $menu): string
-    {
-        if(empty($menu->url) || $menu->url === '/') {
-            return 'dashboard'; // fallback para dashboard
-        }
-        if ($menu->url) {
-            return str_replace('/', '.', trim($menu->url, '/'));
-            // "/clients" -> "clients"
-        }
-
-        return \Str::slug($menu->title, '.');
-        // "Ordens de Serviço" -> "ordens.de.servico"
-    }
 }

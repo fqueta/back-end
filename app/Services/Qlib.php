@@ -1392,6 +1392,18 @@ class Qlib
         }
         return $ret;
     }
+    static function delete_usermeta($user_id,$meta_key=null)
+    {
+        $ret = false;
+        $tab = 'usermeta';
+        if($user_id&&$meta_key){
+            $verf = self::totalReg($tab,"WHERE user_id='$user_id' AND meta_key='$meta_key'");
+            if($verf){
+                $ret=DB::table($tab)->where('user_id',$user_id)->where('meta_key',$meta_key)->delete();
+            }
+        }
+        return $ret;
+    }
     /**
      * Metodo para pegar os meta users
      */

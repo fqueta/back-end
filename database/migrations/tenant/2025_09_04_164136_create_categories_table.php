@@ -18,12 +18,12 @@ return new class extends Migration
             $table->unsignedBigInteger('parent_id')->nullable(); // ID da categoria pai (opcional)
             $table->boolean('active')->default(true); // Status ativo da categoria (padrão true)
             $table->string('token')->nullable();
+            $table->json('config')->nullable();
             $table->enum('excluido',['n','s'])->default('n');
             $table->text('reg_excluido')->nullable();
             $table->enum('deletado',['n','s'])->default('n');
             $table->text('reg_deletado')->nullable();
             $table->timestamps(); // created_at e updated_at
-
             // Índices para melhor performance
             $table->index('parent_id');
             $table->index('active');

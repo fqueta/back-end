@@ -4,11 +4,15 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Menu;
+use App\Models\MenuPermission;
+use App\Models\Permission;
+use Illuminate\Support\Facades\DB;
 
 class MenuSeeder extends Seeder
 {
     public function run()
     {
+        DB::table('menus')->delete(); //Menu::delete();
         // Dashboard
         Menu::create([
             'title' => 'Dashboard',
@@ -85,30 +89,35 @@ class MenuSeeder extends Seeder
             'icon'  => 'DollarSign',
         ]);
 
+        // Menu::create([
+        //     'title' => 'Pagamentos',
+        //     'url'   => '/payments',
+        //     'parent_id' => $financeiro->id,
+        // ]);
+
+        // Menu::create([
+        //     'title' => 'Fluxo de Caixa',
+        //     'url'   => '/cash-flow',
+        //     'parent_id' => $financeiro->id,
+        // ]);
+
         Menu::create([
-            'title' => 'Pagamentos',
-            'url'   => '/payments',
+            'title' => 'Contas',
+            'url'   => '/financial',
             'parent_id' => $financeiro->id,
         ]);
 
-        Menu::create([
-            'title' => 'Fluxo de Caixa',
-            'url'   => '/cash-flow',
-            'parent_id' => $financeiro->id,
-        ]);
+        // Menu::create([
+        //     'title' => 'Contas a Pagar',
+        //     'url'   => '/financial/accounts-payable',
+        //     'parent_id' => $financeiro->id,
+        // ]);
 
         Menu::create([
-            'title' => 'Contas a Receber',
-            'url'   => '/accounts-receivable',
+            'title' => 'Categorias',
+            'url'   => '/financial/categories',
             'parent_id' => $financeiro->id,
         ]);
-
-        Menu::create([
-            'title' => 'Contas a Pagar',
-            'url'   => '/accounts-payable',
-            'parent_id' => $financeiro->id,
-        ]);
-
         // ----------------------------
         // Relatórios (pai + filhos)
         // ----------------------------
@@ -191,5 +200,90 @@ class MenuSeeder extends Seeder
             'url'   => '/settings/system',
             'parent_id' => $configuracoes->id,
         ]);
+
+        //Cadastrar as permissões iniciais
+
+        DB::table('permissions')->delete();
+
+        DB::table('permissions')->insert([
+            // MASTER → acesso a tudo
+            [
+                'name' => 'Master',
+                'description' => 'Desenvolvedores',
+                'redirect_login' => '/home',
+                'active' => 's',
+            ],
+
+            // ADMINISTRADOR → tudo, mas em configurações só "Usuários" e "Perfis"
+            [
+                'name' => 'Administrador',
+                'description' => 'Administradores do sistema',
+                'redirect_login' => '/home',
+                'active' => 's'
+            ],
+
+            // GERENTE → todos os menus exceto configurações
+            [
+                'name' => 'Gerente',
+                'description' => 'Gerente do sistema (sem acesso a configurações)',
+                'redirect_login' => '/home',
+                'active' => 's'
+            ],
+
+            // ESCRITÓRIO → somente dois primeiros menus
+            [
+                'name' => 'Escritório',
+                'description' => 'Acesso limitado a Dashboard e Clientes',
+                'redirect_login' => '/home',
+                'active' => 's'
+            ],
+            // Cliente → para clientes sem acesso ao admin
+            [
+                'name' => 'Cliente',
+                'description' => 'Acesso limitado a Dashboard e Clientes',
+                'redirect_login' => '/home',
+                'active' => 's'
+            ],
+        ]);
+
+
+        //Registrar permissões
+        DB::table('menu_permission')->delete(); //MenuPermission::delete();
+        $menus = Menu::all();
+        $groups =  Permission::all(); // grupos de usuário do sistema
+        DB::table('menu_permission')->delete();
+        foreach ($menus as $menu) {
+            foreach ($groups as $group) {
+                // $keyBase = $this->generateKey($menu);
+                if($group->id==1){
+                    DB::table('menu_permission')->insert([
+                        'menu_id'       => $menu->id,
+                        'permission_id' => $group->id,
+                        // 'permission_key'=> $keyBase . '.view',
+                        'can_view'      => true,   // por padrão todos os grupos podem visualizar
+                        'can_create'    => true,
+                        'can_edit'      => true,
+                        'can_delete'    => true,
+                        'can_upload'    => true,
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }else{
+                    DB::table('menu_permission')->insert([
+                        'menu_id'       => $menu->id,
+                        'permission_id' => $group->id,
+                        // 'permission_key'=> $keyBase . '.view',
+                        'can_view'      => false,   // por padrão todos os grupos podem visualizar
+                        'can_create'    => false,
+                        'can_edit'      => false,
+                        'can_delete'    => false,
+                        'can_upload'    => false,
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }
+            }
+        }
+
     }
 }

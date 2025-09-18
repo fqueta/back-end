@@ -24,9 +24,9 @@ class DatabaseSeeder extends Seeder
             // escolaridadeSeeder::class,
             // estadocivilSeeder::class,
             // ProfissaoSeeder::class,
-            MenuSeeder::class,
-            PermissionSeeder::class,
-            MenuPermissionSeeder::class,
+            MenuSeeder::class, //cadastra menus permissõs e menu_permissions
+            // PermissionSeeder::class,
+            // MenuPermissionSeeder::class,
             DashboardMetricsSeeder::class,
             CategorySeeder::class,
             OptionsTableSeeder::class,
