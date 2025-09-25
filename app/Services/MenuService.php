@@ -15,9 +15,9 @@ class MenuService
     }
     public function getMenuStructure(): array
     {
-        $menus = Menu::whereNull('parent_id')->with('children')->get();
+        $menus = Menu::whereNull('parent_id')->where('active', 'y')->with('children')->get();
 
-        return $menus->map(function ($menu) {
+        return $menus->sortBy('order')->map(function ($menu) {
             return $this->mapMenu($menu);
         })->toArray();
     }
@@ -33,8 +33,8 @@ class MenuService
             'can_view' => $this->generatePermission($menu),
         ];
 
-        if ($menu->children->isNotEmpty()) {
-            $data['items'] = $menu->children->map(function ($child) {
+        if ($menu->children->isNotEmpty() && $menu->children->where('active', 'y')->isNotEmpty()) {
+            $data['items'] = $menu->children->where('active', 'y')->sortBy('order')->map(function ($child) {
                 return $this->mapMenu($child);
             })->toArray();
         }

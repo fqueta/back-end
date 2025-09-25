@@ -14,6 +14,8 @@ return new class extends Migration
             $table->string('url')->nullable();
             $table->string('icon')->nullable();
             $table->json('items')->nullable();
+            $table->enum('active', ['y', 'n'])->default('y');
+            $table->integer('order')->default(0);
             $table->foreignId('parent_id')->nullable()->constrained('menus')->onDelete('cascade');
             $table->timestamps();
         });

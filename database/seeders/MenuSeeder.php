@@ -18,6 +18,7 @@ class MenuSeeder extends Seeder
             'title' => 'Dashboard',
             'url'   => '/',
             'icon'  => 'Home',
+            'order' => 1,
         ]);
 
         // Clientes
@@ -25,6 +26,7 @@ class MenuSeeder extends Seeder
             'title' => 'Clientes',
             'url'   => '/clients',
             'icon'  => 'Users',
+            'order' => 2,
         ]);
 
         // Objetos do Serviço
@@ -32,6 +34,7 @@ class MenuSeeder extends Seeder
             'title' => 'Aeronaves',
             'url'   => '/aircraft',
             'icon'  => 'Plane',
+            'order' => 3,
         ]);
         // Menu::create([
         //     'title' => 'Objetos do Serviço',
@@ -46,24 +49,28 @@ class MenuSeeder extends Seeder
             'title' => 'Catálogo',
             'url'   => null,
             'icon'  => 'Package',
+            'order' => 4,
         ]);
 
         Menu::create([
             'title' => 'Produtos',
             'url'   => '/products',
             'parent_id' => $catalogo->id,
+            'order' => 1,
         ]);
 
         Menu::create([
             'title' => 'Serviços',
             'url'   => '/services',
             'parent_id' => $catalogo->id,
+            'order' => 2,
         ]);
 
         Menu::create([
             'title' => 'Categorias',
             'url'   => '/categories',
             'parent_id' => $catalogo->id,
+            'order' => 3,
         ]);
 
         // Orçamentos
@@ -78,6 +85,7 @@ class MenuSeeder extends Seeder
             'title' => 'Propostas',
             'url'   => '/service-orders',
             'icon'  => 'ClipboardList',
+            'order' => 4,
         ]);
 
         // ----------------------------
@@ -87,24 +95,28 @@ class MenuSeeder extends Seeder
             'title' => 'Financeiro',
             'url'   => null,
             'icon'  => 'DollarSign',
+            'order' => 5,
         ]);
 
         // Menu::create([
         //     'title' => 'Pagamentos',
         //     'url'   => '/payments',
         //     'parent_id' => $financeiro->id,
+        //     'order' => 1,
         // ]);
 
         // Menu::create([
         //     'title' => 'Fluxo de Caixa',
         //     'url'   => '/cash-flow',
         //     'parent_id' => $financeiro->id,
+        //     'order' => 2,
         // ]);
 
         Menu::create([
             'title' => 'Contas',
             'url'   => '/financial',
             'parent_id' => $financeiro->id,
+            'order' => 3,
         ]);
 
         // Menu::create([
@@ -117,6 +129,7 @@ class MenuSeeder extends Seeder
             'title' => 'Categorias',
             'url'   => '/financial/categories',
             'parent_id' => $financeiro->id,
+            'order' => 4,
         ]);
         // ----------------------------
         // Relatórios (pai + filhos)
@@ -125,30 +138,35 @@ class MenuSeeder extends Seeder
             'title' => 'Relatórios',
             'url'   => null,
             'icon'  => 'BarChart3',
+            'order' => 6,
         ]);
 
         Menu::create([
             'title' => 'Faturamento',
             'url'   => '/reports/revenue',
             'parent_id' => $relatorios->id,
+            'order' => 1,
         ]);
 
         Menu::create([
             'title' => 'OS por Período',
             'url'   => '/reports/service-orders',
             'parent_id' => $relatorios->id,
+            'order' => 2,
         ]);
 
         Menu::create([
             'title' => 'Produtos Mais Vendidos',
             'url'   => '/reports/top-products',
             'parent_id' => $relatorios->id,
+            'order' => 3,
         ]);
 
         Menu::create([
             'title' => 'Análise Financeira',
             'url'   => '/reports/financial',
             'parent_id' => $relatorios->id,
+            'order' => 4,
         ]);
 
         // ----------------------------
@@ -158,47 +176,55 @@ class MenuSeeder extends Seeder
             'title' => 'Configurações',
             'url'   => null,
             'icon'  => 'Settings',
+            'order' => 7,
         ]);
 
         Menu::create([
             'title' => 'Usuários',
             'url'   => '/settings/users',
             'parent_id' => $configuracoes->id,
+            'order' => 1,
         ]);
 
         Menu::create([
             'title' => 'Perfis de Usuário',
             'url'   => '/settings/user-profiles',
             'parent_id' => $configuracoes->id,
+            'order' => 2,
         ]);
 
         Menu::create([
             'title' => 'Permissões',
             'url'   => '/settings/permissions',
             'parent_id' => $configuracoes->id,
+            'order' => 3,
         ]);
 
         Menu::create([
             'title' => 'Status de OS',
             'url'   => '/settings/os-statuses',
             'parent_id' => $configuracoes->id,
+            'order' => 4,
         ]);
 
         Menu::create([
             'title' => 'Formas de Pagamento',
             'url'   => '/settings/payment-methods',
             'parent_id' => $configuracoes->id,
+            'order' => 5,
         ]);
 
         Menu::create([
             'title' => 'Metricas',
             'url'   => '/settings/metrics',
             'parent_id' => $configuracoes->id,
+            'order' => 6,
         ]);
         Menu::create([
             'title' => 'Sistema',
             'url'   => '/settings/system',
             'parent_id' => $configuracoes->id,
+            'order' => 7,
         ]);
 
         //Cadastrar as permissões iniciais
