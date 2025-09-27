@@ -424,6 +424,7 @@ class MetricasController extends Controller
                         'period' => Carbon::parse($item['data'])->format('Y-m-d'),
                         'proposals' => $item['propostas'] ?? 0,
                         'closed_deals' => $item['ganhos'] ?? 0,
+                        'human_conversations' => $item['conversas_com_humanos'] ?? 0,
                         'campaign_id' => 'crm_aeroclube',
                         'user_id' => $user->id,
                         'meta' => json_encode([
@@ -513,7 +514,7 @@ class MetricasController extends Controller
     }
     /**
      * Importa dados de Landing Page com validação e tratamento de erros aprimorados
-     * 
+     *
      * @param array $payload Dados da requisição webhook
      * @return array Resultado da operação
      */
@@ -528,7 +529,7 @@ class MetricasController extends Controller
                     'data' => $payload
                 ];
             }
-    
+
             if (empty($payload['pagina'])) {
                 return [
                     'success' => false,
@@ -536,11 +537,11 @@ class MetricasController extends Controller
                     'data' => $payload
                 ];
             }
-    
+
             // Processamento da data
             $dataHora = explode('T', $payload['datahora']);
             $period = $dataHora[0] ?? null;
-            
+
             if (!$period || !$this->isValidDate($period)) {
                 return [
                     'success' => false,
@@ -548,27 +549,27 @@ class MetricasController extends Controller
                     'data' => $payload
                 ];
             }
-    
+
             $lp = trim($payload['pagina']);
             $user = auth()->user();
-    
+
             // Usar transação para garantir consistência
             return DB::transaction(function () use ($period, $lp, $payload, $user) {
                 // Buscar ou criar registro existente
                 $existingMetric = DashboardMetric::where('period', $period)
                     ->where('campaign_id', $lp)
                     ->first();
-    
+
                 $metaData = [
                     'source' => 'lp',
                     'imported_at' => now()->toISOString(),
                     'original_data' => $payload
                 ];
-    
+
                 if ($existingMetric) {
                     // Atualizar registro existente
                     $newVisitors = $existingMetric->visitors + 1;
-                    
+
                     $existingMetric->update([
                         'visitors' => $newVisitors,
                         'proposals' => $payload['propostas'] ?? $existingMetric->proposals,
@@ -578,14 +579,14 @@ class MetricasController extends Controller
                             $metaData
                         ))
                     ]);
-    
+
                     // Salvar meta dados do visitante
                     $metaSaved = Qlib::update_metricmeta(
                         $existingMetric->id,
                         'visitor_' . $newVisitors,
                         json_encode($payload)
                     );
-    
+
                     return [
                         'success' => true,
                         'action' => 'updated',
@@ -605,14 +606,14 @@ class MetricasController extends Controller
                         'user_id' => $user?->id,
                         'meta' => json_encode($metaData)
                     ]);
-    
+
                     // Salvar meta dados do primeiro visitante
                     $metaSaved = Qlib::update_metricmeta(
                         $newMetric->id,
                         'visitor_1',
                         json_encode($payload)
                     );
-    
+
                     return [
                         'success' => true,
                         'action' => 'created',
@@ -623,14 +624,14 @@ class MetricasController extends Controller
                     ];
                 }
             });
-    
+
         } catch (\Exception $e) {
             Log::error('Erro ao importar dados de LP', [
                 'payload' => $payload,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-    
+
             return [
                 'success' => false,
                 'message' => 'Erro interno ao processar dados de LP',
@@ -639,10 +640,10 @@ class MetricasController extends Controller
             ];
         }
     }
-    
+
     /**
      * Valida se uma string é uma data válida no formato Y-m-d
-     * 
+     *
      * @param string $date
      * @return bool
      */
