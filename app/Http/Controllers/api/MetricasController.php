@@ -11,8 +11,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Env;
+use DateTime;
 
 class MetricasController extends Controller
 {
@@ -21,10 +23,10 @@ class MetricasController extends Controller
     public $sec;
     protected $token_api_aeroclube;
     protected $url_api_aeroclube;
-    public function __construct(PermissionService $permissionService)
+    public function __construct()
     {
         $this->routeName = request()->route()->getName();
-        $this->permissionService = $permissionService;
+        $this->permissionService = new PermissionService();
         $this->sec = request()->segment(3);
         $this->token_api_aeroclube = Qlib::qoption('token_api_aeroclube') ?? env('TOKEN_API_AEROCLOUBE','');
         $this->url_api_aeroclube = Qlib::qoption('url_api_aeroclube') ?? env('URL_API_AEROCLOUBE','');
@@ -491,6 +493,163 @@ class MetricasController extends Controller
             return response()->json(['error' => 'Acesso negado'], 403);
         }
         $ret['aeroclube'] = $this->importFromAeroclube($request);
+    }
+    /**
+     * Processar webhooks de métricas
+     *
+     * @param string|null $endp2
+     * @param array $payload
+     * @param array $headers
+     * @return array
+     */
+    public function processWebhook(?string $endp2, array $payload, array $headers): array
+    {
+        switch ($endp2) {
+            case 'lp':
+                return $this->importLp($payload);
+            default:
+                return ['message' => 'Webhook não reconhecido'];
+        }
+    }
+    /**
+     * Importa dados de Landing Page com validação e tratamento de erros aprimorados
+     * 
+     * @param array $payload Dados da requisição webhook
+     * @return array Resultado da operação
+     */
+    private function importLp(array $payload): array
+    {
+        try {
+            // Validação dos dados obrigatórios
+            if (empty($payload['datahora'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Campo datahora é obrigatório',
+                    'data' => $payload
+                ];
+            }
+    
+            if (empty($payload['pagina'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Campo pagina é obrigatório',
+                    'data' => $payload
+                ];
+            }
+    
+            // Processamento da data
+            $dataHora = explode('T', $payload['datahora']);
+            $period = $dataHora[0] ?? null;
+            
+            if (!$period || !$this->isValidDate($period)) {
+                return [
+                    'success' => false,
+                    'message' => 'Formato de data inválido',
+                    'data' => $payload
+                ];
+            }
+    
+            $lp = trim($payload['pagina']);
+            $user = auth()->user();
+    
+            // Usar transação para garantir consistência
+            return DB::transaction(function () use ($period, $lp, $payload, $user) {
+                // Buscar ou criar registro existente
+                $existingMetric = DashboardMetric::where('period', $period)
+                    ->where('campaign_id', $lp)
+                    ->first();
+    
+                $metaData = [
+                    'source' => 'lp',
+                    'imported_at' => now()->toISOString(),
+                    'original_data' => $payload
+                ];
+    
+                if ($existingMetric) {
+                    // Atualizar registro existente
+                    $newVisitors = $existingMetric->visitors + 1;
+                    
+                    $existingMetric->update([
+                        'visitors' => $newVisitors,
+                        'proposals' => $payload['propostas'] ?? $existingMetric->proposals,
+                        'closed_deals' => $payload['ganhos'] ?? $existingMetric->closed_deals,
+                        'meta' => json_encode(array_merge(
+                            json_decode($existingMetric->meta ?? '{}', true),
+                            $metaData
+                        ))
+                    ]);
+    
+                    // Salvar meta dados do visitante
+                    $metaSaved = Qlib::update_metricmeta(
+                        $existingMetric->id,
+                        'visitor_' . $newVisitors,
+                        json_encode($payload)
+                    );
+    
+                    return [
+                        'success' => true,
+                        'action' => 'updated',
+                        'saved' => $existingMetric->fresh(),
+                        'meta' => $metaSaved,
+                        'message' => 'Visitante adicionado à LP existente',
+                        'data' => $payload
+                    ];
+                } else {
+                    // Criar novo registro
+                    $newMetric = DashboardMetric::create([
+                        'period' => $period,
+                        'proposals' => $payload['propostas'] ?? 0,
+                        'closed_deals' => $payload['ganhos'] ?? 0,
+                        'campaign_id' => $lp,
+                        'visitors' => 1,
+                        'user_id' => $user?->id,
+                        'meta' => json_encode($metaData)
+                    ]);
+    
+                    // Salvar meta dados do primeiro visitante
+                    $metaSaved = Qlib::update_metricmeta(
+                        $newMetric->id,
+                        'visitor_1',
+                        json_encode($payload)
+                    );
+    
+                    return [
+                        'success' => true,
+                        'action' => 'created',
+                        'saved' => $newMetric,
+                        'meta' => $metaSaved,
+                        'message' => 'Nova métrica de LP criada',
+                        'data' => $payload
+                    ];
+                }
+            });
+    
+        } catch (\Exception $e) {
+            Log::error('Erro ao importar dados de LP', [
+                'payload' => $payload,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            return [
+                'success' => false,
+                'message' => 'Erro interno ao processar dados de LP',
+                'error' => $e->getMessage(),
+                'data' => $payload
+            ];
+        }
+    }
+    
+    /**
+     * Valida se uma string é uma data válida no formato Y-m-d
+     * 
+     * @param string $date
+     * @return bool
+     */
+    private function isValidDate(string $date): bool
+    {
+        $d = DateTime::createFromFormat('Y-m-d', $date);
+        return $d && $d->format('Y-m-d') === $date;
     }
 }
 

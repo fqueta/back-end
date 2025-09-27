@@ -1407,7 +1407,7 @@ class Qlib
     /**
      * Metodo para pegar os meta users
      */
-    static function get_usermeta($user_id,$meta_key=null,$string=null)
+    static function get_usermeta($user_id,$meta_key=null,$string=true)
     {
         $ret = false;
         $tab = 'usermeta';
@@ -1425,6 +1425,81 @@ class Qlib
         }
         return $ret;
     }
+    /**
+     * Metodo para atualizar ou inserir meta dados de métricas
+     * @param string $metric_id ID da métrica
+     * @param string $meta_key Chave do meta campo
+     * @param string $meta_value Valor do meta campo
+     * @return boolean
+     */
+    static function update_metricmeta($metric_id,$meta_key=null,$meta_value=null)
+    {
+        $ret = false;
+        $tab = 'metricmeta';
+        if($metric_id&&$meta_key&&$meta_value){
+            $verf = self::totalReg($tab,"WHERE metric_id='$metric_id' AND meta_key='$meta_key'");
+            if($verf){
+                $ret=DB::table($tab)->where('metric_id',$metric_id)->where('meta_key',$meta_key)->update([
+                    'meta_value'=>$meta_value,
+                    'updated_at'=>self::dataBanco(),
+                ]);
+            }else{
+                $ret=DB::table($tab)->insert([
+                    'metric_id'=>$metric_id,
+                    'meta_value'=>$meta_value,
+                    'meta_key'=>$meta_key,
+                    'created_at'=>self::dataBanco(),
+                ]);
+            }
+        }
+        return $ret;
+    }
+
+    /**
+     * Metodo para deletar meta dados de métricas
+     * @param string $metric_id ID da métrica
+     * @param string $meta_key Chave do meta campo
+     * @return boolean
+     */
+    static function delete_metricmeta($metric_id,$meta_key=null)
+    {
+        $ret = false;
+        $tab = 'metricmeta';
+        if($metric_id&&$meta_key){
+            $verf = self::totalReg($tab,"WHERE metric_id='$metric_id' AND meta_key='$meta_key'");
+            if($verf){
+                $ret=DB::table($tab)->where('metric_id',$metric_id)->where('meta_key',$meta_key)->delete();
+            }
+        }
+        return $ret;
+    }
+
+    /**
+     * Metodo para pegar os meta dados de métricas
+     * @param string $metric_id ID da métrica
+     * @param string $meta_key Chave do meta campo (opcional)
+     * @param boolean $string Se deve retornar como string ou array
+     * @return mixed
+     */
+    static function get_metricmeta($metric_id,$meta_key=null,$string=true)
+    {
+        $ret = false;
+        $tab = 'metricmeta';
+        if($metric_id){
+            if($meta_key){
+                $d = DB::table($tab)->where('metric_id',$metric_id)->where('meta_key',$meta_key)->get();
+                if($d->count()){
+                    if($string){
+                        $ret = $d[0]->meta_value;
+                    }else{
+                        $ret = [$d[0]->meta_value];
+                    }
+                }
+            }
+        }
+        return $ret;
+    }
+
     /**
      * Metodo para formatar os dados das bando de dados Post
      */

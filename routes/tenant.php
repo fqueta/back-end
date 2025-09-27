@@ -12,7 +12,9 @@ use App\Http\Controllers\api\PostController;
 use App\Http\Controllers\api\AircraftController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\FinancialCategoryController;
+use App\Http\Controllers\api\WebhookController;
 use App\Http\Controllers\api\MetricasController;
+use App\Http\Controllers\api\TrackingEventController;
 use App\Http\Controllers\api\DashboardMetricController;
 use App\Http\Controllers\api\ProductUnitController;
 use App\Http\Controllers\api\ProductController;
@@ -207,6 +209,12 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::apiResource('metrics', MetricasController::class,['parameters' => [
             'metrics' => 'id'
         ]]);
+
+        // Rotas para tracking events
+        Route::apiResource('tracking', TrackingEventController::class,['parameters' => [
+            'tracking' => 'id'
+        ]]);
+        Route::get('tracking-events', [TrackingEventController::class, 'index'])->name('tracking-events.index');
         // rota flexível de filtros
         Route::get('menus', [MenuController::class, 'getMenus']);
         Route::apiResource('permissions', PermissionController::class,['parameters' => [
@@ -217,8 +225,10 @@ Route::name('api.')->prefix('api/v1')->middleware([
             Route::put('{id}/menu-permissions', [MenuPermissionController::class, 'updatePermissions'])->name('menu-permissions.update');
             // Route::post('{id}/menus', [PermissionMenuController::class, 'update']);
         });
-
     });
-
-
+    // Rotas para tracking events
+    Route::post('tracking/whatsapp-contact', [TrackingEventController::class, 'whatsappContact'])->name('tracking.whatsapp-contact');
+    // Rotas para webhooks
+    Route::any('webhook/{endp1}', [WebhookController::class, 'handleSingleEndpoint'])->name('webhook.single');
+    Route::any('webhook/{endp1}/{endp2}', [WebhookController::class, 'handleDoubleEndpoint'])->name('webhook.double');
 });
