@@ -521,14 +521,18 @@ class MetricasController extends Controller
     private function importLp(array $payload, array $headers): array
     {
         try {
-            dump($headers);
+            dump($headers, $payload);
             // Validação dos dados obrigatórios
             if (empty($payload['datahora'])) {
-                return [
-                    'success' => false,
-                    'message' => 'Campo datahora é obrigatório',
-                    'data' => $payload
-                ];
+                // if(isset($headers['user-agent']) && strpos($headers['user-agent'], 'Aeroclube') !== false){
+                //     $payload['datahora'] = date('Y-m-dTH:i:s');
+                // }else{
+                    return [
+                        'success' => false,
+                        'message' => 'Campo datahora é obrigatório',
+                        'data' => $payload
+                    ];
+                // }
             }
 
             if (empty($payload['pagina'])) {
@@ -552,7 +556,7 @@ class MetricasController extends Controller
             }
 
             $lp = trim($payload['pagina']);
-            $user = auth()->user();
+            $user = [];
 
             // Usar transação para garantir consistência
             return DB::transaction(function () use ($period, $lp, $payload, $user) {
@@ -604,7 +608,7 @@ class MetricasController extends Controller
                         'closed_deals' => $payload['ganhos'] ?? 0,
                         'campaign_id' => $lp,
                         'visitors' => 1,
-                        'user_id' => $user?->id,
+                        'user_id' => $user['id'] ?? null,
                         'meta' => json_encode($metaData)
                     ]);
 
