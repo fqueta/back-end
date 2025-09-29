@@ -507,7 +507,7 @@ class MetricasController extends Controller
     {
         switch ($endp2) {
             case 'lp':
-                return $this->importLp($payload);
+                return $this->importLp($payload, $headers);
             default:
                 return ['message' => 'Webhook não reconhecido'];
         }
@@ -518,10 +518,10 @@ class MetricasController extends Controller
      * @param array $payload Dados da requisição webhook
      * @return array Resultado da operação
      */
-    private function importLp(array $payload): array
+    private function importLp(array $payload, array $headers): array
     {
         try {
-            dd($payload);
+            dump($headers);
             // Validação dos dados obrigatórios
             if (empty($payload['datahora'])) {
                 return [
