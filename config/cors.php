@@ -33,7 +33,14 @@ return [
     | Exemplo: ['http://localhost:3000', 'https://meusite.com']
     |
     */
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        '*',
+        'https://api-interajai.maisaqui.com.br',
+        'http://localhost:3000',
+        'http://localhost:8000',
+        'https://maisaqui.com.br',
+        'https://*.maisaqui.com.br'
+    ],
 
     /*
     |--------------------------------------------------------------------------
