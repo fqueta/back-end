@@ -521,7 +521,6 @@ class MetricasController extends Controller
     private function importLp(array $payload, array $headers): array
     {
         try {
-            dump($headers, $payload);
             // Validação dos dados obrigatórios
             if (empty($payload['datahora'])) {
                 // if(isset($headers['user-agent']) && strpos($headers['user-agent'], 'Aeroclube') !== false){

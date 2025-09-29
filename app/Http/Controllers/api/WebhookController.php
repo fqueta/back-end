@@ -120,7 +120,7 @@ class WebhookController extends Controller
     {
         $payload = $request->all();
         $headers = $request->headers->all();
-
+        dd($request->all());
         // Lógica específica baseada nos endpoints
         switch ($endp1) {
             case 'payment':
