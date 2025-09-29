@@ -58,6 +58,7 @@ class UserController extends Controller
         $order = $request->input('order', 'desc');
         //listar usuarios com permissões dele pra cima
         $permission_id = $request->user()->permission_id;
+        // dd($permission_id);
         $query = User::query()->where('permission_id','>=',$permission_id)->orderBy($order_by,$order);
 
         // Não exibir registros marcados como deletados ou excluídos
@@ -94,7 +95,7 @@ class UserController extends Controller
             }
             return $user;
         });
-        // dd($users);
+        // dd($users->toArray());
         return response()->json($users);
     }
 
