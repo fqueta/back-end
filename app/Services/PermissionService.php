@@ -39,6 +39,7 @@ class PermissionService
     public function get_id_menu_by_url($rm){
         $url = $this->get_url_by_route($rm);
         $menu_exist = Menu::where('url',$url)->first();
+        // dd($menu_exist);
         if($menu_exist){
             return $menu_exist->id;
         }else{
@@ -112,6 +113,32 @@ class PermissionService
         }
         if($name=='api.options.index' || $name == 'api.options.update' || $name == 'api.options.show' || $name == 'api.options.store' || $name == 'api.options.destroy' || $name == 'api.options.all'){
             $url = '/settings/system';
+        }
+        /**
+         * @params string 'api.financial.categories.index | api.financial.categories.update | api.financial.categories.show | api.financial.categories.store | api.financial.categories.destroy'
+         */
+        if($name=='api.financial.categories.index' || $name == 'api.financial.categories.update' || $name == 'api.financial.categories.show' || $name == 'api.financial.categories.store' || $name == 'api.financial.categories.destroy'){
+            $url = '/financial/categories';
+        }
+        // Contas a receber
+        if($name=='api.financial.accounts-receivable.index' || $name == 'api.financial.accounts-receivable.update' || $name == 'api.financial.accounts-receivable.show' || $name == 'api.financial.accounts-receivable.store' || $name == 'api.financial.accounts-receivable.destroy' || $name == 'api.financial.accounts-receivable.pay' || $name == 'api.financial.accounts-receivable.receive' || $name == 'api.financial.accounts-receivable.cancel' || $name == 'api.financial.accounts-payable.pay'){
+            $url = '/financial';
+        }
+        // Contas a pagar
+        if($name=='api.financial.accounts-payable.index' || $name == 'api.financial.accounts-payable.update' || $name == 'api.financial.accounts-payable.show' || $name == 'api.financial.accounts-payable.store' || $name == 'api.financial.accounts-payable.destroy'){
+            $url = '/financial';
+        }
+        // Resumo financeiro (overview)
+        if($name=='api.financial.overview'){
+            $url = '/financial';
+        }
+        // Funnels (funis de atendimento)
+        if($name=='api.funnels.index' || $name == 'api.funnels.update' || $name == 'api.funnels.show' || $name == 'api.funnels.store' || $name == 'api.funnels.destroy' || $name == 'api.funnels.toggle-active'){
+            $url = '/funnels';
+        }
+        // Stages (etapas dos funis)
+        if($name=='api.stages.index' || $name == 'api.stages.update' || $name == 'api.stages.show' || $name == 'api.stages.store' || $name == 'api.stages.destroy' || $name == 'api.stages.toggle-active' || $name == 'api.stages.reorder'){
+            $url = '/stages';
         }
         return $url;
     }

@@ -8,6 +8,11 @@ use App\Models\ServiceOrderItem;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\Client;
+use App\Models\Aircraft;
+use App\Http\Controllers\api\AircraftController;
+use App\Models\Funnel;
+use App\Models\Stage;
 use App\Services\PermissionService;
 use App\Services\Qlib;
 use Illuminate\Http\Request;
@@ -53,9 +58,14 @@ class ServiceOrderController extends Controller
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
+        if ($request->input('funnel_id') || $request->has('funnelId')) {
+            $funnel_id = $request->input('funnel_id') ?: $request->funnelId;
+            $query->where('funnel_id', $funnel_id);
+        }
 
-        if ($request->has('priority')) {
-            $query->where('priority', $request->priority);
+        if ($request->has('stage_id') || $request->has('stageId')) {
+            $stage = $request->has('stage_id') ? $request->stage_id : $request->stageId;
+            $query->where('stage_id', $stage);
         }
 
         if ($request->has('assigned_to')) {
@@ -133,10 +143,49 @@ class ServiceOrderController extends Controller
 
         try {
             DB::beginTransaction();
+
+            $clientId = $request->client_id;
+            $aircraftId = $request->object_id;
+            // Verificar se local=workflow e aircraft_registration não está vazio
+            if ($request->local === 'workflow') {
+                // dd($request->all());
+
+                // Ação 1: Verificar e salvar dados de cliente usando campos contact_*
+                if ($request->has('contact_name') || $request->has('contact_email') || $request->has('contact_phone')) {
+                    $clientId = $this->handleClientData($request);
+                }
+
+                // Ação 2: Verificar e salvar aeronave usando modelo Aircraft
+                if ($request->has('aircraft_registration')) {
+                    $aircraftId = $this->handleAircraftData($request, $clientId);
+                }
+
+                // Atualizar os dados da requisição com os IDs obtidos
+                $request->merge([
+                    'client_id' => $clientId,
+                    'object_id' => $aircraftId,
+                    'object_type' => 'aircraft'
+                ]);
+            }
+
             // Gerar token único
             $request->merge(['token' => Qlib::token()]);
-            // Create service order
-            $serviceOrder = ServiceOrder::create($request->only([
+
+            // Mapear campos de funnel e stage
+            $additionalData = [];
+            if ($request->has('funnelId')) {
+                $additionalData['funnel_id'] = $request->funnelId;
+            }
+            if ($request->has('stageId')) {
+                $additionalData['stage_id'] = $request->stageId;
+            }
+            //verifica se não tiver o responsavel assigned_to coloque o id do usuario como sendo o responsavel
+            if (!$request->has('assigned_to')) {
+                $request->merge(['assigned_to' => $user->id]);
+            }
+
+            // Tratar object_id para evitar strings vazias
+            $requestData = $request->only([
                 'doc_type',
                 'title',
                 'token',
@@ -153,7 +202,20 @@ class ServiceOrderController extends Controller
                 'actual_end_date',
                 'notes',
                 'internal_notes'
-            ]));
+            ]);
+
+            // Converter object_id vazio para null ou garantir que seja um inteiro válido
+
+            if (isset($requestData['object_id']) && ($requestData['object_id'] === '' || $requestData['object_id'] === null)) {
+                $requestData['object_id'] = null;
+            } elseif (isset($requestData['object_id'])) {
+                $requestData['object_id'] = (int) $requestData['object_id'];
+            }
+            $ds = array_merge($requestData, $additionalData);
+
+            // Ação 3: Salvar dados da ordem de serviço
+            $serviceOrder = ServiceOrder::create($ds);
+
             // Add products
             if ($request->has('products') && is_array($request->products)) {
                 $this->addItemsToOrder($serviceOrder, $request->products, 'product');
@@ -161,6 +223,11 @@ class ServiceOrderController extends Controller
             // Add services
             if ($request->has('services') && is_array($request->services)) {
                 $this->addItemsToOrder($serviceOrder, $request->services, 'service');
+            }
+
+            // Add services by IDs (service_ids)
+            if ($request->has('service_ids') && is_array($request->service_ids)) {
+                $this->addServicesByIds($serviceOrder, $request->service_ids);
             }
 
             // Calculate total amount
@@ -259,6 +326,16 @@ class ServiceOrderController extends Controller
             //     'internal_notes'
             // ]),$request->all());
             // dd($request->all());
+            if($request->has('stageId')){
+                $request->merge([
+                    'stage_id' => (int) $request->stageId
+                ]);
+            }
+            if($request->has('funnelId')){
+                $request->merge([
+                    'funnel_id' => (int) $request->funnelId
+                ]);
+            }
             $serviceOrder = ServiceOrder::find($id)->update($request->only([
                 'doc_type',
                 'title',
@@ -267,7 +344,9 @@ class ServiceOrderController extends Controller
                 'object_type',
                 'assigned_to',
                 'client_id',
+                'funnel_id',
                 'status',
+                'stage_id',
                 'priority',
                 'estimated_start_date',
                 'estimated_end_date',
@@ -525,7 +604,7 @@ class ServiceOrderController extends Controller
             $rules = [
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'object_id' => 'required|integer|min:1',
+                'object_id' => 'nullable|integer|min:1',
                 'object_type' => 'required|in:aircraft,equipment,vehicle,facility',
                 'aircraft_id' => 'nullable|integer|min:1', // Para compatibilidade
                 'assigned_to' => 'required|exists:users,id',
@@ -551,6 +630,8 @@ class ServiceOrderController extends Controller
                 'services.*.unit_price' => 'required_with:services|numeric|min:0',
                 'services.*.total_price' => 'required_with:services|numeric|min:0',
                 'services.*.notes' => 'nullable|string',
+                'funnelId' => 'nullable|integer|exists:funnels,id',
+                'stageId' => 'nullable|integer|exists:stages,id',
             ];
             $messages = [
                 'title.required' => 'O título é obrigatório',
@@ -594,6 +675,42 @@ class ServiceOrderController extends Controller
     }
 
     /**
+     * Add services to service order by service IDs.
+     */
+    private function addServicesByIds(ServiceOrder $serviceOrder, array $serviceIds)
+    {
+        // Verificar se o service_order_id é válido
+        if (!$serviceOrder->id) {
+            throw new \Exception('Service Order ID is null. Cannot add services.');
+        }
+
+        foreach ($serviceIds as $serviceId) {
+            // Buscar o serviço pelo ID
+            $service = Service::find($serviceId);
+
+            if (!$service) {
+                // Log ou continuar se o serviço não for encontrado
+                continue;
+            }
+
+            // Usar valor padrão de 100.00 já que post_value1 não existe na tabela atual
+            $unitPrice = $service->post_value1 ?? 0;
+            $quantity = 1; // Quantidade padrão
+            $totalPrice = $unitPrice * $quantity;
+
+            ServiceOrderItem::create([
+                'service_order_id' => $serviceOrder->id,
+                'item_type' => 'service',
+                'item_id' => $serviceId,
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'total_price' => $totalPrice,
+                'notes' => null,
+            ]);
+        }
+    }
+
+    /**
      * Transform service order data for API response.
      */
     private function transformServiceOrder($serviceOrder)
@@ -607,6 +724,7 @@ class ServiceOrderController extends Controller
             'object_id' => $serviceOrder['object_id'],
             'object_type' => $serviceOrder['object_type'],
             'aircraft_id' => $serviceOrder['object_type'] === 'aircraft' ? $serviceOrder['object_id'] : null, // Para compatibilidade
+            'aricraft_data' => $serviceOrder['object_type'] === 'aircraft' ? (new AircraftController())->get_data($serviceOrder['object_id']) : null,
             'assigned_to' => $serviceOrder['assigned_to'],
             'assigned_user' => $assigned_user,
             'client_id' => $serviceOrder['client_id'],
@@ -617,6 +735,10 @@ class ServiceOrderController extends Controller
             'actual_start_date' => $serviceOrder['actual_start_date'],
             'actual_end_date' => $serviceOrder['actual_end_date'],
             'notes' => $serviceOrder['notes'],
+            'funnelId' => $serviceOrder['funnel_id'],
+            'stageId' => $serviceOrder['stage_id'],
+            'funnel_id' => $serviceOrder['funnel_id'],
+            'stage_id' => $serviceOrder['stage_id'],
             'internal_notes' => $serviceOrder['internal_notes'],
             'total_amount' => $serviceOrder['total_amount'],
             'created_at' => $serviceOrder['created_at'],
@@ -632,10 +754,20 @@ class ServiceOrderController extends Controller
         if (isset($serviceOrder['client'])) {
             $data['client'] = $serviceOrder['client'];
         }
-
         if (isset($serviceOrder['assigned_user'])) {
             $data['assigned_user'] = $serviceOrder['assigned_user'];
         }
+        //pegar dados da etapa atraves do stage_id
+        if (isset($serviceOrder['stage_id'])) {
+            $data['stage'] = Stage::find($serviceOrder['stage_id'])->toArray();
+        }
+        //pegar dados do funnel atraves do funnel_id
+        if (isset($serviceOrder['funnel_id'])) {
+            $data['funnel'] = Funnel::find($serviceOrder['funnel_id'])->toArray();
+        }
+
+        // dd($data['funnel'], $data);
+
 
         // Transform items
         $data['products'] = [];
@@ -668,5 +800,156 @@ class ServiceOrderController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * Verificar e salvar dados de cliente usando campos contact_*
+     *
+     * @param Request $request
+     * @return int Client ID
+     */
+    private function handleClientData(Request $request): string
+    {
+        $contactEmail = $request->contact_email;
+        $contactName = $request->contact_name;
+        $contactPhone = $request->contact_phone;
+
+        // Verificar se já existe um cliente com este email
+        $existingClient = null;
+        if ($contactEmail) {
+            $existingClient = Client::where('email', $contactEmail)->first();
+        }
+        if ($existingClient) {
+            // Atualizar dados do cliente existente se necessário
+            $updateData = [];
+            if ($contactName && $existingClient->name !== $contactName) {
+                $updateData['name'] = $contactName;
+            }
+            if ($contactPhone) {
+                // Garantir que config seja sempre um array
+                $currentConfig = $existingClient->config;
+                if (is_string($currentConfig)) {
+                    $currentConfig = json_decode($currentConfig, true) ?? [];
+                } elseif (!is_array($currentConfig)) {
+                    $currentConfig = [];
+                }
+
+                // Verificar se precisa atualizar o telefone
+                if (!isset($currentConfig['phone']) || $currentConfig['phone'] !== $contactPhone) {
+                    $currentConfig['celular'] = (string)$contactPhone;
+                    $currentConfig['phone'] = $contactPhone;
+                    $updateData['config'] = $currentConfig;
+                }
+            }
+
+            if (!empty($updateData)) {
+                $existingClient->update($updateData);
+            }
+            // dd($existingClient);
+            return $existingClient->id;
+        }
+        // Criar novo cliente
+        $clientData = [
+            'name' => $contactName ?? 'Cliente',
+            'email' => $contactEmail,
+            'tipo_pessoa' => 'pf', // pessoa física por padrão
+            'status' => 'actived',
+            'ativo' => 's',
+            'permission_id' => Qlib::qoption('permission_client_id') ?? 5, // ID da permissão de cliente
+            'token' => Qlib::token(),
+            'config' => [
+                'celular' => $contactPhone
+            ]
+        ];
+        $client = Client::create($clientData);
+        //se o cliente foi cadastro com sucesso retorna o id do cliente em array
+        $clientId = $client->id;
+        // $client_save = Client::find($clientId);
+        // dd($clientId,$client_save);
+
+        return (string) $clientId;
+    }
+
+    /**
+     * Verificar e salvar aeronave usando modelo Aircraft
+     *
+     * @param Request $request
+     * @param int $clientId
+     * @return int Aircraft ID
+     */
+    private function handleAircraftData(Request $request, string $clientId): string
+    {
+        $aircraftRegistration = $request->aircraft_registration;
+        $description = $request->description;
+        $rabData = $request->rab_data;
+
+        // Verificar se já existe uma aeronave com esta matrícula (post_title)
+        $existingAircraft = Aircraft::where('post_title', $aircraftRegistration)
+                                  ->where('excluido', '!=', 's')
+                                  ->where('deletado', '!=', 's')
+                                  ->first();
+                                  if ($existingAircraft) {
+                                      // Atualizar dados da aeronave existente se necessário
+            $updateData = [];
+            if ($description && $existingAircraft->post_content !== $description) {
+                $updateData['post_content'] = $description;
+            }
+            if ($rabData && $existingAircraft->config !== $rabData) {
+                $updateData['config'] = $rabData;
+            }
+            if ($clientId && $existingAircraft->guid !== $clientId) {
+                $updateData['guid'] = $clientId;
+            }
+
+            if (!empty($updateData)) {
+                $existingAircraft->update($updateData);
+            }
+            // dd($existingAircraft);
+
+            return (int) $existingAircraft['ID'];
+        }
+
+        // Criar nova aeronave usando o AircraftController
+        $aircraftController = new AircraftController();
+
+        // Preparar dados para o AircraftController->store()
+        $aircraftRequest = new Request([
+            'matricula' => $aircraftRegistration,
+            'description' => $description,
+            'config' => $rabData,
+            'client_id' => $clientId
+        ]);
+
+        // Simular o usuário atual para o AircraftController
+        $aircraftRequest->setUserResolver(function () {
+            return request()->user();
+        });
+
+        // Chamar o método store do AircraftController
+        $response = $aircraftController->store($aircraftRequest);
+        $responseData = $response->getData(true);
+
+        if ($response->getStatusCode() === 201 && isset($responseData['data']['id'])) {
+            return (int) $responseData['data']['id'];
+        }
+
+        // Se falhar, criar diretamente no modelo Aircraft
+        $aircraftData = [
+            'post_title' => $aircraftRegistration,
+            'post_content' => $description ?? '',
+            'post_type' => 'aircraft',
+            'post_status' => 'publish',
+            'post_author' => request()->user()->id,
+            'guid' => $clientId,
+            'config' => $rabData,
+            'token' => Qlib::token(),
+            'post_name' => strtolower(str_replace(' ', '-', $aircraftRegistration)),
+            'ativo' => 's',
+            'excluido' => 'n',
+            'deletado' => 'n'
+        ];
+
+        $aircraft = Aircraft::create($aircraftData);
+        return (string) $aircraft->id;
     }
 }

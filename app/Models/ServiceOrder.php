@@ -35,6 +35,8 @@ class ServiceOrder extends Model
         'config',
         'internal_notes',
         'total_amount',
+        'stage_id',
+        'funnel_id',
     ];
 
     /**

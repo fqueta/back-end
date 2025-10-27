@@ -34,12 +34,12 @@ return [
     |
     */
     'allowed_origins' => [
-        '*',
         'https://api-interajai.maisaqui.com.br',
+        'https://api-aeroclube.maisaqui.com.br',
+        'http://maisaqui1.localhost:8080',
         'http://localhost:3000',
         'http://localhost:8000',
-        'https://maisaqui.com.br',
-        'https://*.maisaqui.com.br'
+        'https://maisaqui.com.br'
     ],
 
     /*
@@ -50,7 +50,11 @@ return [
     | Você pode usar regex para liberar origens.
     |
     */
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '/^https?:\/\/.*\.localhost:8000$/',
+        '/^https:\/\/.*\.maisaqui\.com\.br$/',
+        '/^http:\/\/localhost:.*$/',
+    ],
 
     /*
     |--------------------------------------------------------------------------

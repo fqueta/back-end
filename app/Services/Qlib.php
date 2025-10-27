@@ -2856,14 +2856,14 @@ class Qlib
      * @return json
      */
     static function get_category_by_id($id){
-        $category = Category::findOrFail($id);
+        $category = Category::find($id);
         return $category;
     }
     /**
      * retorna os dados de uma unidade de medida
      */
     static function get_unit_by_id($id){
-        $unit = ProductUnit::findOrFail($id);
+        $unit = ProductUnit::find($id);
         $unitMap = (new ProductUnitController())->map_product_unit($unit);
         // dd($unitMap);
         return $unitMap;

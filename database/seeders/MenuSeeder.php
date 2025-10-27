@@ -28,13 +28,43 @@ class MenuSeeder extends Seeder
             'icon'  => 'Users',
             'order' => 2,
         ]);
+        // ----------------------------
+        // Atendimento (pai + filhos)
+        // ----------------------------
+        $attendimento = Menu::create([
+            'title' => 'Atendimento',
+            'url'   => '/attendments',
+            'icon'  => 'Headset',
+            'order' => 3,
+        ]);
+        //workflow
+        Menu::create([
+            'title' => 'Workflow',
+            'url'   => '/attendimento/workflow',
+            'parent_id' => $attendimento->id,
+            'order' => 1,
+        ]);
+        //Etapas
+        Menu::create([
+            'title' => 'Etapas',
+            'url'   => '/attendimento/etapas',
+            'parent_id' => $attendimento->id,
+            'order' => 2,
+        ]);
+        //Funis
+        Menu::create([
+            'title' => 'Funis',
+            'url'   => '/attendimento/funis',
+            'parent_id' => $attendimento->id,
+            'order' => 3,
+        ]);
 
         // Objetos do Serviço
         Menu::create([
             'title' => 'Aeronaves',
             'url'   => '/aircraft',
             'icon'  => 'Plane',
-            'order' => 3,
+            'order' => 4,
         ]);
         // Menu::create([
         //     'title' => 'Objetos do Serviço',
@@ -49,7 +79,7 @@ class MenuSeeder extends Seeder
             'title' => 'Catálogo',
             'url'   => null,
             'icon'  => 'Package',
-            'order' => 4,
+            'order' => 5,
         ]);
 
         Menu::create([
@@ -78,6 +108,7 @@ class MenuSeeder extends Seeder
         //     'title' => 'Orçamentos',
         //     'url'   => '/budgets',
         //     'icon'  => 'FileText',
+        //     'order' => 1,
         // ]);
 
         // Ordens de Serviço
@@ -85,7 +116,7 @@ class MenuSeeder extends Seeder
             'title' => 'Propostas',
             'url'   => '/service-orders',
             'icon'  => 'ClipboardList',
-            'order' => 4,
+            'order' => 6,
         ]);
 
         // ----------------------------
@@ -95,7 +126,7 @@ class MenuSeeder extends Seeder
             'title' => 'Financeiro',
             'url'   => null,
             'icon'  => 'DollarSign',
-            'order' => 5,
+            'order' => 6,
         ]);
 
         // Menu::create([
@@ -123,6 +154,7 @@ class MenuSeeder extends Seeder
         //     'title' => 'Contas a Pagar',
         //     'url'   => '/financial/accounts-payable',
         //     'parent_id' => $financeiro->id,
+        //     'order' => 4,
         // ]);
 
         Menu::create([
@@ -138,7 +170,7 @@ class MenuSeeder extends Seeder
             'title' => 'Relatórios',
             'url'   => null,
             'icon'  => 'BarChart3',
-            'order' => 6,
+            'order' => 7,
         ]);
 
         Menu::create([
@@ -176,7 +208,7 @@ class MenuSeeder extends Seeder
             'title' => 'Configurações',
             'url'   => null,
             'icon'  => 'Settings',
-            'order' => 7,
+            'order' => 8,
         ]);
 
         Menu::create([

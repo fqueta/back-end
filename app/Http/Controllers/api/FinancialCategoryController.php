@@ -21,10 +21,10 @@ class FinancialCategoryController extends Controller
     public $routeName;
     public $sec;
 
-    public function __construct(PermissionService $permissionService)
+    public function __construct()
     {
         $this->routeName = request()->route()->getName();
-        $this->permissionService = $permissionService;
+        $this->permissionService = new PermissionService();
         $this->sec = request()->segment(3);
     }
 
@@ -56,7 +56,6 @@ class FinancialCategoryController extends Controller
         $query->where(function($q) {
             $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
         });
-
         // Filtros opcionais
         if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->input('name') . '%');
@@ -70,6 +69,16 @@ class FinancialCategoryController extends Controller
         if ($request->filled('parent_id')) {
             $query->where('parent_id', $request->input('parent_id'));
         }
+        //debug SQL: string crua, bindings e SQL com bindings interpolados
+        // dd([
+        //     'sql' => $query->toSql(),
+        //     'bindings' => $query->getBindings(),
+        //     'sql_with_bindings' => \Illuminate\Support\Str::replaceArray(
+        //         '?',
+        //         array_map(function($b){ return is_numeric($b) ? $b : "'".addslashes((string)$b)."'"; }, $query->getBindings()),
+        //         $query->toSql()
+        //     ),
+        // ]);
 
         $categories = $query->paginate($perPage);
 
@@ -77,7 +86,6 @@ class FinancialCategoryController extends Controller
         $categories->getCollection()->transform(function ($category) {
             return $this->transformCategory($category);
         });
-
         return response()->json($categories);
     }
 
@@ -129,23 +137,16 @@ class FinancialCategoryController extends Controller
         }
 
         $validated = $validator->validated();
-        
-        // Mapear campos do frontend para o banco
-        $categoryData = [
-            'name'        => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'parent_id'   => $validated['parent_id'] ?? null,
-            'active'      => $validated['isActive'] ?? true,
-            'entidade'    => 'financeiro', // Sempre financeiro
-            'token'       => Qlib::token(),
-            'config'      => json_encode([
-                'color' => $validated['color'] ?? '#3B82F6',
-                'type'  => $validated['type'] ?? 'expense'
-            ])
-        ];
+
+        // Mapear campos usando o método centralizado
+        $categoryData = $this->mapRequestToModel($validated);
+
+        // Adicionar campos específicos para criação
+        $categoryData['entidade'] = 'financeiro'; // Sempre financeiro
+        $categoryData['token'] = Qlib::token();
 
         $category = Category::create($categoryData);
-        
+
         return response()->json([
             'data'    => $this->transformCategory($category),
             'message' => 'Categoria financeira criada com sucesso',
@@ -208,40 +209,11 @@ class FinancialCategoryController extends Controller
         }
 
         $validated = $validator->validated();
-        
-        // Preparar dados para atualização
-        $updateData = [];
-        
-        if (isset($validated['name'])) {
-            $updateData['name'] = $validated['name'];
-        }
-        if (isset($validated['description'])) {
-            $updateData['description'] = $validated['description'];
-        }
-        if (isset($validated['parent_id'])) {
-            $updateData['parent_id'] = $validated['parent_id'];
-        }
-        if (isset($validated['isActive'])) {
-            $updateData['active'] = $validated['isActive'];
-        }
-        
-        // Atualizar config se color ou type foram fornecidos
-        if (isset($validated['color']) || isset($validated['type'])) {
-            $currentConfig = json_decode($category->config ?? '{}', true);
-            
-            if (isset($validated['color'])) {
-                $currentConfig['color'] = $validated['color'];
-            }
-            if (isset($validated['type'])) {
-                $currentConfig['type'] = $validated['type'];
-            }
-            
-            $updateData['config'] = json_encode($currentConfig);
-        }
 
+        // Mapear campos usando o método centralizado
+        $updateData = $this->mapRequestToModel($validated, $category);
         $category->update($updateData);
         $category->refresh();
-
         return response()->json([
             'data'    => $this->transformCategory($category),
             'message' => 'Categoria financeira atualizada com sucesso',
@@ -390,13 +362,69 @@ class FinancialCategoryController extends Controller
     }
 
     /**
+     * Mapear campos da requisição para campos do modelo
+     * Converte: name=name, description=description, isActive=active,
+     * color=config[color], type=config[type], parent_id=parent_id
+     */
+    private function mapRequestToModel(array $requestData, $existingCategory = null)
+    {
+        $mappedData = [];
+
+        // Mapeamento direto de campos
+        if (isset($requestData['name'])) {
+            $mappedData['name'] = $requestData['name'];
+        }
+
+        if (isset($requestData['description'])) {
+            $mappedData['description'] = $requestData['description'];
+        }
+
+        if (isset($requestData['isActive'])) {
+            $mappedData['active'] = $requestData['isActive'];
+        }
+
+        if (isset($requestData['parent_id'])) {
+            $mappedData['parent_id'] = $requestData['parent_id'];
+        }
+
+        // Mapeamento para config (JSON)
+        $configUpdated = false;
+        $currentConfig = [];
+
+        if ($existingCategory) {
+            $currentConfig = json_decode($existingCategory->config ?? '{}', true);
+        }
+
+        if (isset($requestData['color'])) {
+            $currentConfig['color'] = $requestData['color'];
+            $configUpdated = true;
+        }
+
+        if (isset($requestData['type'])) {
+            $currentConfig['type'] = $requestData['type'];
+            $configUpdated = true;
+        }
+
+        if ($configUpdated || !$existingCategory) {
+            // Para novos registros, definir valores padrão se não fornecidos
+            if (!$existingCategory) {
+                $currentConfig['color'] = $currentConfig['color'] ?? '#3B82F6';
+                $currentConfig['type'] = $currentConfig['type'] ?? 'expense';
+            }
+            $mappedData['config'] = json_encode($currentConfig);
+        }
+
+        return $mappedData;
+    }
+
+    /**
      * Transformar categoria para o formato esperado pelo frontend
      * Mapeia: color=config.color, type=config.type, isActive=active
      */
     private function transformCategory($category)
     {
         $config = json_decode($category->config ?? '{}', true);
-        
+
         return [
             'id'          => $category->id,
             'name'        => $category->name,

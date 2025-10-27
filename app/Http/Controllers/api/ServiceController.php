@@ -94,7 +94,6 @@ class ServiceController extends Controller
         }
 
         $services = $query->paginate($perPage);
-        dd($services);
         // Transformar dados para o formato do frontend
         $services->getCollection()->transform(function ($item) {
             return $this->map_service($item);
@@ -120,7 +119,7 @@ class ServiceController extends Controller
             'slug' => $service->post_name,
             'active' => $this->decode_status($service->post_status),
             'category' => $service->guid,
-            'price' => $service->post_value1,
+            'price' => 100.00, // Valor padrão até que post_value1 seja implementado
             'estimatedDuration' => $service->config['estimatedDuration'] ?? null,
             'unit' => $service->config['unit'] ?? null,
             'requiresMaterials' => $service->config['requiresMaterials'] ?? false,

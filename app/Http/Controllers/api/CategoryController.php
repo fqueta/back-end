@@ -15,10 +15,10 @@ class CategoryController extends Controller
     public $routeName;
     public $sec;
 
-    public function __construct(PermissionService $permissionService)
+    public function __construct()
     {
         $this->routeName = request()->route()->getName();
-        $this->permissionService = $permissionService;
+        $this->permissionService = new PermissionService();
         $this->sec = request()->segment(3);
     }
     /**

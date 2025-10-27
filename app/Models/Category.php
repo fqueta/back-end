@@ -20,10 +20,12 @@ class Category extends Model
         'reg_excluido',
         'deletado',
         'reg_deletado',
+        'config',
     ];
 
     protected $casts = [
         'active' => 'boolean',
+        'config' => 'array',
     ];
 
     /**

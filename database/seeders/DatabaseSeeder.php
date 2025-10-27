@@ -29,8 +29,11 @@ class DatabaseSeeder extends Seeder
             // MenuPermissionSeeder::class,
             DashboardMetricsSeeder::class,
             CategorySeeder::class,
+            FinancialCategoriesSeeder::class,
             OptionsTableSeeder::class,
             ProductUnitsSeeder::class,
+            FunnelStageSeeder::class,
+            AircraftAttendanceSeeder::class,
             // QoptionSeeder::class,
         ]);
     }

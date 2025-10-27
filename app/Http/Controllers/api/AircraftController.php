@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Aircraft;
+use App\Models\Client;
 use App\Services\PermissionService;
 use App\Services\Qlib;
 use Illuminate\Http\Request;
@@ -49,56 +50,92 @@ class AircraftController extends Controller
      */
     public function index(Request $request)
     {
-        $user = request()->user();
-        if (!$user) {
-            return response()->json(['error' => 'Acesso negado'], 403);
-        }
-        if (!$this->permissionService->isHasPermission('view')) {
-            return response()->json(['error' => 'Acesso negado'], 403);
-        }
+        // $this->authorize('ler', Aircraft::class);
+        $dataForm = $this->sanitizeInput($request->all());
+        $page = $dataForm['page'] ?? 1;
+        $limit = $dataForm['limit'] ?? 10;
+        $order = $dataForm['order'] ?? 'desc';
+        $orderBy = $dataForm['orderBy'] ?? 'ID';
+        $search = $dataForm['search'] ?? false;
+        $searchFields = $dataForm['searchFields'] ?? ['post_title'];
+        $where = $dataForm['where'] ?? false;
+        $whereRaw = $dataForm['whereRaw'] ?? false;
+        $include = $dataForm['include'] ?? '';
+        $arr_ret = [];
 
-        $perPage = $request->input('per_page', 10);
-        $order_by = $request->input('order_by', 'created_at');
-        $order = $request->input('order', 'desc');
+        $query = Aircraft::query();
 
-        $query = Aircraft::query()->orderBy($order_by, $order);
-
-        // Filtros opcionais
-        if ($request->filled('post_title')) {
-            $query->where('post_title', 'like', '%' . $request->input('post_title') . '%');
-        }
-        if ($request->filled('post_status')) {
-            $query->where('post_status', $request->input('post_status'));
-        }
-        if ($request->filled('post_author')) {
-            $query->where('post_author', $request->input('post_author'));
+        // Verificar se deve incluir o cliente
+        if ($include === 'client') {
+            $query->with('client');
         }
 
-        $aircraft = $query->paginate($perPage);
+        if ($search && is_array($searchFields) && count($searchFields)) {
+            $query->where(function ($q) use ($search, $searchFields) {
+                foreach ($searchFields as $field) {
+                    $q->orWhere($field, 'like', "%{$search}%");
+                }
+            });
+        }
 
-        // Transformar dados para o formato do frontend
-        $aircraft->getCollection()->transform(function ($item) {
-            return $this->map_aircraft($item);
+        if ($where && is_array($where)) {
+            foreach ($where as $condition) {
+                if (isset($condition['field'], $condition['operator'], $condition['value'])) {
+                    $query->where($condition['field'], $condition['operator'], $condition['value']);
+                }
+            }
+        }
+
+        if ($whereRaw) {
+            $query->whereRaw($whereRaw);
+        }
+
+        $total = $query->count();
+        $aircrafts = $query->orderBy($orderBy, $order)
+            ->skip(($page - 1) * $limit)
+            ->take($limit)
+            ->get();
+
+        $arr_ret['data'] = $aircrafts->map(function ($aircraft) use ($include) {
+            return $this->map_aircraft($aircraft, $include);
         });
 
-        return response()->json($aircraft);
+        $arr_ret['current_page'] = (int) $page;
+        $arr_ret['last_page'] = (int) ceil($total / $limit);
+        $arr_ret['per_page'] = (int) $limit;
+        $arr_ret['total'] = (int) $total;
+
+        return response()->json($arr_ret);
     }
-    public function map_aircraft($item){
+    /**
+     * Metodo para localizar uma aeronave pelo id e retornar os dados formatados
+     */
+    public function get_data($id, $include = ''){
+        $aircraft = Aircraft::find($id);
+        if(!$aircraft){
+            return response()->json(['error' => 'Aeronave não encontrada'], 404);
+        }
+        return $this->map_aircraft($aircraft, $include);
+    }
+    public function map_aircraft($item, $include = ''){
         if(isset($item->config) && !empty($item->config)){
-            $arr_config = json_decode($item->config, true);
+            // Verificar se config já é um array ou se é uma string JSON
+            if(is_string($item->config)){
+                $arr_config = json_decode($item->config, true);
+            } else if(is_array($item->config)){
+                $arr_config = $item->config;
+            } else {
+                $arr_config = [];
+            }
         }else{
             $arr_config = [];
         }
         if(is_array($item)){
             $item = (object)$item;
         }
-        // if(!isset($item->ID)){
-        //     $item->ID = 0;
-        // }
-        return [
+
+        $aircraft_data = [
             'id' => $item->ID,
-            'client' => Qlib::get_client_by_id($item->guid),
-            'client_name' => Qlib::get_client_by_id($item->guid)->name,
             'client_id' => $item->guid,
             'config' => $item->config, // Manter como JSON string
             'description' => $item->post_content,
@@ -109,6 +146,39 @@ class AircraftController extends Controller
             'active' => $this->decode_status($item->post_status),
         ];
 
+        // Incluir dados do cliente se solicitado
+        if ($include === 'client' && isset($item->client)) {
+            $client = $item->client;
+            $client_config = [];
+
+            if (isset($client->config) && !empty($client->config)) {
+                // Verificar se config já é um array ou se é uma string JSON
+                if(is_string($client->config)){
+                    $client_config = json_decode($client->config, true);
+                } else if(is_array($client->config)){
+                    $client_config = $client->config;
+                } else {
+                    $client_config = [];
+                }
+            }
+
+            $aircraft_data['client'] = [
+                'id' => $client->id,
+                'tipo_pessoa' => $client->tipo_pessoa,
+                'email' => $client->email,
+                'name' => $client->name,
+                'cpf' => $client->cpf,
+                'cnpj' => $client->cnpj,
+                'razao' => $client->razao,
+                'config' => $client_config,
+                'genero' => $client->genero,
+                'ativo' => $client->ativo,
+                'created_at' => $client->created_at,
+                'updated_at' => $client->updated_at,
+            ];
+        }
+
+        return $aircraft_data;
     }
 
     /**

@@ -28,6 +28,8 @@ return new class extends Migration
             $table->date('actual_end_date')->nullable(); // Data real de fim
             $table->text('notes')->nullable(); // Notas públicas
             $table->text('internal_notes')->nullable(); // Notas internas
+            $table->integer('stage_id')->default(0); // ID do estágio atual
+            $table->integer('funnel_id')->default(0); // ID do funil atual
             $table->string('token')->nullable();
             $table->json('config')->nullable(); //Para registro de meta campos
             $table->decimal('total_amount', 10, 2)->default(0); // Valor total da ordem

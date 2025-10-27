@@ -113,6 +113,14 @@ class Aircraft extends Model
     }
 
     /**
+     * Relacionamento com o cliente (Client)
+     */
+    public function client()
+    {
+        return $this->belongsTo(Client::class, 'guid', 'id');
+    }
+
+    /**
      * Relacionamento com o aircraft pai
      */
     public function parent()

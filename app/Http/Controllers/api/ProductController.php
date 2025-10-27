@@ -87,8 +87,8 @@ class ProductController extends Controller
         if ($request->filled('category')) {
             $query->where('guid', $request->input('category'));
         }
-
         $products = $query->paginate($perPage);
+        // dd($products);
         // Transformar dados para o formato do frontend
         $products->getCollection()->transform(function ($item) {
             // dd($item);
@@ -108,6 +108,7 @@ class ProductController extends Controller
         if(is_array($product)){
             $product = (object)$product;
         }
+        // dd($product);
         return [
             'id' => $product->ID,
             'name' => $product->post_title,

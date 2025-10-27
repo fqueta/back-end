@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use Illuminate\Http\Request;
-use App\Http\Controllers\admin\DashboardController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\ClientController;
 use App\Http\Controllers\api\MenuPermissionController;
@@ -13,11 +11,6 @@ use App\Http\Controllers\api\PostController;
 use App\Http\Controllers\api\AircraftController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\FinancialCategoryController;
-use App\Http\Controllers\api\FinancialOverviewController;
-use App\Http\Controllers\api\FunnelController;
-use App\Http\Controllers\api\StageController;
-use App\Http\Controllers\api\WorkflowController;
-use App\Http\Controllers\FinancialAccountController;
 use App\Http\Controllers\api\WebhookController;
 use App\Http\Controllers\api\MetricasController;
 use App\Http\Controllers\api\TrackingEventController;
@@ -27,13 +20,13 @@ use App\Http\Controllers\api\ProductController;
 use App\Http\Controllers\api\ServiceController;
 use App\Http\Controllers\api\ServiceUnitController;
 use App\Http\Controllers\api\ServiceOrderController;
+use App\Http\Controllers\api\AircraftAttendanceController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\TesteController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use App\Http\Controllers\Api\PermissionMenuController;
@@ -41,47 +34,22 @@ use App\Http\Controllers\api\UserController;
 
 /*
 |--------------------------------------------------------------------------
-| Tenant Routes
+| API Routes
 |--------------------------------------------------------------------------
 |
-| Here you can register the tenant routes for your application.
-| These routes are loaded by the TenantRouteServiceProvider.
-|
-| Feel free to customize them however you want. Good luck!
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group. Enjoy building your API!
 |
 */
 
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-])->group(function () {
-    // Route::get('/', function () {
-    //     return Inertia::render('welcome');
-    // })->name('home');
-    Route::get('/teste', [ TesteController::class,'index'])->name('teste.index');
-    // // Route::get('/', function () {
-    //     //     return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
-    //     // });
-    // // Route::middleware(['auth', 'verified'])->group(function () {
-    // //     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    // //     // Route::get('profile', function () {
-    // //     //     return Inertia::render('profile');
-    // //     // })->name('profile');
-    // // });
-
-    // require __DIR__.'/settings.php';
-    // require __DIR__.'/auth.php';
-
-});
-
-Route::name('api.')->prefix('api/v1')->middleware([
+Route::name('api.')->prefix('v1')->middleware([
     'api',
     // 'auth:sanctum',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
-    Route::post('/login',[AuthController::class,'login'])->name('api.login');
+    Route::post('/login',[AuthController::class,'login'])->name('login');
 
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
@@ -94,8 +62,12 @@ Route::name('api.')->prefix('api/v1')->middleware([
     Route::fallback(function () {
         return response()->json(['message' => 'Rota não encontrada'], 404);
     });
+    
+    // Rota de teste para API
+    Route::get('/teste', [TesteController::class,'index'])->name('teste.index');
+    
 
-
+    
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('user',[UserController::class,'perfil'])->name('perfil.user');
         Route::get('user/can',[UserController::class,'can_access'])->name('perfil.can');
@@ -128,12 +100,12 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::delete('posts/{id}/force', [PostController::class, 'forceDelete'])->name('posts.forceDelete');
 
         // Rotas para aircraft
-        Route::get('aircraft/trash', [AircraftController::class, 'trash'])->name('aircraft.trash');
-        Route::put('aircraft/{id}/restore', [AircraftController::class, 'restore'])->name('aircraft.restore');
-        Route::delete('aircraft/{id}/force', [AircraftController::class, 'forceDelete'])->name('aircraft.forceDelete');
         Route::apiResource('aircraft', AircraftController::class,['parameters' => [
             'aircraft' => 'id'
         ]]);
+        Route::get('aircraft/trash', [AircraftController::class, 'trash'])->name('aircraft.trash');
+        Route::put('aircraft/{id}/restore', [AircraftController::class, 'restore'])->name('aircraft.restore');
+        Route::delete('aircraft/{id}/force', [AircraftController::class, 'forceDelete'])->name('aircraft.forceDelete');
 
         // Rotas para categories
         Route::apiResource('categories', CategoryController::class,['parameters' => [
@@ -162,94 +134,6 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::put('financial/categories/{id}/restore', [FinancialCategoryController::class, 'restore'])->name('financial.categories.restore');
         Route::delete('financial/categories/{id}/force', [FinancialCategoryController::class, 'forceDelete'])->name('financial.categories.forceDelete');
 
-        // Rotas para financial/accounts (contas financeiras unificadas)
-        Route::apiResource('financial/accounts', FinancialAccountController::class,[
-            'parameters' => ['accounts' => 'id']
-        ])->names([
-            'index' => 'financial.accounts.index',
-            'store' => 'financial.accounts.store',
-            'show' => 'financial.accounts.show',
-            'update' => 'financial.accounts.update',
-            'destroy' => 'financial.accounts.destroy'
-        ]);
-        Route::get('financial/accounts/trash', [FinancialAccountController::class, 'trash'])->name('financial.accounts.trash');
-        Route::put('financial/accounts/{id}/restore', [FinancialAccountController::class, 'restore'])->name('financial.accounts.restore');
-        Route::delete('financial/accounts/{id}/force', [FinancialAccountController::class, 'forceDelete'])->name('financial.accounts.forceDelete');
-
-        // Rotas de compatibilidade para accounts-payable (contas a pagar)
-        Route::get('financial/accounts-payable', function(Request $request) {
-            $request->merge(['type' => 'payable']);
-            return app(FinancialAccountController::class)->index($request);
-        })->name('financial.accounts-payable.index');
-        Route::post('financial/accounts-payable', function(Request $request) {
-            $request->merge(['type' => 'payable']);
-            return app(FinancialAccountController::class)->store($request);
-        })->name('financial.accounts-payable.store');
-        Route::get('financial/accounts-payable/{id}', function(Request $request, $id) {
-            return app(FinancialAccountController::class)->show($request, $id);
-        })->name('financial.accounts-payable.show');
-        Route::put('financial/accounts-payable/{id}', function(Request $request, $id) {
-            return app(FinancialAccountController::class)->update($request, $id);
-        })->name('financial.accounts-payable.update');
-        Route::delete('financial/accounts-payable/{id}', function(Request $request, $id) {
-            return app(FinancialAccountController::class)->destroy($request, $id);
-        })->name('financial.accounts-payable.destroy');
-        Route::patch('financial/accounts-payable/{id}/pay', function(Request $request, $id) {
-            return app(FinancialAccountController::class)->pay($request, $id);
-        })->name('financial.accounts-payable.pay');
-
-        // Rotas de compatibilidade para accounts-receivable (contas a receber)
-        Route::get('financial/accounts-receivable', function(Request $request) {
-            $request->merge(['type' => 'receivable']);
-            return app(FinancialAccountController::class)->index($request);
-        })->name('financial.accounts-receivable.index');
-        Route::post('financial/accounts-receivable', function(Request $request) {
-            $request->merge(['type' => 'receivable']);
-            return app(FinancialAccountController::class)->store($request);
-        })->name('financial.accounts-receivable.store');
-        Route::get('financial/accounts-receivable/{id}', function(Request $request, $id) {
-            return app(FinancialAccountController::class)->show($request, $id);
-        })->name('financial.accounts-receivable.show');
-        Route::put('financial/accounts-receivable/{id}', function(Request $request, $id) {
-            return app(FinancialAccountController::class)->update($request, $id);
-        })->name('financial.accounts-receivable.update');
-        Route::delete('financial/accounts-receivable/{id}', function(Request $request, $id) {
-            return app(FinancialAccountController::class)->destroy($request, $id);
-        })->name('financial.accounts-receivable.destroy');
-        Route::patch('financial/accounts-receivable/{id}/receive', function(Request $request, $id) {
-            return app(FinancialAccountController::class)->receive($request, $id);
-        })->name('financial.accounts-receivable.receive');
-        Route::patch('financial/accounts-receivable/{id}/cancel', function(Request $request, $id) {
-            return app(FinancialAccountController::class)->cancel($request, $id);
-        })->name('financial.accounts-receivable.cancel');
-
-        // Resumo financeiro (dados mocados)
-        Route::get('financial/overview', [FinancialOverviewController::class, 'index'])->name('financial.overview');
-
-        // Rotas para funnels (funis de atendimento)
-        Route::apiResource('funnels', FunnelController::class, ['parameters' => [
-            'funnels' => 'id'
-        ]]);
-        Route::patch('funnels/{id}/toggle-active', [FunnelController::class, 'toggleActive'])->name('funnels.toggle-active');
-        Route::get('funnels/{id}/stages', [FunnelController::class, 'stages'])->name('funnels.stages');
-
-        // Rotas para stages (etapas dos funis)
-        Route::apiResource('stages', StageController::class, ['parameters' => [
-            'stages' => 'id'
-        ]]);
-        Route::patch('stages/{id}/toggle-active', [StageController::class, 'toggleActive'])->name('stages.toggle-active');
-        Route::post('stages/reorder', [StageController::class, 'reorder'])->name('stages.reorder');
-
-        // Rotas para workflows (fluxos de trabalho)
-        Route::apiResource('workflows', WorkflowController::class, ['parameters' => [
-            'workflows' => 'id'
-        ]]);
-        Route::patch('workflows/{id}/toggle-active', [WorkflowController::class, 'toggleActive'])->name('workflows.toggle-active');
-    });
-
-
-
-    Route::middleware('auth:sanctum')->group(function () {
         // Rotas para product-units
         Route::apiResource('product-units', ProductUnitController::class,['parameters' => [
             'product-units' => 'id'
@@ -290,6 +174,16 @@ Route::name('api.')->prefix('api/v1')->middleware([
          Route::put('service-orders/{id}/restore', [ServiceOrderController::class, 'restore'])->name('service-orders.restore');
          Route::put('service-orders/{id}/status ', [ServiceOrderController::class, 'updateStatus'])->name('service-orders.update-status');
          Route::delete('service-orders/{id}/force', [ServiceOrderController::class, 'forceDelete'])->name('service-orders.forceDelete');
+
+         // Rotas para aircraft-attendances
+         Route::apiResource('aircraft-attendances', AircraftAttendanceController::class,['parameters' => [
+             'aircraft-attendances' => 'id'
+         ]]);
+         Route::get('aircraft-attendances/stats', [AircraftAttendanceController::class, 'stats'])->name('aircraft-attendances.stats');
+         Route::put('aircraft-attendances/{id}/complete', [AircraftAttendanceController::class, 'complete'])->name('aircraft-attendances.complete');
+         Route::put('aircraft-attendances/{id}/cancel', [AircraftAttendanceController::class, 'cancel'])->name('aircraft-attendances.cancel');
+         Route::put('aircraft-attendances/{id}/start', [AircraftAttendanceController::class, 'start'])->name('aircraft-attendances.start');
+         Route::put('aircraft-attendances/{id}/hold', [AircraftAttendanceController::class, 'hold'])->name('aircraft-attendances.hold');
 
          // Rotas para dashboard-metrics
         Route::apiResource('dashboard-metrics', MetricasController::class,['parameters' => [
