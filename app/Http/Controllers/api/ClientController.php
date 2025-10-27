@@ -280,7 +280,8 @@ class ClientController extends Controller
 
         // Validação extra de CPF
         if (!empty($request->cpf) && !Qlib::validaCpf($request->cpf)) {
-            return response()->json(                'exec'=>false,
+            return response()->json([
+                'exec'=>false,
                 'message' => 'Erro de validação',
                 'errors'  => ['cpf' => ['CPF inválido']],
             ], 422);
