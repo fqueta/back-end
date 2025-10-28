@@ -53,7 +53,16 @@ class ClientController extends Controller
         $query->where(function($q) {
             $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
         });
-
+        //adiciona filtro search por email, cpf ou cnpj ou nome
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('email', 'like', '%' . $search . '%')
+                  ->orWhere('cpf', 'like', '%' . $search . '%')
+                  ->orWhere('cnpj', 'like', '%' . $search . '%')
+                  ->orWhere('name', 'like', '%' . $search . '%');
+            });
+        }
         if ($request->filled('email')) {
             $query->where('email', 'like', '%' . $request->input('email') . '%');
         }
@@ -200,6 +209,10 @@ class ClientController extends Controller
         }
 
         $client = Client::create($validated);
+        // converter o client->config para array
+        if (is_string($client->config)) {
+            $client->config = json_decode($client->config, true) ?? [];
+        }
         $ret['data'] = $client;
         $ret['message'] = 'Cliente criado com sucesso';
         $ret['status'] = 201;
