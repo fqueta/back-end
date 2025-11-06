@@ -238,7 +238,7 @@ Route::name('api.')->prefix('api/v1')->middleware([
             'stages' => 'id'
         ]]);
         Route::patch('stages/{id}/toggle-active', [StageController::class, 'toggleActive'])->name('stages.toggle-active');
-        Route::post('stages/reorder', [StageController::class, 'reorder'])->name('stages.reorder');
+        Route::post('funnels/{id}/stages/reorder', [FunnelController::class, 'reorderStages'])->name('funnels.stages.reorder');
 
         // Rotas para workflows (fluxos de trabalho)
         Route::apiResource('workflows', WorkflowController::class, ['parameters' => [
