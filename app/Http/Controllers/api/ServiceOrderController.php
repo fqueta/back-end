@@ -52,7 +52,7 @@ class ServiceOrderController extends Controller
             'aircraft',
             'client',
             'assignedUser'
-        ]);
+        ])->where('excluido', 'n');
 
         // Apply filters
         if ($request->has('status')) {
@@ -143,6 +143,27 @@ class ServiceOrderController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // Normalize common camelCase inputs to expected snake_case fields
+            // - aircraftId -> object_id (as 'aircraft')
+            // - clientId -> client_id
+            // - observations -> notes
+            if ($request->has('aircraftId') && !$request->has('object_id')) {
+                $request->merge([
+                    'object_id' => (int) $request->aircraftId,
+                    'object_type' => 'aircraft'
+                ]);
+            }
+            if ($request->has('clientId') && !$request->has('client_id')) {
+                $request->merge([
+                    'client_id' => $request->clientId
+                ]);
+            }
+            if ($request->has('observations') && !$request->has('notes')) {
+                $request->merge([
+                    'notes' => $request->observations
+                ]);
+            }
 
             $clientId = $request->client_id;
             $aircraftId = $request->object_id;
@@ -328,15 +349,19 @@ class ServiceOrderController extends Controller
             // dd($request->all());
             if($request->has('stageId')){
                 $request->merge([
-                    'stage_id' => (int) $request->stageId
+                    // Map stageId to stage_id; allow null to be omitted later
+                    'stage_id' => $request->stageId !== null ? (int) $request->stageId : null
                 ]);
             }
             if($request->has('funnelId')){
                 $request->merge([
-                    'funnel_id' => (int) $request->funnelId
+                    // Map funnelId to funnel_id; allow null to be omitted later
+                    'funnel_id' => $request->funnelId !== null ? (int) $request->funnelId : null
                 ]);
             }
-            $serviceOrder = ServiceOrder::find($id)->update($request->only([
+
+            // Build update data and drop nulls for stage_id/funnel_id to avoid DB constraint issues
+            $updateData = $request->only([
                 'doc_type',
                 'title',
                 'description',
@@ -354,14 +379,42 @@ class ServiceOrderController extends Controller
                 'actual_end_date',
                 'notes',
                 'internal_notes'
-            ]));
+            ]);
 
-            // dd($serviceOrder);
-            // Recarregar o modelo do banco de dados
-            $serviceOrder = ServiceOrder::find($id);
-            if (!$serviceOrder) {
-                throw new \Exception('Service Order not found after update');
+            // If funnel is provided and stage is not provided or null, set stage to first stage of the funnel
+            /**
+             * Auto-select first stage when funnel changes without explicit stage.
+             * - Detects provided funnel_id.
+             * - If stage_id not provided or null, fills with first ordered stage from funnel.
+             */
+            $stageIdProvided = $request->has('stageId') || $request->has('stage_id');
+            $stageIdValue = $request->has('stage_id') ? $request->stage_id : ($request->stageId ?? null);
+            if ((array_key_exists('funnel_id', $updateData) && $updateData['funnel_id'] !== null)
+                && (!$stageIdProvided || $stageIdValue === null)) {
+                $firstStageId = \App\Models\Stage::where('funnel_id', $updateData['funnel_id'])
+                    ->orderBy('order', 'asc')
+                    ->value('id');
+                if ($firstStageId) {
+                    $updateData['stage_id'] = $firstStageId;
+                }
             }
+
+            if (array_key_exists('stage_id', $updateData) && $updateData['stage_id'] === null) {
+                unset($updateData['stage_id']);
+            }
+            if (array_key_exists('funnel_id', $updateData) && $updateData['funnel_id'] === null) {
+                unset($updateData['funnel_id']);
+            }
+
+            // Perform update on the model instance to keep it loaded
+            /**
+             * Update service order with null-safe stage/funnel handling.
+             * - Maps optional stageId/funnelId.
+             * - Omits null stage_id/funnel_id to respect NOT NULL constraints.
+             * - Auto-fills stage_id from funnel when not provided.
+             */
+            $serviceOrder = ServiceOrder::findOrFail($id);
+            $serviceOrder->update($updateData);
 
             // Update items if provided
             if ($request->has('products') || $request->has('services')) {
@@ -412,7 +465,7 @@ class ServiceOrderController extends Controller
     /**
      * Remove the specified service order (soft delete).
      */
-    public function destroy(Request $request, ServiceOrder $serviceOrder): JsonResponse
+    public function destroy($id): JsonResponse
     {
         // Check permissions
         $user = request()->user();
@@ -422,14 +475,41 @@ class ServiceOrderController extends Controller
         if (!$this->permissionService->isHasPermission('delete')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-
         try {
-            $serviceOrder->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Ordem de serviço movida para lixeira com sucesso'
+            //Ao excluir preciso que atualize o campo excluido=s e reg_exluido para ['excluido_por'=>user_id,'data'=>now]
+            ServiceOrder::where('id', $id)->update([
+                'excluido' => 's',
+                'deletado' => 's',
+                'reg_excluido' => json_encode([
+                    'excluido_por' => $user->id,
+                    'data' => now()
+                    ])
             ]);
+            $serviceOrder = ServiceOrder::find($id);
+
+            // dd($serviceOrder);
+
+            // $serviceOrder->delete();
+            //se excluido com sucesso retorna sucesso
+            if($serviceOrder->excluido == 's'){
+                return response()->json([
+                    'exec' => true,
+                    'success' => true,
+                    'message' => 'Ordem de serviço movida para lixeira com sucesso'
+                ]);
+            }else{
+                return response()->json([
+                    'exec' => false,
+                    'success' => false,
+                    'message' => 'Erro ao mover ordem de serviço para lixeira'
+                ]);
+            }
+
+            // return response()->json([
+
+            //     'success' => true,
+            //     'message' => 'Ordem de serviço movida para lixeira com sucesso'
+            // ]);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Erro ao mover ordem de serviço para lixeira: ' . $e->getMessage()
@@ -651,6 +731,11 @@ class ServiceOrderController extends Controller
 
     /**
      * Add items (products or services) to service order.
+     *
+     * Supports camelCase and snake_case payloads:
+     * - product_id or productId
+     * - service_id or serviceId
+     * Derives unit_price/total_price when missing using model defaults.
      */
     private function addItemsToOrder(ServiceOrder $serviceOrder, array $items, string $itemType)
     {
@@ -660,15 +745,45 @@ class ServiceOrderController extends Controller
         }
 
         foreach ($items as $item) {
-            $itemId = $itemType === 'product' ? $item['product_id'] : $item['service_id'];
+            // Normalize item IDs based on type, accepting snake_case or camelCase
+            $itemId = null;
+            if ($itemType === 'product') {
+                $itemId = $item['product_id'] ?? $item['productId'] ?? null;
+            } else {
+                $itemId = $item['service_id'] ?? $item['serviceId'] ?? null;
+            }
+            if (!$itemId) {
+                // Skip items without an identifiable id
+                continue;
+            }
+
+            $quantity = isset($item['quantity']) ? (int) $item['quantity'] : 1;
+
+            // Determine unit price when not provided
+            if (isset($item['unit_price'])) {
+                $unitPrice = (float) $item['unit_price'];
+            } else {
+                if ($itemType === 'service') {
+                    $service = Service::find($itemId);
+                    $unitPrice = $service->post_value1 ?? 0;
+                } else {
+                    $product = Product::find($itemId);
+                    $unitPrice = $product->post_value1 ?? 0;
+                }
+            }
+
+            // Calculate total price when not provided
+            $totalPrice = isset($item['total_price'])
+                ? (float) $item['total_price']
+                : ($unitPrice * $quantity);
 
             ServiceOrderItem::create([
                 'service_order_id' => $serviceOrder->id,
                 'item_type' => $itemType,
                 'item_id' => $itemId,
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'total_price' => $item['total_price'],
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'total_price' => $totalPrice,
                 'notes' => $item['notes'] ?? null,
             ]);
         }

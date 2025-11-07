@@ -119,7 +119,7 @@ class ServiceController extends Controller
             'slug' => $service->post_name,
             'active' => $this->decode_status($service->post_status),
             'category' => $service->guid,
-            'price' => 100.00, // Valor padrão até que post_value1 seja implementado
+            'price' => $service->post_value1 ?? 0.00, // Valor padrão até que post_value1 seja implementado
             'estimatedDuration' => $service->config['estimatedDuration'] ?? null,
             'unit' => $service->config['unit'] ?? null,
             'requiresMaterials' => $service->config['requiresMaterials'] ?? false,
@@ -345,9 +345,9 @@ class ServiceController extends Controller
 
         // Garantir que o post_type permaneça como service
         $mappedData['post_type'] = $this->post_type;
-
+        // dd($request->all(), $mappedData);
         $serviceToUpdate->update($mappedData);
-
+        // dd($serviceToUpdate);
         // Preparar resposta no formato do frontend
         $responseData = $this->map_service($serviceToUpdate);
 

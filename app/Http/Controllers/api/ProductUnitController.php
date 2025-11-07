@@ -97,16 +97,33 @@ class ProductUnitController extends Controller
 
         return response()->json($productUnits);
     }
+    /**
+     * Map a ProductUnit to frontend format in a null-safe way.
+     * Accepts Eloquent model or array; returns safe defaults when input is null.
+     */
     public function map_product_unit($productUnit)
     {
-        // dd($productUnit);
+        if (!$productUnit) {
+            return [
+                'id' => null,
+                'label' => null,
+                'value' => null,
+                'active' => false,
+                'created_at' => null,
+                'updated_at' => null,
+            ];
+        }
+        if (is_array($productUnit)) {
+            $productUnit = (object) $productUnit;
+        }
+
         return [
-            'id' => $productUnit->ID,
-            'label' => $productUnit->post_title,
-            'value' => $productUnit->post_name,
-            'active' => $this->decode_status($productUnit->post_status),
-            'created_at' => $productUnit->created_at,
-            'updated_at' => $productUnit->updated_at,
+            'id' => $productUnit->ID ?? $productUnit->id ?? null,
+            'label' => $productUnit->post_title ?? null,
+            'value' => $productUnit->post_name ?? null,
+            'active' => isset($productUnit->post_status) ? $this->decode_status($productUnit->post_status) : false,
+            'created_at' => $productUnit->created_at ?? null,
+            'updated_at' => $productUnit->updated_at ?? null,
         ];
     }
     /**
