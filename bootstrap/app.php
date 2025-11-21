@@ -17,9 +17,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
-        // Aplicar CORS globalmente para todas as rotas
+        // Aplicar CORS globalmente para todas as rotas da API
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
+
+        // Alias para middlewares customizados
+        $middleware->alias([
+            'tenant.headers' => \App\Http\Middleware\TenantHeadersMiddleware::class,
+            'auth.active'    => \App\Http\Middleware\EnsureActiveUser::class,
         ]);
 
         $middleware->web(append: [

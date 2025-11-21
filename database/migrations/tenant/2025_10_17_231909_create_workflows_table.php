@@ -13,16 +13,7 @@ return new class extends Migration
     {
         Schema::create('workflows', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->foreignId('funnel_id')->constrained('funnels')->onDelete('cascade');
-            $table->boolean('isActive')->default(true);
-            $table->json('settings')->nullable();
             $table->timestamps();
-            
-            // Índices para melhor performance
-            $table->index(['funnel_id', 'isActive']);
-            $table->index('name');
         });
     }
 

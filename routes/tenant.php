@@ -11,12 +11,14 @@ use App\Http\Controllers\api\OptionController;
 use App\Http\Controllers\api\PermissionController;
 use App\Http\Controllers\api\PostController;
 use App\Http\Controllers\api\AircraftController;
+use App\Http\Controllers\api\AeronaveController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\FinancialCategoryController;
 use App\Http\Controllers\api\FinancialOverviewController;
 use App\Http\Controllers\api\FunnelController;
 use App\Http\Controllers\api\StageController;
 use App\Http\Controllers\api\WorkflowController;
+use App\Http\Controllers\api\ClientAttendanceController;
 use App\Http\Controllers\FinancialAccountController;
 use App\Http\Controllers\api\WebhookController;
 use App\Http\Controllers\api\MetricasController;
@@ -80,6 +82,7 @@ Route::name('api.')->prefix('api/v1')->middleware([
     // 'auth:sanctum',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    'tenant.headers',
 ])->group(function () {
     Route::post('/login',[AuthController::class,'login'])->name('api.login');
 
@@ -96,8 +99,11 @@ Route::name('api.')->prefix('api/v1')->middleware([
     });
 
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum','auth.active'])->group(function () {
         Route::get('user',[UserController::class,'perfil'])->name('perfil.user');
+        // User profile routes (self-service)
+        Route::get('user/profile',[UserController::class,'profile'])->name('user.profile.show');
+        Route::put('user/profile',[UserController::class,'updateProfile'])->name('user.profile.update');
         Route::get('user/can',[UserController::class,'can_access'])->name('perfil.can');
         Route::post('/logout',[AuthController::class,'logout'])->name('logout');
         Route::apiResource('users', UserController::class,['parameters' => [
@@ -106,6 +112,9 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::apiResource('clients', ClientController::class,['parameters' => [
             'clients' => 'id'
         ]]);
+        // Atendimentos do cliente (nested)
+        Route::get('clients/{id}/attendances', [ClientAttendanceController::class, 'index'])->name('clients.attendances.index');
+        Route::post('clients/{id}/attendances', [ClientAttendanceController::class, 'store'])->name('clients.attendances.store');
         Route::get('clients/trash', [ClientController::class, 'trash'])->name('clients.trash');
         Route::put('clients/{id}/restore', [ClientController::class, 'restore'])->name('clients.restore');
         Route::delete('clients/{id}/force', [ClientController::class, 'forceDelete'])->name('clients.forceDelete');
@@ -133,6 +142,13 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::delete('aircraft/{id}/force', [AircraftController::class, 'forceDelete'])->name('aircraft.forceDelete');
         Route::apiResource('aircraft', AircraftController::class,['parameters' => [
             'aircraft' => 'id'
+        ]]);
+
+        // Rotas para aeronaves (CRUD baseado em tabela `aeronaves`)
+        Route::get('aeronaves/trash', [AeronaveController::class, 'trash'])->name('aeronaves.trash');
+        Route::put('aeronaves/{id}/restore', [AeronaveController::class, 'restore'])->name('aeronaves.restore');
+        Route::apiResource('aeronaves', AeronaveController::class, ['parameters' => [
+            'aeronaves' => 'id'
         ]]);
 
         // Rotas para categories
@@ -232,6 +248,9 @@ Route::name('api.')->prefix('api/v1')->middleware([
         ]]);
         Route::patch('funnels/{id}/toggle-active', [FunnelController::class, 'toggleActive'])->name('funnels.toggle-active');
         Route::get('funnels/{id}/stages', [FunnelController::class, 'stages'])->name('funnels.stages');
+        // Reordenar funis com payload de IDs (PUT e POST para compatibilidade)
+        Route::put('funnels/reorder', [FunnelController::class, 'reorder'])->name('funnels.reorder');
+        Route::post('funnels/reorder', [FunnelController::class, 'reorder'])->name('funnels.reorder.post');
 
         // Rotas para stages (etapas dos funis)
         Route::apiResource('stages', StageController::class, ['parameters' => [
@@ -239,6 +258,11 @@ Route::name('api.')->prefix('api/v1')->middleware([
         ]]);
         Route::patch('stages/{id}/toggle-active', [StageController::class, 'toggleActive'])->name('stages.toggle-active');
         Route::post('funnels/{id}/stages/reorder', [FunnelController::class, 'reorderStages'])->name('funnels.stages.reorder');
+        // Alias para permitir reordenação via PUT (compatibilidade com clientes)
+        Route::put('funnels/{id}/stages/reorder', [FunnelController::class, 'reorderStages'])->name('funnels.stages.reorder.put');
+        // Alias para atualização de etapa escopada por funil via PUT/PATCH
+        Route::match(['put', 'patch'], 'funnels/{funnelId}/stages/{id}', [StageController::class, 'update'])
+            ->name('funnels.stages.update');
 
         // Rotas para workflows (fluxos de trabalho)
         Route::apiResource('workflows', WorkflowController::class, ['parameters' => [
@@ -249,7 +273,7 @@ Route::name('api.')->prefix('api/v1')->middleware([
 
 
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum','auth.active'])->group(function () {
         // Rotas para product-units
         Route::apiResource('product-units', ProductUnitController::class,['parameters' => [
             'product-units' => 'id'

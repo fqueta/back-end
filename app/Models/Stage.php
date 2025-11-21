@@ -5,38 +5,33 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Modelo para gerenciar as etapas (stages) dos funis de atendimento
- */
 class Stage extends Model
 {
     /**
-     * Campos que podem ser preenchidos em massa
+     * Mass assignable attributes for Stage.
+     * Allows creating/updating with validated payloads safely.
      */
     protected $fillable = [
         'name',
         'description',
         'color',
+        'order',
+        'settings',
         'funnel_id',
         'isActive',
-        'order',
-        'settings'
     ];
 
     /**
-     * Conversões de tipos para os atributos
+     * Attribute casting rules.
+     * Ensures JSON `settings` is serialized/deserialized and booleans handled.
      */
     protected $casts = [
         'isActive' => 'boolean',
         'settings' => 'array',
-        'order' => 'integer',
-        'funnel_id' => 'integer',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
     ];
 
     /**
-     * Relacionamento: Stage pertence a um Funnel
+     * Relationship: Stage belongs to a Funnel.
      */
     public function funnel(): BelongsTo
     {
@@ -44,39 +39,8 @@ class Stage extends Model
     }
 
     /**
-     * Scope para buscar apenas stages ativos
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('isActive', true);
-    }
-
-    /**
-     * Scope para buscar apenas stages inativos
-     */
-    public function scopeInactive($query)
-    {
-        return $query->where('isActive', false);
-    }
-
-    /**
-     * Scope para ordenar por ordem
-     */
-    public function scopeOrdered($query)
-    {
-        return $query->orderBy('order');
-    }
-
-    /**
-     * Scope para buscar por funil
-     */
-    public function scopeByFunnel($query, $funnelId)
-    {
-        return $query->where('funnel_id', $funnelId);
-    }
-
-    /**
-     * Retorna as configurações padrão para um stage
+     * Default settings structure for a Stage.
+     * Used to merge with provided settings on create/update.
      */
     public static function getDefaultSettings(): array
     {
@@ -86,36 +50,15 @@ class Stage extends Model
             'notifyOnEntry' => false,
             'notifyOnExit' => false,
             'requireApproval' => false,
-            'timeLimit' => null
+            'timeLimit' => null, // in days; null means no limit
         ];
     }
 
     /**
-     * Retorna as configurações mescladas com os padrões
+     * Return settings merged with defaults when reading from the model.
      */
     public function getSettingsWithDefaults(): array
     {
-        $defaultSettings = self::getDefaultSettings();
-        $currentSettings = $this->settings ?? [];
-        
-        return array_merge($defaultSettings, $currentSettings);
-    }
-
-    /**
-     * Verifica se o stage tem limite de tempo
-     */
-    public function hasTimeLimit(): bool
-    {
-        $settings = $this->getSettingsWithDefaults();
-        return !empty($settings['timeLimit']) && $settings['timeLimit'] > 0;
-    }
-
-    /**
-     * Verifica se o stage tem limite máximo de itens
-     */
-    public function hasMaxItems(): bool
-    {
-        $settings = $this->getSettingsWithDefaults();
-        return !empty($settings['maxItems']) && $settings['maxItems'] > 0;
+        return array_merge(self::getDefaultSettings(), $this->settings ?? []);
     }
 }

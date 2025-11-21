@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Model representing a sales/service funnel
- * 
+ *
  * @property int $id
  * @property string $name
  * @property string|null $description
@@ -29,6 +29,7 @@ class Funnel extends Model
         'description',
         'color',
         'isActive',
+        'order',
         'settings',
     ];
 
@@ -39,6 +40,7 @@ class Funnel extends Model
      */
     protected $casts = [
         'isActive' => 'boolean',
+        'order' => 'integer',
         'settings' => 'array',
     ];
 
@@ -59,22 +61,6 @@ class Funnel extends Model
     }
 
     /**
-     * Relacionamento: Funnel tem muitos Stages
-     */
-    public function stages(): HasMany
-    {
-        return $this->hasMany(Stage::class)->orderBy('order');
-    }
-
-    /**
-     * Relacionamento: Stages ativos do funnel
-     */
-    public function activeStages(): HasMany
-    {
-        return $this->hasMany(Stage::class)->where('isActive', true)->orderBy('order');
-    }
-
-    /**
      * Get the default settings structure
      */
     public static function getDefaultSettings(): array
@@ -83,6 +69,7 @@ class Funnel extends Model
             'autoAdvance' => false,
             'notifyOnStageChange' => false,
             'requireApproval' => false,
+            'place' => 'Vendas',
         ];
     }
 
@@ -92,5 +79,14 @@ class Funnel extends Model
     public function getSettingsWithDefaults(): array
     {
         return array_merge(self::getDefaultSettings(), $this->settings ?? []);
+    }
+
+    /**
+     * Relationship: Funnel has many Stages.
+     * Provides access to stages ordered by the `order` field.
+     */
+    public function stages(): HasMany
+    {
+        return $this->hasMany(Stage::class)->orderBy('order');
     }
 }

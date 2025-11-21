@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Stage;
+use App\Models\User;
 use App\Services\PermissionService;
 use App\Services\Qlib;
 use Illuminate\Http\Request;
@@ -29,6 +31,13 @@ class ClientController extends Controller
 
     /**
      * Listar todos os clientes
+     *
+     * Filtros suportados via query params:
+     * - `search`: termo para buscar em `email`, `cpf`, `cnpj`, `name`.
+     * - `email`, `cpf`, `cnpj`: filtros específicos por campo.
+     * - `stage_id` ou `stageId`: filtra clientes pelo estágio atual (busca em JSON `config.stage_id` ou `preferencias.pipeline.stage_id`).
+     * - `funnel_id` ou `funnelId`: filtra clientes pelo funil (derivado via `stage_id` -> `stages.funnel_id`).
+     * - `per_page`, `order_by`, `order`: paginação e ordenação.
      */
     public function index(Request $request)
     {
@@ -72,24 +81,135 @@ class ClientController extends Controller
         if ($request->filled('cnpj')) {
             $query->where('cnpj', 'like', '%' . $request->input('cnpj') . '%');
         }
+        // Filtro por stage (stage_id ou stageId) usando JSON em config/preferencias
+        if ($request->filled('stage_id') || $request->filled('stageId')) {
+            $stageId = (int) ($request->input('stage_id') ?? $request->input('stageId'));
+            $query->where(function($q) use ($stageId) {
+                $q->whereRaw("CAST(JSON_UNQUOTE(JSON_EXTRACT(`config`, '$.stage_id')) AS UNSIGNED) = ?", [$stageId])
+                  ->orWhereRaw("CAST(JSON_UNQUOTE(JSON_EXTRACT(`preferencias`, '$.pipeline.stage_id')) AS UNSIGNED) = ?", [$stageId]);
+            });
+        }
 
+        // Filtro por funil (funnel_id ou funnelId) derivado via stage_id
+        if ($request->filled('funnel_id') || $request->filled('funnelId')) {
+            $funnelId = (int) ($request->input('funnel_id') ?? $request->input('funnelId'));
+            // Obter todos os stage_ids pertencentes ao funil informado
+            $stageIds = \App\Models\Stage::where('funnel_id', $funnelId)->pluck('id')->all();
+            $query->where(function($q) use ($stageIds) {
+                if (empty($stageIds)) {
+                    // Nenhum estágio para este funil: força vazio
+                    $q->whereRaw('1 = 0');
+                } else {
+                    $placeholders = implode(',', array_fill(0, count($stageIds), '?'));
+                    $q->whereRaw("CAST(JSON_UNQUOTE(JSON_EXTRACT(`config`, '$.stage_id')) AS UNSIGNED) IN ($placeholders)", $stageIds)
+                      ->orWhereRaw("CAST(JSON_UNQUOTE(JSON_EXTRACT(`preferencias`, '$.pipeline.stage_id')) AS UNSIGNED) IN ($placeholders)", $stageIds);
+                }
+            });
+        }
+        //quero debugar a query em sql string completa
+        // dd([
+        //     'sql_string' => vsprintf($query->toSql(), $query->getBindings()),
+        //     'bindings' => $query->getBindings(),
+        // ]);
         $clients = $query->paginate($perPage);
 
-        // Converter config para array em cada cliente
+        // Mapear campos para compatibilidade no resultado do index
         $clients->getCollection()->transform(function ($client) {
-            if (is_string($client->config)) {
-                $configArr = json_decode($client->config, true) ?? [];
+            return $this->mapIndexItemOutput($client);
+        });
+
+        return response()->json($clients);
+    }
+
+    /**
+     * Mapeia campos de um item na listagem (index) para compatibilidade com o front-end.
+     *
+     * - Converte config de JSON para array e normaliza valores nulos.
+     * - Adiciona alias em camelCase mantendo os originais em snake_case.
+     * - Normaliza campo de ativo ('s'/'n') para booleano em "active".
+     */
+    private function mapIndexItemOutput($client): array
+    {
+        // Base em array para manipulação
+        $data = is_array($client) ? $client : $client->toArray();
+
+        // Converter config para array e substituir null por string vazia
+        if (isset($data['config'])) {
+            if (is_string($data['config'])) {
+                $configArr = json_decode($data['config'], true) ?? [];
                 array_walk($configArr, function (&$value) {
                     if (is_null($value)) {
                         $value = (string)'';
                     }
                 });
-                $client->config = $configArr;
+                $data['config'] = $configArr;
+            } elseif (is_array($data['config'])) {
+                array_walk($data['config'], function (&$value) {
+                    if (is_null($value)) {
+                        $value = (string)'';
+                    }
+                });
             }
-            return $client;
-        });
+        }
 
-        return response()->json($clients);
+        // Garantir estrutura de preferencias
+        if (!isset($data['preferencias']) || !is_array($data['preferencias'])) {
+            $data['preferencias'] = [];
+        }
+        if (!isset($data['preferencias']['pipeline']) || !is_array($data['preferencias']['pipeline'])) {
+            $data['preferencias']['pipeline'] = [];
+        }
+
+        // Copiar stage_id para preferencias.pipeline a partir de config, se existir
+        if (isset($data['config']) && is_array($data['config']) && isset($data['config']['stage_id'])) {
+            $data['preferencias']['pipeline']['stage_id'] = $data['config']['stage_id'];
+        }
+        // Se preferências.pipeline.stage_id estiver presente mas config.stage_id não, reflete em config
+        if (isset($data['preferencias']['pipeline']['stage_id']) && (!isset($data['config']['stage_id']) || empty($data['config']['stage_id']))) {
+            $data['config']['stage_id'] = $data['preferencias']['pipeline']['stage_id'];
+        }
+        // Derivar funnelId via Stage quando possível
+        if (isset($data['config']['stage_id']) && (!isset($data['config']['funnelId']) || empty($data['config']['funnelId']))) {
+            $stageId = $data['config']['stage_id'];
+            $stage = null;
+            try {
+                $stage = Stage::select(['id','funnel_id'])->find($stageId);
+            } catch (\Exception $e) {
+                $stage = null;
+            }
+            if ($stage && isset($stage->funnel_id)) {
+                $data['config']['funnelId'] = $stage->funnel_id;
+            }
+        }
+
+        // Aliases em camelCase (mantendo originais)
+        $data['createdAt'] = $data['created_at'] ?? null;
+        $data['updatedAt'] = $data['updated_at'] ?? null;
+        $data['permissionId'] = $data['permission_id'] ?? null;
+        $data['tipoPessoa'] = $data['tipo_pessoa'] ?? null;
+
+        // Normalizar ativo para booleano em alias "active"
+        if (array_key_exists('ativo', $data)) {
+            $data['active'] = ($data['ativo'] === 's');
+        }
+
+        // Enriquecer autor_name quando possível
+        if (isset($data['autor']) && !empty($data['autor']) && is_numeric($data['autor'])) {
+            $autorUser = null;
+            try {
+                $autorUser = User::find($data['autor']);
+            } catch (\Exception $e) {
+                $autorUser = null;
+            }
+            if ($autorUser) {
+                $data['autor_name'] = $autorUser->name ?? null;
+            }
+        }
+        // Garantir chaves esperadas mesmo que nulas
+        $data['points'] = $data['points'] ?? null;
+        $data['is_alloyal'] = $data['is_alloyal'] ?? null;
+
+        return $data;
     }
 
     /**
@@ -140,6 +260,28 @@ class ClientController extends Controller
                 ], 422);
             }
         }
+        // verificar se ja existe o celular na lixeira
+        if ($request->filled('celular')) {
+            $existingUser = Client::withoutGlobalScope('client')
+                ->where('celular', $request->celular)
+                ->where(function($q) {
+                    $q->where('deletado', 's')->orWhere('excluido', 's');
+                })
+                ->first();
+
+            if ($existingUser) {
+                return response()->json([
+                    'message' => 'Este cadastro já está em nossa base de dados, verifique na lixeira.',
+                    'errors'  => ['celular' => ['Cadastro com este celular está na lixeira']],
+                ], 422);
+            }
+        }
+        //remover a mascara do celular
+        if ($request->filled('celular')) {
+            $request->merge([
+                'celular' => preg_replace('/\D/', '', $request->celular),
+            ]);
+        }
         // Verificar se o CPF ou CNPJ já existe na lixeira
         if ($request->filled('cpf') || $request->filled('cnpj')) {
             $existingUser = Client::withoutGlobalScope('client')
@@ -171,6 +313,7 @@ class ClientController extends Controller
             'cpf'           => 'nullable|string|max:20|unique:users,cpf',
             'cnpj'          => 'nullable|string|max:20|unique:users,cnpj',
             'email'         => 'nullable|email|unique:users,email',
+            'celular'         => 'nullable|celular|unique:users,celular',
             'password'      => 'nullable|string|min:6',
             'genero'        => ['required', Rule::in(['ni','m','f'])],
             'config'        => 'array',
@@ -322,7 +465,7 @@ class ClientController extends Controller
                 $validated['config'] = json_encode($validated['config']);
             }
         }
-
+        // dd($validated);
         $clientToUpdate->update($validated);
 
         // Converter config para array na resposta

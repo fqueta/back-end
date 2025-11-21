@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Laravel\Sanctum\PersonalAccessToken;
 use function PHPUnit\Framework\isArray;
 
 class UserController extends Controller
@@ -77,6 +78,11 @@ class UserController extends Controller
         }
         if ($request->filled('cnpj')) {
             $query->where('cnpj', 'like', '%' . $request->input('cnpj') . '%');
+        }
+        //**Adicionar filtros extras  */
+        //se existir um campo consultores for true então filtrar todos com permissão maior ou igual a dele
+        if($request->filled('consultores')){
+            $query->where('permission_id','>=',$user->permission_id);
         }
 
         $users = $query->paginate($perPage);
@@ -212,8 +218,8 @@ class UserController extends Controller
     {
         $user = $request->user();
         // dd($user);
-        if(!$user){
-            return response()->json(['error' => 'Acesso negado'], 403);
+        if(!$user || ($user->ativo ?? null) !== 's'){
+            return response()->json(['error' => 'Usuário inativo'], 419);
         }
         return response()->json($user);
     }
@@ -221,10 +227,107 @@ class UserController extends Controller
     {
         $user = $request->user();
         // dd($user);
-        if(!$user){
-            return response()->json(['error' => 'Acesso negado'], 403);
+        if(!$user || ($user->ativo ?? null) !== 's'){
+            return response()->json(['error' => 'Usuário inativo'], 419);
         }
         return response()->json($user);
+    }
+
+    /**
+     * Get logged-in user profile.
+     *
+     * Obtém o perfil do usuário autenticado (self-service).
+     */
+    public function profile(Request $request)
+    {
+        $user = $request->user();
+        if (!$user || ($user->ativo ?? null) !== 's') {
+            return response()->json(['error' => 'Usuário inativo'], 405);
+        }
+        return response()->json($user);
+    }
+
+    /**
+     * Update logged-in user profile.
+     *
+     * Atualiza o perfil do usuário autenticado (nome, e-mail e senha).
+     */
+    public function updateProfile(Request $request)
+    {
+        $authUser = $request->user();
+        if (!$authUser || ($authUser->ativo ?? null) !== 's') {
+            return response()->json(['error' => 'Usuário inativo'], 405);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name'     => 'sometimes|required|string|max:255',
+            'email'    => ['sometimes','required','email', Rule::unique('users','email')->ignore($authUser->id)],
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $data = $validator->validated();
+        if (isset($data['password']) && $data['password']) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
+        }
+
+        $authUser->fill($data);
+        $authUser->save();
+
+        return response()->json($authUser);
+    }
+
+    /**
+     * Valida um token do Sanctum.
+     *
+     * Recebe um token no formato "id|plainText" (padrão do Sanctum) ou apenas
+     * o "plainText". Retorna JSON com { status: "valid" } ou { status: "invalid" }.
+     * Se o usuário do token estiver inativo (ativo != 's' ou status != 'actived'),
+     * o token é revogado e o status retornado será "invalid".
+     */
+    public function validateToken(Request $request, string $token)
+    {
+        // Suporta ambos formatos: "id|token" e apenas "token"
+        $tokenId = null;
+        $plain = $token;
+        if (str_contains($token, '|')) {
+            [$tokenId, $plain] = explode('|', $token, 2);
+        }
+
+        $hashed = hash('sha256', $plain);
+        $pat = null;
+
+        if ($tokenId) {
+            $pat = PersonalAccessToken::find($tokenId);
+            if (!$pat || $pat->token !== $hashed) {
+                return response()->json(['status' => 'invalid']);
+            }
+        } else {
+            $pat = PersonalAccessToken::where('token', $hashed)->first();
+            if (!$pat) {
+                return response()->json(['status' => 'invalid']);
+            }
+        }
+
+        $user = $pat->tokenable;
+
+        $isActive = (($user->ativo ?? null) === 's') || (($user->status ?? null) === 'actived');
+        if (!$isActive) {
+            // Revoga o token do usuário inativo
+            try {
+                $pat->delete();
+            } catch (\Throwable $e) {
+                // opcionalmente registrar log
+            }
+            return response()->json(['status' => 'invalid', 'message' => 'Usuário inativo'], 419);
+        }
+
+        return response()->json(['status' => 'valid']);
     }
 
      /**
@@ -280,9 +383,13 @@ class UserController extends Controller
             'genero'        => ['sometimes', Rule::in(['ni','m','f'])],
             'verificado'    => ['sometimes', Rule::in(['n','s'])],
             'permission_id' => 'nullable|integer',
+            'ativo'         => ['sometimes', Rule::in(['n','s'])],
             'config'        => 'array'
         ]);
-
+        //se ativo = n status = inactived
+        if ($request->ativo == 'n') {
+            $request->merge(['status' => 'inactived']);
+        }
 
         if ($validator->fails()) {
             return response()->json([
@@ -307,7 +414,11 @@ class UserController extends Controller
         $validated = $this->sanitizeInput($validated);
 
         if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
+            if (!empty($validated['password'])) {
+                $validated['password'] = Hash::make($validated['password']);
+            } else {
+                unset($validated['password']);
+            }
         } else {
             unset($validated['password']);
         }
@@ -315,7 +426,7 @@ class UserController extends Controller
         if (isset($validated['config']) && isArray($validated['config'])) {
             $validated['config'] = json_encode($validated['config']);
         }
-
+        // dd($validated);
         $userToUpdate->update($validated);
 
         return response()->json([

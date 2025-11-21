@@ -15,12 +15,12 @@ use App\Http\Controllers\api\WebhookController;
 use App\Http\Controllers\api\MetricasController;
 use App\Http\Controllers\api\TrackingEventController;
 use App\Http\Controllers\api\DashboardMetricController;
+use App\Http\Controllers\api\StageController;
 use App\Http\Controllers\api\ProductUnitController;
 use App\Http\Controllers\api\ProductController;
 use App\Http\Controllers\api\ServiceController;
 use App\Http\Controllers\api\ServiceUnitController;
 use App\Http\Controllers\api\ServiceOrderController;
-use App\Http\Controllers\api\AircraftAttendanceController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -48,8 +48,12 @@ Route::name('api.')->prefix('v1')->middleware([
     // 'auth:sanctum',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    'tenant.headers',
 ])->group(function () {
     Route::post('/login',[AuthController::class,'login'])->name('login');
+    // Validação de token (pública): retorna "valid" ou "invalid"
+    Route::get('user/validate-token/{token}', [UserController::class, 'validateToken'])
+        ->name('user.validate-token');
 
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
@@ -68,7 +72,7 @@ Route::name('api.')->prefix('v1')->middleware([
     
 
     
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum','auth.active'])->group(function () {
         Route::get('user',[UserController::class,'perfil'])->name('perfil.user');
         Route::get('user/can',[UserController::class,'can_access'])->name('perfil.can');
         Route::post('/logout',[AuthController::class,'logout'])->name('logout');
@@ -175,16 +179,6 @@ Route::name('api.')->prefix('v1')->middleware([
          Route::put('service-orders/{id}/status ', [ServiceOrderController::class, 'updateStatus'])->name('service-orders.update-status');
          Route::delete('service-orders/{id}/force', [ServiceOrderController::class, 'forceDelete'])->name('service-orders.forceDelete');
 
-         // Rotas para aircraft-attendances
-         Route::apiResource('aircraft-attendances', AircraftAttendanceController::class,['parameters' => [
-             'aircraft-attendances' => 'id'
-         ]]);
-         Route::get('aircraft-attendances/stats', [AircraftAttendanceController::class, 'stats'])->name('aircraft-attendances.stats');
-         Route::put('aircraft-attendances/{id}/complete', [AircraftAttendanceController::class, 'complete'])->name('aircraft-attendances.complete');
-         Route::put('aircraft-attendances/{id}/cancel', [AircraftAttendanceController::class, 'cancel'])->name('aircraft-attendances.cancel');
-         Route::put('aircraft-attendances/{id}/start', [AircraftAttendanceController::class, 'start'])->name('aircraft-attendances.start');
-         Route::put('aircraft-attendances/{id}/hold', [AircraftAttendanceController::class, 'hold'])->name('aircraft-attendances.hold');
-
          // Rotas para dashboard-metrics
         Route::apiResource('dashboard-metrics', MetricasController::class,['parameters' => [
             'dashboard-metrics' => 'id'
@@ -205,6 +199,10 @@ Route::name('api.')->prefix('v1')->middleware([
             'tracking' => 'id'
         ]]);
         Route::get('tracking-events', [TrackingEventController::class, 'index'])->name('tracking-events.index');
+        // Rota aninhada para cadastro de etapas de um funil específico
+        Route::post('funnels/{id}/stages', [StageController::class, 'storeForFunnel'])->name('funnels.stages.store');
+        // Listar etapas de um funil específico, ordenadas por order
+        Route::get('funnels/{id}/stages', [StageController::class, 'indexForFunnel'])->name('funnels.stages.index');
         // rota flexível de filtros
         Route::get('menus', [MenuController::class, 'getMenus']);
         Route::apiResource('permissions', PermissionController::class,['parameters' => [
@@ -221,4 +219,24 @@ Route::name('api.')->prefix('v1')->middleware([
     // Rotas para webhooks
     Route::any('webhook/{endp1}', [WebhookController::class, 'handleSingleEndpoint'])->name('webhook.single');
     Route::any('webhook/{endp1}/{endp2}', [WebhookController::class, 'handleDoubleEndpoint'])->name('webhook.double');
+});
+
+// Rota de teste sem middleware de tenancy
+Route::post('/v1/teste-json-simple', function(\Illuminate\Http\Request $request) {
+    \Log::info('Teste JSON Simple - request->all():', $request->all());
+    \Log::info('Teste JSON Simple - request->json()->all():', $request->json()->all() ?? []);
+    \Log::info('Teste JSON Simple - request->getContent():', [$request->getContent()]);
+    \Log::info('Teste JSON Simple - Content-Type:', [$request->header('Content-Type')]);
+    
+    // Tratar codificação UTF-8
+    $rawContent = $request->getContent();
+    $cleanContent = mb_convert_encoding($rawContent, 'UTF-8', 'UTF-8');
+    
+    return response()->json([
+        'request_all' => $request->all(),
+        'request_json' => $request->json()->all() ?? [],
+        'raw_content' => $cleanContent,
+        'content_type' => $request->header('Content-Type'),
+        'encoding_fixed' => true
+    ]);
 });

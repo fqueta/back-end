@@ -36,10 +36,13 @@ return [
     'allowed_origins' => [
         'https://api-interajai.maisaqui.com.br',
         'https://api-aeroclube.maisaqui.com.br',
-        'http://maisaqui1.localhost:8080',
-        'http://localhost:3000',
+        'https://maisaqui.com.br',
+        // Dev/local origins
+        'http://crm.localhost:3000',
         'http://localhost:8000',
-        'https://maisaqui.com.br'
+        'http://maisaqui1.localhost:8080',
+        'http://api-crm.localhost:8000',
+        'http://crm.localhost:5173',
     ],
 
     /*
@@ -51,9 +54,12 @@ return [
     |
     */
     'allowed_origins_patterns' => [
-        '/^https?:\/\/.*\.localhost:8000$/',
-        '/^https:\/\/.*\.maisaqui\.com\.br$/',
-        '/^http:\/\/localhost:.*$/',
+        // Allow any subdomain of localhost on any port (dev)
+        '/^https?:\\/\\/.*\\.localhost(:\\d+)?$/',
+        // Allow any subdomain of maisaqui.com.br (prod)
+        '/^https:\\/\\/.*\\.maisaqui\\.com\\.br$/',
+        // Allow localhost with any port
+        '/^http:\\/\\/localhost:.*$/',
     ],
 
     /*
@@ -94,6 +100,6 @@ return [
     | Se true, permite envio de cookies/autenticação cross-origin.
     |
     */
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 ];

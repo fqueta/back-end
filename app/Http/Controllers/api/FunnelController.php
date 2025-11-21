@@ -4,11 +4,11 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Funnel;
+use Illuminate\Support\Facades\Schema;
+use App\Http\Controllers\api\StageController;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
-use App\Models\Stage;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Controller for managing sales/service funnels
@@ -33,7 +33,10 @@ class FunnelController extends Controller
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        // Order by name by default
+        // Ordenar por 'order' se a coluna existir; caso contrário, por 'name'
+        if (Schema::hasColumn('funnels', 'order')) {
+            $query->orderBy('order');
+        }
         $funnels = $query->orderBy('name')->get();
         $ret['data'] = $funnels;
         $ret['total'] = $funnels->count();
@@ -55,6 +58,8 @@ class FunnelController extends Controller
                 'settings.autoAdvance' => 'nullable|boolean',
                 'settings.notifyOnStageChange' => 'nullable|boolean',
                 'settings.requireApproval' => 'nullable|boolean',
+                'settings.place' => 'nullable|string',
+                'order' => 'nullable|integer',
             ]);
 
             // Set default values
@@ -119,6 +124,8 @@ class FunnelController extends Controller
                 'settings.autoAdvance' => 'nullable|boolean',
                 'settings.notifyOnStageChange' => 'nullable|boolean',
                 'settings.requireApproval' => 'nullable|boolean',
+                'settings.place' => 'nullable|string',
+                'order' => 'nullable|integer',
             ]);
 
             // Merge settings with existing ones if provided
@@ -180,142 +187,122 @@ class FunnelController extends Controller
     }
 
     /**
-     * Get all stages for a specific funnel
+     * Listar etapas de um funil específico, ordenadas por `order`.
+     *
+     * GET /api/v1/funnels/{id}/stages
+     * Delegado para StageController::indexForFunnel para manter compatibilidade
+     * com o formato de resposta esperado no front-end.
      */
-    public function stages(string $id): JsonResponse
+    public function stages(int $id): JsonResponse
     {
-        $funnel = Funnel::find($id);
-
-        if (!$funnel) {
-            return response()->json([
-                'data' => [],
-                'message' => 'Funil não encontrado',
-                'success' => false
-            ], 404);
-        }
-
-        // Get stages ordered by order field
-        $stages = $funnel->stages()->orderBy('order')->get();
-
-        // Transform data to match the required structure
-        $transformedStages = $stages->map(function ($stage) {
-            return [
-                'id' => (string) $stage->id,
-                'name' => $stage->name,
-                'funnelId' => (string) $stage->funnel_id,
-                'order' => $stage->order,
-                'color' => $stage->color,
-                'description' => $stage->description,
-                'isActive' => $stage->isActive,
-                'createdAt' => $stage->created_at ? $stage->created_at->toISOString() : null,
-                'updatedAt' => $stage->updated_at ? $stage->updated_at->toISOString() : null,
-            ];
-        });
-
-        return response()->json([
-            'data' => $transformedStages,
-            'message' => 'Etapas do funil recuperadas com sucesso',
-            'success' => true
-        ]);
+        // Delegar para o StageController para reaproveitar a lógica existente
+        return app(StageController::class)->indexForFunnel($id);
     }
 
     /**
-     * Reordenar etapas de um funil com base em uma lista de IDs.
+     * Reordenar etapas de um funil específico.
      *
-     * Recebe um body no formato:
-     * {
-     *   "stageIds": ["6", "8", "7", "9", "10", "11"]
-     * }
-     *
-     * - Valida se o funil existe.
-     * - Valida se os IDs fornecidos pertencem ao funil.
-     * - Atualiza a coluna `order` sequencialmente conforme a ordem dos IDs.
-     * - Mantém as etapas não informadas ao final, preservando a ordem relativa atual.
+     * POST /api/v1/funnels/{id}/stages/reorder
+     * Mescla o `funnel_id` da rota no Request e delega para
+     * StageController::reorder, reutilizando validação e atualização.
      */
-    public function reorderStages(Request $request, string $id): JsonResponse
+    public function reorderStages(Request $request, int $id): JsonResponse
+    {
+        // Garantir que usamos o funil fornecido na rota
+        $request->merge(['funnel_id' => $id]);
+
+        /**
+         * Suporte a payload simplificado com 'ids':
+         * Permite enviar apenas a lista de IDs na ordem desejada e
+         * mapeia para o formato esperado por StageController::reorder
+         * (stages: [{id, order}, ...]).
+         */
+        if ($request->has('ids') && is_array($request->ids)) {
+            $stages = [];
+            foreach ($request->ids as $index => $stageId) {
+                $stages[] = [
+                    'id' => (int) $stageId,
+                    'order' => $index + 1,
+                ];
+            }
+            $request->merge(['stages' => $stages]);
+        }
+
+        return app(StageController::class)->reorder($request);
+    }
+
+    /**
+     * Reordenar a lista de funis com base em uma lista de IDs.
+     *
+     * Endpoint: PUT/POST /api/v1/funnels/reorder
+     * Body suportado: { "ids": [2, 3, 1, 4, 5] }
+     * - Valida duplicidades
+     * - Valida existência dos IDs
+     * - Atualiza o campo `order` conforme a posição no array
+     */
+    public function reorder(Request $request): JsonResponse
     {
         try {
-            $funnel = Funnel::find($id);
-            if (!$funnel) {
-                return response()->json([
-                    'message' => 'Funil não encontrado'
-                ], 404);
-            }
-
+            // Validar presença e formato da lista de IDs
             $validated = $request->validate([
-                'stageIds' => 'required|array|min:1',
-                'stageIds.*' => 'required|integer|distinct'
+                'ids' => 'required|array|min:1',
+                'ids.*' => 'integer|exists:funnels,id',
             ], [
-                'stageIds.required' => 'A lista de etapas é obrigatória',
-                'stageIds.array' => 'A lista de etapas deve ser um array',
-                'stageIds.min' => 'Informe pelo menos uma etapa',
-                'stageIds.*.required' => 'Cada etapa deve ter um ID',
-                'stageIds.*.integer' => 'Os IDs das etapas devem ser inteiros',
-                'stageIds.*.distinct' => 'A lista de etapas contém IDs duplicados'
+                'ids.required' => 'A lista de IDs é obrigatória',
+                'ids.array' => 'A lista de IDs deve ser um array',
+                'ids.min' => 'A lista de IDs deve conter ao menos um ID',
+                'ids.*.integer' => 'Todos os IDs devem ser números inteiros',
+                'ids.*.exists' => 'Um ou mais IDs informados não existem',
             ]);
 
-            // Buscar todas as etapas do funil
-            $allStages = Stage::where('funnel_id', $funnel->id)->orderBy('order')->get();
-            $allStageIds = $allStages->pluck('id')->all();
+            $ids = array_map('intval', $validated['ids']);
 
-            // Validar se todos os IDs fornecidos pertencem ao funil
-            $invalidIds = array_diff($validated['stageIds'], $allStageIds);
-            if (!empty($invalidIds)) {
+            // Checar duplicidades
+            $counts = array_count_values($ids);
+            $duplicates = array_keys(array_filter($counts, fn($c) => $c > 1));
+            if (!empty($duplicates)) {
                 return response()->json([
-                    'message' => 'Uma ou mais etapas não pertencem ao funil',
-                    'invalidIds' => array_values($invalidIds)
+                    'error' => 'Dados de validação inválidos',
+                    'errors' => [
+                        'ids' => ['Há IDs duplicados no payload. Remova duplicidades e tente novamente.'],
+                        'duplicateIds' => $duplicates,
+                    ]
                 ], 422);
             }
 
-            DB::transaction(function () use ($validated, $funnel, $allStages) {
-                // Atualizar ordem para os IDs fornecidos
-                foreach ($validated['stageIds'] as $index => $stageId) {
-                    Stage::where('id', $stageId)
-                        ->where('funnel_id', $funnel->id)
-                        ->update(['order' => $index + 1]);
-                }
+            // Validar existência dos IDs (proteção adicional contra conditions race)
+            $existingIds = Funnel::whereIn('id', $ids)->pluck('id')->all();
+            $missing = array_values(array_diff($ids, $existingIds));
+            if (!empty($missing)) {
+                return response()->json([
+                    'error' => 'Dados de validação inválidos',
+                    'errors' => [
+                        'ids' => ['Alguns IDs informados não existem.'],
+                        'missingIds' => $missing,
+                    ]
+                ], 422);
+            }
 
-                // Etapas restantes (não informadas) mantêm a ordem relativa após as informadas
-                $remaining = $allStages->whereNotIn('id', $validated['stageIds'])->values();
-                $base = count($validated['stageIds']);
-                foreach ($remaining as $offset => $stage) {
-                    Stage::where('id', $stage->id)
-                        ->where('funnel_id', $funnel->id)
-                        ->update(['order' => $base + $offset + 1]);
-                }
-            });
+            // Aplicar ordenação: primeira posição recebe order=1, e assim por diante
+            foreach ($ids as $pos => $funnelId) {
+                Funnel::where('id', $funnelId)->update(['order' => $pos + 1]);
+            }
 
-            // Retornar lista atualizada
-            $updatedStages = Stage::where('funnel_id', $funnel->id)
-                ->orderBy('order')
-                ->get()
-                ->map(function ($stage) {
-                    return [
-                        'id' => (string) $stage->id,
-                        'name' => $stage->name,
-                        'funnelId' => (string) $stage->funnel_id,
-                        'order' => $stage->order,
-                        'color' => $stage->color,
-                        'description' => $stage->description,
-                        'isActive' => $stage->isActive,
-                        'createdAt' => $stage->created_at ? $stage->created_at->toISOString() : null,
-                        'updatedAt' => $stage->updated_at ? $stage->updated_at->toISOString() : null,
-                    ];
-                });
-
+            // Retornar lista ordenada
+            $funnels = Funnel::orderBy('order')->orderBy('name')->get();
             return response()->json([
-                'data' => $updatedStages,
-                'message' => 'Etapas reordenadas com sucesso',
-                'success' => true
+                'data' => $funnels,
+                'total' => $funnels->count(),
+                'message' => 'Funis reordenados com sucesso'
             ]);
-        } catch (ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'error' => 'Dados de validação inválidos',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Erro ao reordenar etapas',
+                'error' => 'Erro ao reordenar funis',
                 'message' => $e->getMessage()
             ], 500);
         }

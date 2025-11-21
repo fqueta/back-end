@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Funnel;
 use App\Models\Stage;
+use App\Services\Qlib;
 
 /**
  * Seeder para criar funnels e stages de exemplo
@@ -14,9 +15,217 @@ class FunnelStageSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Quando o tenant estiver no modo CRM Aero (Qlib::is_crm_aero()),
+     * cadastra funis específicos:
+     * - "Funil de leads" com settings.place = atendimento
+     * - "Funil de Vendas" com settings.place = vendas
+     * Caso contrário, cria os funis de exemplo padrão (Vendas, Manutenção, Suporte).
      */
     public function run(): void
     {
+        // Branch condicional por tenant (CRM Aero)
+        if (Qlib::is_crm_aero()) {
+            // Funil de leads (place = atendimento)
+            $leadsFunnel = Funnel::create([
+                'name' => 'Funil de leads',
+                'description' => 'Captação e atendimento de leads',
+                'color' => '#06b6d4',
+                'isActive' => true,
+                'settings' => [
+                    'autoAdvance' => false,
+                    'requiresApproval' => false,
+                    'notificationEnabled' => true,
+                    'place' => 'atendimento',
+                ],
+            ]);
+
+            /**
+             * Estágios do funil de leads (CRM Aero):
+             * Frio → Aquecimento → Morno → Quente → Quente+ → Matriculados
+             */
+            $leadsStages = [
+                [
+                    'name' => 'Frio',
+                    'description' => 'Lead recém captado, baixo engajamento',
+                    'color' => '#60a5fa',
+                    'order' => 1,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => null,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+                [
+                    'name' => 'Aquecimento',
+                    'description' => 'Nutrição e ativação do interesse',
+                    'color' => '#f59e0b',
+                    'order' => 2,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => 3,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+                [
+                    'name' => 'Morno',
+                    'description' => 'Interesse moderado, qualificação em andamento',
+                    'color' => '#fbbf24',
+                    'order' => 3,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => 5,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+                [
+                    'name' => 'Quente',
+                    'description' => 'Alta propensão à compra',
+                    'color' => '#ef4444',
+                    'order' => 4,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => 5,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+                [
+                    'name' => 'Quente+',
+                    'description' => 'Momento ideal de fechamento',
+                    'color' => '#dc2626',
+                    'order' => 5,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => null,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+                [
+                    'name' => 'Matriculados',
+                    'description' => 'Conversão efetivada / matriculados',
+                    'color' => '#10b981',
+                    'order' => 6,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => null,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+            ];
+
+            foreach ($leadsStages as $stageData) {
+                Stage::create(array_merge($stageData, [
+                    'funnel_id' => $leadsFunnel->id,
+                    'isActive' => true,
+                ]));
+            }
+
+            // Funil de Vendas (place = vendas)
+            $salesFunnel = Funnel::create([
+                'name' => 'Funil de Vendas',
+                'description' => 'Processo comercial de vendas',
+                'color' => '#10b981',
+                'isActive' => true,
+                'settings' => [
+                    'autoAdvance' => false,
+                    'requiresApproval' => true,
+                    'notificationEnabled' => true,
+                    'place' => 'vendas',
+                ],
+            ]);
+
+            // Stages do funil de Vendas
+            $salesStages = [
+                [
+                    'name' => 'Lead',
+                    'description' => 'Cliente em potencial',
+                    'color' => '#6b7280',
+                    'order' => 1,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => null,
+                        'autoAdvance' => true,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'vendas',
+                    ],
+                ],
+                [
+                    'name' => 'Qualificação',
+                    'description' => 'Análise de necessidade/capacidade',
+                    'color' => '#3b82f6',
+                    'order' => 2,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => 3,
+                        'requiresDocuments' => true,
+                        'autoAdvance' => true,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'vendas',
+                    ],
+                ],
+                [
+                    'name' => 'Proposta',
+                    'description' => 'Envio da proposta comercial',
+                    'color' => '#f59e0b',
+                    'order' => 3,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => 7,
+                        'requiresDocuments' => true,
+                        'autoAdvance' => true,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'vendas',
+                    ],
+                ],
+                [
+                    'name' => 'Negociação',
+                    'description' => 'Discussão de termos e condições',
+                    'color' => '#ef4444',
+                    'order' => 4,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => 5,
+                        'requiresDocuments' => false,
+                        'place' => 'vendas',
+                    ],
+                ],
+                [
+                    'name' => 'Fechamento',
+                    'description' => 'Conclusão e início do serviço',
+                    'color' => '#10b981',
+                    'order' => 5,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => null,
+                        'requiresDocuments' => true,
+                        'place' => 'vendas',
+                    ],
+                ],
+            ];
+
+            foreach ($salesStages as $stageData) {
+                Stage::create(array_merge($stageData, [
+                    'funnel_id' => $salesFunnel->id,
+                    'isActive' => true,
+                ]));
+            }
+
+            $this->command->info('✅ Funnels (CRM Aero) criados com sucesso!');
+            $this->command->info("🧲 Criados {$leadsFunnel->stages()->count()} stages para o Funil de leads");
+            $this->command->info("💼 Criados {$salesFunnel->stages()->count()} stages para o Funil de Vendas");
+            return;
+        }
+
         // Criar Funil de Vendas
         $salesFunnel = Funnel::create([
             'name' => 'Funil de Vendas',
@@ -29,7 +238,16 @@ class FunnelStageSeeder extends Seeder
                 'notificationEnabled' => true
             ]
         ]);
-
+        /**
+         * {
+          *      "autoAdvance": true,
+          *      "notifyOnStageChange": false,
+           *     "requireApproval": false,
+           *     "place": "atendimento",
+            *    "requiresApproval": false,
+            *    "notificationEnabled": true
+            *    }
+         */
         // Criar stages para o Funil de Vendas
         $salesStages = [
             [
@@ -39,7 +257,13 @@ class FunnelStageSeeder extends Seeder
                 'order' => 1,
                 'settings' => [
                     'autoAdvanceAfterDays' => null,
-                    'requiresDocuments' => false
+                    'requiresDocuments' => false,
+                    'autoAdvance' => true,
+                    'notifyOnStageChange' => false,
+                    'requireApproval' => false,
+                    'place' => 'atendimento',
+                    'requiresApproval' => false,
+                    'notificationEnabled' => true
                 ]
             ],
             [
@@ -49,8 +273,15 @@ class FunnelStageSeeder extends Seeder
                 'order' => 2,
                 'settings' => [
                     'autoAdvanceAfterDays' => 3,
-                    'requiresDocuments' => true
+                    'requiresDocuments' => true,
+                    'autoAdvance' => true,
+                    'notifyOnStageChange' => false,
+                    'requireApproval' => false,
+                    'place' => 'atendimento',
+                    'requiresApproval' => false,
+                    'notificationEnabled' => true
                 ]
+
             ],
             [
                 'name' => 'Proposta',
@@ -59,7 +290,13 @@ class FunnelStageSeeder extends Seeder
                 'order' => 3,
                 'settings' => [
                     'autoAdvanceAfterDays' => 7,
-                    'requiresDocuments' => true
+                    'requiresDocuments' => true,
+                    'autoAdvance' => true,
+                    'notifyOnStageChange' => false,
+                    'requireApproval' => false,
+                    'place' => 'atendimento',
+                    'requiresApproval' => false,
+                    'notificationEnabled' => true
                 ]
             ],
             [

@@ -159,6 +159,21 @@ class StageController extends Controller
     }
 
     /**
+     * Criar etapa para um funil específico (rota aninhada).
+     *
+     * Recebe o `id` do funil via URL, mescla no request como `funnel_id`
+     * e reutiliza a validação/fluxo do método `store`.
+     *
+     * POST /api/v1/funnels/{id}/stages
+     */
+    public function storeForFunnel(Request $request, int $id): JsonResponse
+    {
+        // Garante que usaremos o funil da rota
+        $request->merge(['funnel_id' => $id]);
+        return $this->store($request);
+    }
+
+    /**
      * Exibir uma etapa específica
      */
     public function show(string $id): JsonResponse
@@ -185,11 +200,29 @@ class StageController extends Controller
 
     /**
      * Atualizar uma etapa existente
+     *
+     * Suporta chamadas escopadas por funil via rota
+     * `PUT/PATCH /api/v1/funnels/{funnelId}/stages/{id}`.
+     * Quando `funnelId` estiver presente na rota, valida que a etapa
+     * pertence ao funil informado antes de aplicar a atualização.
      */
     public function update(Request $request, string $id): JsonResponse
     {
         try {
             $stage = Stage::findOrFail($id);
+
+            // Se a rota tiver {funnelId}, garantir que a etapa pertence ao funil
+            $routeFunnelId = $request->route('funnelId');
+            if ($routeFunnelId !== null && (int)$routeFunnelId !== (int)$stage->funnel_id) {
+                return response()->json([
+                    'error' => 'Etapa não pertence ao funil informado',
+                    'details' => [
+                        'funnelId' => (int)$routeFunnelId,
+                        'stageId' => (int)$id,
+                        'stageFunnelId' => (int)$stage->funnel_id,
+                    ]
+                ], 404);
+            }
 
             $validated = $request->validate([
                 'name' => 'sometimes|required|string|max:255',
@@ -217,7 +250,6 @@ class StageController extends Controller
                 'settings.maxItems.min' => 'O máximo de itens deve ser no mínimo 1',
                 'settings.timeLimit.min' => 'O limite de tempo deve ser no mínimo 1'
             ]);
-
             // Aplicar mapeamento de campos
             $validated = $this->map_campos($validated);
 
@@ -228,8 +260,8 @@ class StageController extends Controller
             }
 
             $stage->update($validated);
-            $stage->load('funnel');
 
+            $stage->load('funnel');
             return response()->json([
                 'stage' => $stage,
                 'message' => 'Etapa atualizada com sucesso'
@@ -308,6 +340,9 @@ class StageController extends Controller
 
     /**
      * Reordenar etapas de um funil
+     *
+     * Valida o payload e garante que todas as etapas informadas
+     * pertencem ao funil indicado antes de aplicar a atualização.
      */
     public function reorder(Request $request): JsonResponse
     {
@@ -326,6 +361,37 @@ class StageController extends Controller
                 'stages.*.order.required' => 'A ordem da etapa é obrigatória',
                 'stages.*.order.min' => 'A ordem deve ser no mínimo 1'
             ]);
+
+            // Verificar IDs duplicados no payload
+            $idsInput = array_map(function ($s) { return (int) $s['id']; }, $validated['stages']);
+            $idCounts = array_count_values($idsInput);
+            $duplicateIds = array_keys(array_filter($idCounts, function ($count) { return $count > 1; }));
+            if (!empty($duplicateIds)) {
+                return response()->json([
+                    'error' => 'Dados de validação inválidos',
+                    'errors' => [
+                        'stages' => ['Há IDs duplicados no payload. Remova duplicidades e tente novamente.'],
+                        'duplicateIds' => $duplicateIds,
+                    ]
+                ], 422);
+            }
+
+            // Validar se todas as etapas informadas pertencem ao funil
+            $stageIds = array_unique($idsInput);
+            $existingIds = Stage::where('funnel_id', $validated['funnel_id'])
+                                ->whereIn('id', $stageIds)
+                                ->pluck('id')
+                                ->all();
+            $invalidIds = array_values(array_diff($stageIds, $existingIds));
+            if (!empty($invalidIds)) {
+                return response()->json([
+                    'error' => 'Dados de validação inválidos',
+                    'errors' => [
+                        'stages' => ['Uma ou mais etapas não pertencem ao funil informado.'],
+                        'invalidIds' => $invalidIds,
+                    ]
+                ], 422);
+            }
 
             foreach ($validated['stages'] as $stageData) {
                 Stage::where('id', $stageData['id'])
@@ -350,6 +416,37 @@ class StageController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Erro ao reordenar etapas',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Listar etapas de um funil específico, ordenadas por `order`.
+     *
+     * GET /api/v1/funnels/{id}/stages
+     * Retorna lista compatível com o front-end, incluindo mapeamentos como
+     * `funnelId`, `createdAt` e `updatedAt`.
+     */
+    public function indexForFunnel(int $id): JsonResponse
+    {
+        try {
+            $stages = Stage::where('funnel_id', $id)
+                ->orderBy('order', 'asc')
+                ->get();
+
+            $data = $stages->map(function ($stage) {
+                return $this->compatibilidade($stage->toArray());
+            });
+
+            return response()->json([
+                'data' => $data,
+                'total' => $data->count(),
+                'message' => 'Etapas listadas com sucesso'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erro ao listar etapas do funil',
                 'message' => $e->getMessage()
             ], 500);
         }

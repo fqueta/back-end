@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             ProductUnitsSeeder::class,
             FunnelStageSeeder::class,
             AircraftAttendanceSeeder::class,
+            AeronavesSeeder::class,
             // QoptionSeeder::class,
         ]);
     }

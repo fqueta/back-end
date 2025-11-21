@@ -2876,4 +2876,13 @@ class Qlib
         }
         return $client;
     }
+    // verifica se o tenant é do crm do aeroclubejf ou seja se o id do tenant atual é = api-crm
+    static function is_crm_aero(){
+        $tenant_id = tenant('id');
+        if($tenant_id == 'api-crm'){
+            return true;
+        }else{
+            return false;
+        }
+    }
 }

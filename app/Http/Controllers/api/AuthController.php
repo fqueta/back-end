@@ -29,7 +29,13 @@ class AuthController extends Controller
     }
 
 
-      public function login(Request $request)
+    /**
+     * Realiza login e emite token para usuários ativos.
+     *
+     * Bloqueia o login quando o campo `ativo` do usuário for diferente de 's',
+     * retornando erro 405 sem gerar token.
+     */
+    public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
 
@@ -38,6 +44,11 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
+        // dd($user);
+        // Impede login de usuário inativo (ativo != 's')
+        if (($user->ativo ?? null) !== 's') {
+            return response()->json(['error' => 'Usuário inativo'], 405);
+        }
 
         // Carrega o grupo de permissões
         $pid = $user->permission_id;

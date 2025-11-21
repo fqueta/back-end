@@ -18,7 +18,7 @@ class PermissionService
         $campo = 'can_' . $action; // can_view, can_create, can_edit, can_delete, can_upload
         // se no seu caso for hasOne ou belongsTo, só trocar.
         $get_id_menu_by_url = $this->get_id_menu_by_url($routeName);
-        // dd($get_id_menu_by_url,$routeName,$action);
+        // dd($get_id_menu_by_url,$routeName,$action,$get_id_menu_by_url);
         $perm = MenuPermission::where('permission_id', $groupIds)
                 ->where('menu_id', $get_id_menu_by_url)
                 //   ->where($campo,1)
@@ -39,7 +39,6 @@ class PermissionService
     public function get_id_menu_by_url($rm){
         $url = $this->get_url_by_route($rm);
         $menu_exist = Menu::where('url',$url)->first();
-        // dd($menu_exist);
         if($menu_exist){
             return $menu_exist->id;
         }else{
@@ -48,41 +47,70 @@ class PermissionService
         // return Menu::where('url',$url)->first()->id;
     }
     /**
-     * Metodo para veriricar se o usuario tem permissão para executar ao acessar esse recurso atraves de ''
-     * @params string 'view | create | edit | delete'
+     * Verifica se o usuário autenticado está ativo e se possui a permissão solicitada.
+     *
+     * Regras de atividade:
+     * - Considera o usuário ativo se `status === 'actived'` OU `ativo === 's'`.
+     * - Se o usuário não estiver ativo ou não autenticado, retorna false.
+     *
+     * @param string $permissao Tipo de permissão solicitada: 'view' | 'create' | 'edit' | 'delete' | 'upload'.
+     * @return bool true se ativo e com permissão; false caso contrário.
      */
-    public function isHasPermission($permissao=''){
+    public function isHasPermission($permissao = ''): bool
+    {
         $user = request()->user();
-        $routeName = request()->route()->getName();
-        if ($this->can($user, $routeName, $permissao)) {
-            return true;
-        }else{
+
+        // Bloqueia quando não há usuário autenticado
+        if (!$user) {
             return false;
         }
+
+        // Verifica atividade por `status` ou `ativo`
+        $status = isset($user->status) ? strtolower((string) $user->status) : null;
+        $ativo  = isset($user->ativo)  ? strtolower((string) $user->ativo)  : null;
+        $isActive = ($status === 'actived') || ($ativo === 's');
+
+        if (!$isActive) {
+            // Revoga o token atual (Sanctum) para impedir novos acessos
+            try {
+                if (method_exists($user, 'currentAccessToken') && $user->currentAccessToken()) {
+                    $user->currentAccessToken()->delete();
+                } elseif (method_exists($user, 'tokens')) {
+                    // Fallback: revoga todos os tokens caso o atual não esteja disponível
+                    $user->tokens()->delete();
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('Falha ao revogar token de usuário inativo', [
+                    'user_id' => $user->id ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+            return false;
+        }
+
+        // Verifica permissão para a rota atual
+        $routeName = request()->route()->getName();
+        return $this->can($user, $routeName, $permissao);
     }
     private function get_url_by_route($name=''){
         $url = '';
         // dd($name);
         if($name=='api.permissions.index' || $name == 'api.permissions.update' || $name == 'api.permissions.show' || $name == 'api.permissions.store' || $name == 'api.permissions.destroy'){
             $url = '/settings/permissions';
-        }
-        if($name=='api.users.index' || $name == 'api.users.update' || $name == 'api.users.show' || $name == 'api.users.store' || $name == 'api.users.destroy'){
+        }elseif($name=='api.users.index' || $name == 'api.users.update' || $name == 'api.users.show' || $name == 'api.users.store' || $name == 'api.users.destroy'){
             $url = '/settings/users';
-        }
-        if($name=='api.metrics.index' || $name == 'api.metrics.update' || $name == 'api.metrics.show' || $name == 'api.metrics.store' || $name == 'api.metrics.destroy'){
+        }elseif($name=='api.metrics.index' || $name == 'api.metrics.update' || $name == 'api.metrics.show' || $name == 'api.metrics.store' || $name == 'api.metrics.destroy'){
             $url = '/settings/metrics';
-        }
-        if($name=='api.clients.index' || $name == 'api.clients.update' || $name == 'api.clients.show' || $name == 'api.clients.store' || $name == 'api.clients.destroy' || $name == 'api.clients.restore' || $name == 'api.clients.forceDelete'){
+        }elseif($name=='api.clients.index' || $name == 'api.clients.update' || $name == 'api.clients.show' || $name == 'api.clients.store' || $name == 'api.clients.destroy' || $name == 'api.clients.restore' || $name == 'api.clients.forceDelete' || $name == 'api.clients.attendances.store'){
             $url = '/clients';
-        }
-        if($name=='api.options.index' || $name == 'api.options.update' || $name == 'api.options.show' || $name == 'api.options.store' || $name == 'api.options.destroy' || $name == 'api.options.restore' || $name == 'api.options.forceDelete' || $name == 'api.options.trash'){
+        }elseif($name=='api.options.index' || $name == 'api.options.update' || $name == 'api.options.show' || $name == 'api.options.store' || $name == 'api.options.destroy' || $name == 'api.options.restore' || $name == 'api.options.forceDelete' || $name == 'api.options.trash'){
             $url = '/options';
-        }
-        if($name=='api.posts.index' || $name == 'api.posts.update' || $name == 'api.posts.show' || $name == 'api.posts.store' || $name == 'api.posts.destroy' || $name == 'api.posts.restore' || $name == 'api.posts.forceDelete' || $name == 'api.posts.trash'){
+        }elseif($name=='api.posts.index' || $name == 'api.posts.update' || $name == 'api.posts.show' || $name == 'api.posts.store' || $name == 'api.posts.destroy' || $name == 'api.posts.restore' || $name == 'api.posts.forceDelete' || $name == 'api.posts.trash'){
             $url = '/posts';
-        }
-        if($name=='api.aircraft.index' || $name == 'api.aircraft.update' || $name == 'api.aircraft.show' || $name == 'api.aircraft.store' || $name == 'api.aircraft.destroy' || $name == 'api.aircraft.restore' || $name == 'api.aircraft.forceDelete' || $name == 'api.aircraft.trash'){
+        }elseif($name=='api.aircraft.index' || $name == 'api.aircraft.update' || $name == 'api.aircraft.show' || $name == 'api.aircraft.store' || $name == 'api.aircraft.destroy' || $name == 'api.aircraft.restore' || $name == 'api.aircraft.forceDelete' || $name == 'api.aircraft.trash'){
             $url = '/aircraft';
+        }elseif($name=='api.aeronaves.index' || $name=='api.aeronaves.store' || $name == 'api.aeronaves.update' || $name == 'api.aeronaves.show' || $name == 'api.aeronaves.destroy' || $name == 'api.aeronaves.restore' || $name == 'api.aeronaves.forceDelete' || $name == 'api.aeronaves.trash'){
+            $url = '/settings/aircrafts';
         }
         if($name=='api.categories.index' || $name == 'api.categories.update' || $name == 'api.categories.show' || $name == 'api.categories.store' || $name == 'api.categories.destroy' || $name == 'api.categories.restore' || $name == 'api.categories.forceDelete' || $name == 'api.categories.trash' || $name == 'api.categories.tree'){
             $url = '/categories';
@@ -121,24 +149,13 @@ class PermissionService
             $url = '/financial/categories';
         }
         // Contas a receber
-        if($name=='api.financial.accounts-receivable.index' || $name == 'api.financial.accounts-receivable.update' || $name == 'api.financial.accounts-receivable.show' || $name == 'api.financial.accounts-receivable.store' || $name == 'api.financial.accounts-receivable.destroy' || $name == 'api.financial.accounts-receivable.pay' || $name == 'api.financial.accounts-receivable.receive' || $name == 'api.financial.accounts-receivable.cancel' || $name == 'api.financial.accounts-payable.pay'){
+        if($name=='api.financial.accounts-receivable.index' || $name == 'api.financial.accounts-receivable.update' || $name == 'api.financial.accounts-receivable.show' || $name == 'api.financial.accounts-receivable.store' || $name == 'api.financial.accounts-receivable.destroy' || $name == 'api.financial.accounts-receivable.pay' || $name == 'api.financial.accounts-receivable.receive' || $name == 'api.financial.accounts-payable.pay'){
+            // dd($name);
             $url = '/financial';
         }
         // Contas a pagar
         if($name=='api.financial.accounts-payable.index' || $name == 'api.financial.accounts-payable.update' || $name == 'api.financial.accounts-payable.show' || $name == 'api.financial.accounts-payable.store' || $name == 'api.financial.accounts-payable.destroy'){
             $url = '/financial';
-        }
-        // Resumo financeiro (overview)
-        if($name=='api.financial.overview'){
-            $url = '/financial';
-        }
-        // Funnels (funis de atendimento)
-        if($name=='api.funnels.index' || $name == 'api.funnels.update' || $name == 'api.funnels.show' || $name == 'api.funnels.store' || $name == 'api.funnels.destroy' || $name == 'api.funnels.toggle-active'){
-            $url = '/funnels';
-        }
-        // Stages (etapas dos funis)
-        if($name=='api.stages.index' || $name == 'api.stages.update' || $name == 'api.stages.show' || $name == 'api.stages.store' || $name == 'api.stages.destroy' || $name == 'api.stages.toggle-active' || $name == 'api.stages.reorder'){
-            $url = '/stages';
         }
         return $url;
     }

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('cpf')->unique()->nullable();
             $table->string('cnpj')->nullable();
             $table->string('email')->unique()->nullable();
+            $table->string('celular')->unique()->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->enum('status',['actived','inactived','pre_registred']);

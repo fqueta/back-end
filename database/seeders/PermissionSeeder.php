@@ -9,7 +9,21 @@ class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('permissions')->delete();
+        /**
+         * Trunca a tabela para garantir IDs consistentes (ex.: Master = 1).
+         * Como há FK de menu_permission -> permissions, desabilitamos FKs temporariamente.
+         */
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        } catch (\Throwable $e) {
+            // Em bancos que não suportam (ex.: SQLite), ignorar.
+        }
+        DB::table('permissions')->truncate();
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        } catch (\Throwable $e) {
+            // Ignorar para compatibilidade.
+        }
 
         DB::table('permissions')->insert([
             // MASTER → acesso a tudo
