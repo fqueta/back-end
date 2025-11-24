@@ -31,6 +31,7 @@ use App\Http\Controllers\api\ServiceUnitController;
 use App\Http\Controllers\api\ServiceOrderController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\api\CursoController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\TesteController;
@@ -288,6 +289,22 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::delete('products/{id}/force', [ProductController::class, 'forceDelete'])->name('products.forceDelete');
         Route::apiResource('products', ProductController::class,['parameters' => [
             'products' => 'id'
+        ]]);
+
+        // Rotas para cursos (PT-BR)
+        Route::get('cursos/trash', [CursoController::class, 'trash'])->name('cursos.trash');
+        Route::put('cursos/{id}/restore', [CursoController::class, 'restore'])->name('cursos.restore');
+        Route::delete('cursos/{id}/force', [CursoController::class, 'forceDelete'])->name('cursos.forceDelete');
+        Route::apiResource('cursos', CursoController::class, ['parameters' => [
+            'cursos' => 'id'
+        ]]);
+
+        // Alias em inglês para compatibilidade
+        Route::get('courses/trash', [CursoController::class, 'trash'])->name('courses.trash');
+        Route::put('courses/{id}/restore', [CursoController::class, 'restore'])->name('courses.restore');
+        Route::delete('courses/{id}/force', [CursoController::class, 'forceDelete'])->name('courses.forceDelete');
+        Route::apiResource('courses', CursoController::class, ['parameters' => [
+            'courses' => 'id'
         ]]);
 
         // Rotas para services

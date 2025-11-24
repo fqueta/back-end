@@ -12,7 +12,8 @@ return [
     | ['*'] -> todas as rotas
     |
     */
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    // Aplica CORS a todas as rotas, inclusive respostas de erro
+    'paths' => ['*'],
 
     /*
     |--------------------------------------------------------------------------
@@ -80,7 +81,8 @@ return [
     | Cabeçalhos que podem ser expostos para o navegador.
     |
     */
-    'exposed_headers' => [],
+    // Expõe cabeçalhos úteis para debug multi-tenant no frontend
+    'exposed_headers' => ['X-Tenant-Id', 'X-Tenant-Slug'],
 
     /*
     |--------------------------------------------------------------------------

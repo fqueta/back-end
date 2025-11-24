@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Registra HandleCors globalmente para garantir cabeçalhos em quaisquer respostas (inclui erros)
+        $middleware->use([
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
+
         // Aplicar CORS globalmente para todas as rotas da API
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
