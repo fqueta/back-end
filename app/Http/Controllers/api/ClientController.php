@@ -21,9 +21,14 @@ class ClientController extends Controller
     public $routeName;
     public $sec;
     public $cliente_permission_id;
+    /**
+     * ID de permissão para Responsáveis (clientes responsáveis).
+     * EN: Permission ID for Guardians (responsáveis).
+     */
+    protected int $responsavel_permission_id = 8;
     public function __construct()
     {
-        $this->cliente_permission_id = Qlib::qoption('cliente_permission_id')??5;
+        $this->cliente_permission_id = Qlib::qoption('permission_client_id');
         $this->routeName = request()->route()->getName();
         $this->permissionService = new PermissionService();
         $this->sec = request()->segment(3);
@@ -232,6 +237,22 @@ class ClientController extends Controller
     }
 
     /**
+     * Normaliza strings opcionais para null quando vazias.
+     * Normalize optional string inputs to null when empty.
+     */
+    private function normalizeOptionalString($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            return $trimmed === '' ? null : $trimmed;
+        }
+        return null;
+    }
+
+    /**
      * Criar um novo cliente
      */
     public function store(Request $request)
@@ -282,6 +303,13 @@ class ClientController extends Controller
                 'celular' => preg_replace('/\D/', '', $request->celular),
             ]);
         }
+        // Normalizar campos opcionais para null quando vazios (evita unique com "")
+        $request->merge([
+            'email'   => $this->normalizeOptionalString($request->get('email')),
+            'cpf'     => $this->normalizeOptionalString($request->get('cpf')),
+            'cnpj'    => $this->normalizeOptionalString($request->get('cnpj')),
+            'celular' => $this->normalizeOptionalString($request->get('celular')),
+        ]);
         // Verificar se o CPF ou CNPJ já existe na lixeira
         if ($request->filled('cpf') || $request->filled('cnpj')) {
             $existingUser = Client::withoutGlobalScope('client')
@@ -344,13 +372,13 @@ class ClientController extends Controller
         $validated['ativo'] = isset($validated['ativo']) ? $validated['ativo'] : 's';
         $validated['status'] = isset($validated['status']) ? $validated['status'] : 'actived';
         $validated['tipo_pessoa'] = isset($validated['tipo_pessoa']) ? $validated['tipo_pessoa'] : 'pf';
-        $validated['permission_id'] = $this->cliente_permission_id; // Força sempre grupo cliente
+        // $validated['permission_id'] = $this->cliente_permission_id; // Força sempre grupo cliente
         $validated['config'] = isset($validated['config']) ? $this->sanitizeInput($validated['config']) : [];
 
         if(isArray($validated['config'])){
             $validated['config'] = json_encode($validated['config']);
         }
-
+        // dd($validated);
         $client = Client::create($validated);
         // converter o client->config para array
         if (is_string($client->config)) {
@@ -412,6 +440,14 @@ class ClientController extends Controller
         }
 
         $clientToUpdate = Client::findOrFail($id);
+
+        // Normalizar campos opcionais para null quando vazios (evita unique com "")
+        $request->merge([
+            'email'   => $this->normalizeOptionalString($request->get('email')),
+            'cpf'     => $this->normalizeOptionalString($request->get('cpf')),
+            'cnpj'    => $this->normalizeOptionalString($request->get('cnpj')),
+            'celular' => $this->normalizeOptionalString($request->get('celular')),
+        ]);
 
         $validator = Validator::make($request->all(), [
             'tipo_pessoa'   => ['sometimes', Rule::in(['pf','pj'])],
@@ -615,6 +651,450 @@ class ClientController extends Controller
 
         return response()->json([
             'message' => 'Cliente excluído permanentemente',
+            'status' => 200
+        ]);
+    }
+
+    /**
+     * Listar responsáveis (clientes com permission_id=8) com paginação e filtros.
+     * EN: List guardians (clients with permission_id=8) with pagination and filters.
+     */
+    public function responsaveisIndex(Request $request)
+    {
+        $user = request()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('view')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        $perPage = $request->input('per_page', 10);
+        $order_by = $request->input('order_by', 'created_at');
+        $order = $request->input('order', 'desc');
+
+        $query = Client::withoutGlobalScope('client')
+            ->where('permission_id', $this->responsavel_permission_id)
+            ->orderBy($order_by, $order);
+
+        // Não exibir registros marcados como deletados ou excluídos
+        $query->where(function($q) {
+            $q->whereNull('deletado')->orWhere('deletado', '!=', 's');
+        });
+        $query->where(function($q) {
+            $q->whereNull('excluido')->orWhere('excluido', '!=', 's');
+        });
+
+        // Filtro search e campos individuais
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('email', 'like', '%' . $search . '%')
+                  ->orWhere('cpf', 'like', '%' . $search . '%')
+                  ->orWhere('cnpj', 'like', '%' . $search . '%')
+                  ->orWhere('name', 'like', '%' . $search . '%');
+            });
+        }
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->input('email') . '%');
+        }
+        if ($request->filled('cpf')) {
+            $query->where('cpf', 'like', '%' . $request->input('cpf') . '%');
+        }
+        if ($request->filled('cnpj')) {
+            $query->where('cnpj', 'like', '%' . $request->input('cnpj') . '%');
+        }
+        if ($request->filled('celular')) {
+            $cel = preg_replace('/\D/', '', (string)$request->input('celular'));
+            $query->where('celular', 'like', '%' . $cel . '%');
+        }
+        // Filtros por status simples
+        if ($request->filled('ativo')) {
+            $ativo = $request->input('ativo'); // esperado 's' ou 'n'
+            $query->where('ativo', $ativo);
+        }
+        if ($request->filled('verificado')) {
+            $verificado = $request->input('verificado'); // 's' ou 'n'
+            $query->where('verificado', $verificado);
+        }
+        // Filtro por par chave/valor em config (match simples por string)
+        if ($request->filled('config_key') && $request->filled('config_value')) {
+            $key = $request->input('config_key');
+            $val = $request->input('config_value');
+            $query->where('config', 'like', '%"' . $key . '"%');
+            $query->where('config', 'like', '%"' . $key . '"\s*:\s*"' . $val . '"%');
+        }
+
+        $clients = $query->paginate($perPage);
+
+        $clients->getCollection()->transform(function ($client) {
+            return $this->mapIndexItemOutput($client);
+        });
+
+        return response()->json($clients);
+    }
+
+    /**
+     * Criar um novo responsável (permission_id=8).
+     * EN: Create a new guardian (permission_id=8).
+     */
+    public function responsaveisStore(Request $request)
+    {
+        $user = request()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('create')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        // Remover máscara do celular
+        if ($request->filled('celular')) {
+            $request->merge(['celular' => preg_replace('/\D/', '', $request->celular)]);
+        }
+        // Normalizar campos opcionais para null quando vazios
+        $request->merge([
+            'email'   => $this->normalizeOptionalString($request->get('email')),
+            'cpf'     => $this->normalizeOptionalString($request->get('cpf')),
+            'cnpj'    => $this->normalizeOptionalString($request->get('cnpj')),
+            'celular' => $this->normalizeOptionalString($request->get('celular')),
+        ]);
+
+        $request->merge([
+            'tipo_pessoa' => $request->get('tipo_pessoa') ? $request->get('tipo_pessoa') : 'pf',
+            'genero' => $request->get('genero') ? $request->get('genero') : 'ni',
+        ]);
+
+        $validator = Validator::make($request->all(), [
+            'tipo_pessoa'   => ['required', Rule::in(['pf','pj'])],
+            'name'          => 'required|string|max:255',
+            'razao'         => 'nullable|string|max:255',
+            'cpf'           => 'nullable|string|max:20|unique:users,cpf',
+            'cnpj'          => 'nullable|string|max:20|unique:users,cnpj',
+            'email'         => 'nullable|email|unique:users,email',
+            'celular'       => 'nullable|celular|unique:users,celular',
+            'password'      => 'nullable|string|min:6',
+            'genero'        => ['required', Rule::in(['ni','m','f'])],
+            'config'        => 'array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Erro de validação',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        if (!empty($request->cpf) && !Qlib::validaCpf($request->cpf)) {
+            return response()->json([
+                'message' => 'Erro de validação',
+                'errors'  => ['cpf' => ['CPF inválido']],
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+        $validated = $this->sanitizeInput($validated);
+        $validated['token'] = Qlib::token();
+        if(isset($validated['password'])){
+            $validated['password'] = Hash::make($validated['password']);
+        }
+        $validated['ativo'] = $validated['ativo'] ?? 's';
+        $validated['status'] = $validated['status'] ?? 'actived';
+        $validated['tipo_pessoa'] = $validated['tipo_pessoa'] ?? 'pf';
+        $validated['permission_id'] = $this->responsavel_permission_id; // força responsável
+        $validated['config'] = isset($validated['config']) ? $this->sanitizeInput($validated['config']) : [];
+        if(isArray($validated['config'])){
+            $validated['config'] = json_encode($validated['config']);
+        }
+
+        $client = Client::create($validated);
+        if (is_string($client->config)) {
+            $client->config = json_decode($client->config, true) ?? [];
+        }
+        return response()->json([
+            'data' => $client,
+            'message' => 'Responsável criado com sucesso',
+            'status' => 201,
+        ], 201);
+    }
+
+    /**
+     * Exibir um responsável específico.
+     * EN: Show a specific guardian.
+     */
+    public function responsaveisShow(Request $request, string $id)
+    {
+        $user = request()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('view')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        $client = Client::withoutGlobalScope('client')
+            ->where('id', $id)
+            ->where('permission_id', $this->responsavel_permission_id)
+            ->firstOrFail();
+
+        if (is_string($client->config)) {
+            $client->config = json_decode($client->config, true) ?? [];
+        }
+
+        return response()->json($client);
+    }
+
+    /**
+     * Atualizar um responsável específico (permission_id=8).
+     * EN: Update a specific guardian (permission_id=8).
+     */
+    public function responsaveisUpdate(Request $request, string $id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('edit')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        $clientToUpdate = Client::withoutGlobalScope('client')
+            ->where('id', $id)
+            ->where('permission_id', $this->responsavel_permission_id)
+            ->firstOrFail();
+
+        $request->merge([
+            'email'   => $this->normalizeOptionalString($request->get('email')),
+            'cpf'     => $this->normalizeOptionalString($request->get('cpf')),
+            'cnpj'    => $this->normalizeOptionalString($request->get('cnpj')),
+            'celular' => $this->normalizeOptionalString($request->get('celular')),
+        ]);
+
+        $validator = Validator::make($request->all(), [
+            'tipo_pessoa'   => ['sometimes', Rule::in(['pf','pj'])],
+            'name'          => 'sometimes|required|string|max:255',
+            'razao'         => 'nullable|string|max:255',
+            'cpf'           => ['nullable','string','max:20', Rule::unique('users','cpf')->ignore($clientToUpdate->id)],
+            'cnpj'          => ['nullable','string','max:20', Rule::unique('users','cnpj')->ignore($clientToUpdate->id)],
+            'email'         => ['nullable','email', Rule::unique('users','email')->ignore($clientToUpdate->id)],
+            'password'      => 'nullable|string|min:6',
+            'genero'        => ['sometimes', Rule::in(['ni','m','f'])],
+            'verificado'    => ['sometimes', Rule::in(['n','s'])],
+            'config'        => 'array'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'exec'=>false,
+                'message' => 'Erro de validação',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        if (!empty($request->cpf) && !Qlib::validaCpf($request->cpf)) {
+            return response()->json([
+                'exec'=>false,
+                'message' => 'Erro de validação',
+                'errors'  => ['cpf' => ['CPF inválido']],
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+        $validated = $this->sanitizeInput($validated);
+        if (isset($validated['password']) && !empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        // Garantir permission_id=8
+        $validated['permission_id'] = $this->responsavel_permission_id;
+
+        if (isset($validated['config'])) {
+            $validated['config'] = $this->sanitizeInput($validated['config']);
+            if (isArray($validated['config'])) {
+                $validated['config'] = json_encode($validated['config']);
+            }
+        }
+
+        $clientToUpdate->update($validated);
+
+        if (is_string($clientToUpdate->config)) {
+            $clientToUpdate->config = json_decode($clientToUpdate->config, true) ?? [];
+        }
+
+        return response()->json([
+            'data' => $clientToUpdate,
+            'message' => 'Responsável atualizado com sucesso',
+            'status' => 200,
+        ]);
+    }
+
+    /**
+     * Mover responsável para a lixeira.
+     * EN: Move guardian to trash.
+     */
+    public function responsaveisDestroy(Request $request, string $id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('delete')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        $client = Client::withoutGlobalScope('client')
+            ->where('id', $id)
+            ->where('permission_id', $this->responsavel_permission_id)
+            ->firstOrFail();
+
+        $client->update([
+            'deletado' => 's',
+            'reg_deletado' => json_encode([
+                'usuario' => $user->id,
+                'nome' => $user->name,
+                'created_at' => now(),
+            ])
+        ]);
+
+        return response()->json([
+            'exec'=>true,
+            'message' => 'Responsável movido para a lixeira com sucesso',
+            'status' => 200
+        ]);
+    }
+
+    /**
+     * Listar responsáveis na lixeira.
+     * EN: List guardians in trash.
+     */
+    public function responsaveisTrash(Request $request)
+    {
+        $user = request()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('view')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        $perPage = $request->input('per_page', 10);
+        $order_by = $request->input('order_by', 'created_at');
+        $order = $request->input('order', 'desc');
+
+        $query = Client::withoutGlobalScope('client')
+            ->where('permission_id', $this->responsavel_permission_id)
+            ->where('deletado', 's')
+            ->orderBy($order_by, $order);
+
+        // Filtros adicionais
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('email', 'like', '%' . $search . '%')
+                  ->orWhere('cpf', 'like', '%' . $search . '%')
+                  ->orWhere('cnpj', 'like', '%' . $search . '%')
+                  ->orWhere('name', 'like', '%' . $search . '%');
+            });
+        }
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->input('email') . '%');
+        }
+        if ($request->filled('cpf')) {
+            $query->where('cpf', 'like', '%' . $request->input('cpf') . '%');
+        }
+        if ($request->filled('cnpj')) {
+            $query->where('cnpj', 'like', '%' . $request->input('cnpj') . '%');
+        }
+        if ($request->filled('celular')) {
+            $cel = preg_replace('/\D/', '', (string)$request->input('celular'));
+            $query->where('celular', 'like', '%' . $cel . '%');
+        }
+        if ($request->filled('ativo')) {
+            $query->where('ativo', $request->input('ativo'));
+        }
+        if ($request->filled('verificado')) {
+            $query->where('verificado', $request->input('verificado'));
+        }
+        if ($request->filled('config_key') && $request->filled('config_value')) {
+            $key = $request->input('config_key');
+            $val = $request->input('config_value');
+            $query->where('config', 'like', '%"' . $key . '"%');
+            $query->where('config', 'like', '%"' . $key . '"\s*:\s*"' . $val . '"%');
+        }
+
+        $clients = $query->paginate($perPage);
+        $clients->getCollection()->transform(function ($client) {
+            if (is_string($client->config)) {
+                $configArr = json_decode($client->config, true) ?? [];
+                array_walk($configArr, function (&$value) {
+                    if (is_null($value)) {
+                        $value = (string)'';
+                    }
+                });
+                $client->config = $configArr;
+            }
+            return $client;
+        });
+
+        return response()->json($clients);
+    }
+
+    /**
+     * Restaurar responsável da lixeira.
+     * EN: Restore guardian from trash.
+     */
+    public function responsaveisRestore(Request $request, string $id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('delete')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        $client = Client::withoutGlobalScope('client')
+            ->where('id', $id)
+            ->where('deletado', 's')
+            ->where('permission_id', $this->responsavel_permission_id)
+            ->firstOrFail();
+
+        $client->update([
+            'deletado' => 'n',
+            'reg_deletado' => null
+        ]);
+
+        return response()->json([
+            'message' => 'Responsável restaurado com sucesso',
+            'status' => 200
+        ]);
+    }
+
+    /**
+     * Exclusão permanente de responsável.
+     * EN: Permanently delete guardian.
+     */
+    public function responsaveisForceDelete(Request $request, string $id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+        if (!$this->permissionService->isHasPermission('delete')) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        $client = Client::withoutGlobalScope('client')
+            ->where('id', $id)
+            ->where('permission_id', $this->responsavel_permission_id)
+            ->firstOrFail();
+
+        $client->delete();
+
+        return response()->json([
+            'message' => 'Responsável excluído permanentemente',
             'status' => 200
         ]);
     }

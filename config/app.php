@@ -56,6 +56,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend Base URL
+    |--------------------------------------------------------------------------
+    |
+    | URL base do frontend utilizada para montar links públicos enviados por
+    | e-mail (ex.: recuperação de senha). Parametrizada via FRONTEND_URL no .env.
+    |
+    */
+    'frontend_url' => env('FRONTEND_URL', 'http://crm.localhost:3000/'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

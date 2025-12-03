@@ -36,7 +36,9 @@ class PasswordResetLinkController extends Controller
             $response = Password::sendResetLink(
                 $request->only('email')
             );
-            if($api) {
+            // Detecta chamadas da API para responder JSON
+            $isApi = $api || $request->is('api/*') || $request->expectsJson();
+            if($isApi) {
                 return response()->json([
                     'status' => 200,
                     'message' => __('Um link de redefinição será enviado se a conta existir.'),
@@ -46,10 +48,14 @@ class PasswordResetLinkController extends Controller
                 return back()->with('status', __('Um link de redefinição será enviado se a conta existir.'));
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 500,
-                'message' => __('Erro ao enviar o link de redefinição de senha.'),
-            ], 500);
+            $isApi = $api || $request->is('api/*') || $request->expectsJson();
+            if($isApi) {
+                return response()->json([
+                    'status' => 500,
+                    'message' => __('Erro ao enviar o link de redefinição de senha.'),
+                ], 500);
+            }
+            return back()->withErrors(['email' => __('Erro ao enviar o link de redefinição de senha.')]);
         }
         // Password::sendResetLink(
         //     $request->only('email')

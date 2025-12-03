@@ -20,6 +20,7 @@ use App\Http\Controllers\api\ProductUnitController;
 use App\Http\Controllers\api\ProductController;
 use App\Http\Controllers\api\ServiceController;
 use App\Http\Controllers\api\ServiceUnitController;
+use App\Http\Controllers\api\SituacaoMatriculaController;
 use App\Http\Controllers\api\ServiceOrderController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -63,6 +64,10 @@ Route::name('api.')->prefix('v1')->middleware([
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
         ->name('password.email');
+    // Reset de senha via API (POST)
+    // EN: Password reset endpoint for API clients (expects JSON)
+    Route::post('reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])
+        ->name('password.store');
     Route::fallback(function () {
         return response()->json(['message' => 'Rota não encontrada'], 404);
     });
@@ -86,14 +91,7 @@ Route::name('api.')->prefix('v1')->middleware([
         Route::put('clients/{id}/restore', [ClientController::class, 'restore'])->name('clients.restore');
         Route::delete('clients/{id}/force', [ClientController::class, 'forceDelete'])->name('clients.forceDelete');
 
-        // Rotas para options
-        Route::apiResource('options', OptionController::class,['parameters' => [
-            'options' => 'id'
-        ]]);
-        Route::post('options/all', [OptionController::class, 'fast_update_all'])->name('options.all');
-        Route::get('options/trash', [OptionController::class, 'trash'])->name('options.trash');
-        Route::put('options/{id}/restore', [OptionController::class, 'restore'])->name('options.restore');
-        Route::delete('options/{id}/force', [OptionController::class, 'forceDelete'])->name('options.forceDelete');
+        
 
         // Rotas para posts
         Route::apiResource('posts', PostController::class,['parameters' => [
@@ -197,6 +195,14 @@ Route::name('api.')->prefix('v1')->middleware([
         // Rotas para tracking events
         Route::apiResource('tracking', TrackingEventController::class,['parameters' => [
             'tracking' => 'id'
+        ]]);
+        // Rotas para matriculas
+        Route::apiResource('matriculas', \App\Http\Controllers\api\MatriculaController::class, ['parameters' => [
+            'matriculas' => 'id'
+        ]]);
+        // Rotas para situações de matrícula (posts: situacao_matricula)
+        Route::apiResource('situacoes-matricula', SituacaoMatriculaController::class, ['parameters' => [
+            'situacoes-matricula' => 'id'
         ]]);
         Route::get('tracking-events', [TrackingEventController::class, 'index'])->name('tracking-events.index');
         // Rota aninhada para cadastro de etapas de um funil específico

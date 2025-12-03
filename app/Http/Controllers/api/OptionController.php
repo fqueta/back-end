@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Option;
@@ -13,15 +13,15 @@ use Illuminate\Validation\Rule;
 
 class OptionController extends Controller
 {
-    protected PermissionService $permissionService;
+    protected $permissionService;
     public $routeName;
     public $sec;
 
-    public function __construct(PermissionService $permissionService)
+    public function __construct()
     {
         $this->routeName = request()->route()->getName();
-        $this->permissionService = $permissionService;
-        $this->sec = request()->segment(3);
+        $this->permissionService = new PermissionService();
+        $this->sec = request()->segment(4);
     }
 
     /**
@@ -36,6 +36,7 @@ class OptionController extends Controller
         if (!$this->permissionService->isHasPermission('view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
+
 
         $perPage = $request->input('per_page', 100);
         $order_by = $request->input('order_by', 'created_at');
@@ -59,21 +60,11 @@ class OptionController extends Controller
         }
 
         $options = $query->paginate($perPage);
-        // Converter value para array em cada opção
-        // $options->getCollection()->transform(function ($option) {
-        //     if (is_string($option->value)) {
-        //         $valueArr = json_decode($option->value, true) ?? [];
-        //         dd($valueArr);
-        //         array_walk($valueArr, function (&$value) {
-        //             if (is_null($value)) {
-        //                 $value = (string)'';
-        //             }
-        //         });
-        //         $option->value = $valueArr;
-        //     }
-        //     return $option;
-        // });
-        $ret = $this->AdvancedInputSettings($options);
+        if($this->sec=='all'){
+            $ret = $options;
+        }else{
+            $ret = $this->AdvancedInputSettings($options);
+        }
 
         return response()->json(['data'=>$ret]);
     }
@@ -250,7 +241,7 @@ class OptionController extends Controller
         if (!$this->permissionService->isHasPermission('view')) {
             return response()->json(['error' => 'Acesso negado'], 403);
         }
-
+        dd($id);
         $option = Option::findOrFail($id);
 
         // Converter value para array

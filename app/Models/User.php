@@ -5,6 +5,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -74,4 +75,18 @@ class User extends Authenticatable
     //             ];
     //         });
     // }
+
+    /**
+     * Dispara a notificação de redefinição de senha usando nossa
+     * ResetPasswordNotification, que por sua vez seleciona o canal Brevo
+     * quando a API key estiver configurada e constrói o link para o frontend.
+     *
+     * EN: Send the password reset notification using our custom
+     * ResetPasswordNotification which uses Brevo channel when configured
+     * and builds the link to the frontend.
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
 }

@@ -35,11 +35,13 @@ class UserController extends Controller
     protected PermissionService $permissionService;
     public $routeName;
     public $sec;
+    public $cliente_permission_id;
     public function __construct(PermissionService $permissionService)
     {
         $this->routeName = request()->route()->getName();
         $this->permissionService = $permissionService;
         $this->sec = request()->segment(3);
+        $this->cliente_permission_id = (new ClientController)->cliente_permission_id ?? Qlib::qoption('permission_client_id');
     }
     /**
      * Listar todos os usuários
@@ -60,7 +62,7 @@ class UserController extends Controller
         //listar usuarios com permissões dele pra cima
         $permission_id = $request->user()->permission_id;
         // dd($permission_id);
-        $query = User::query()->where('permission_id','>=',$permission_id)->orderBy($order_by,$order);
+        $query = User::query()->where('permission_id','!=',$this->cliente_permission_id)->orderBy($order_by,$order);
 
         // Não exibir registros marcados como deletados ou excluídos
         $query->where(function($q) {
@@ -176,8 +178,21 @@ class UserController extends Controller
         }
 
         $validated = $validator->validated();
-        // Sanitização dos dados
+        /**
+         * PT: Sanitiza e normaliza campos opcionais para evitar duplicidade de strings vazias
+         * EN: Sanitize and normalize optional fields to avoid duplicate empty-string unique values
+         */
         $validated = $this->sanitizeInput($validated);
+        // Converter strings vazias em null para campos únicos opcionais
+        if (array_key_exists('email', $validated) && ($validated['email'] === '' || $validated['email'] === null)) {
+            $validated['email'] = null;
+        }
+        if (array_key_exists('cpf', $validated) && ($validated['cpf'] === '' || $validated['cpf'] === null)) {
+            $validated['cpf'] = null;
+        }
+        if (array_key_exists('cnpj', $validated) && ($validated['cnpj'] === '' || $validated['cnpj'] === null)) {
+            $validated['cnpj'] = null;
+        }
         $validated['token'] = Qlib::token();
         $validated['password'] = Hash::make($validated['password']);
         $validated['ativo'] = isset($validated['ativo']) ? $validated['ativo'] : 's';
@@ -425,6 +440,16 @@ class UserController extends Controller
 
         if (isset($validated['config']) && isArray($validated['config'])) {
             $validated['config'] = json_encode($validated['config']);
+        }
+        // Normalizar campos únicos opcionais: strings vazias viram null
+        if (array_key_exists('email', $validated) && ($validated['email'] === '' || $validated['email'] === null)) {
+            $validated['email'] = null;
+        }
+        if (array_key_exists('cpf', $validated) && ($validated['cpf'] === '' || $validated['cpf'] === null)) {
+            $validated['cpf'] = null;
+        }
+        if (array_key_exists('cnpj', $validated) && ($validated['cnpj'] === '' || $validated['cnpj'] === null)) {
+            $validated['cnpj'] = null;
         }
         // dd($validated);
         $userToUpdate->update($validated);

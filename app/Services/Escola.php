@@ -1026,7 +1026,7 @@ class Escola
 				'dadosForm' => $config
 			);
 			$ret['config2'] = $config2;
-			$result_salvarClientes =  lib_salvarFormulario($config2);//Declado em Lib/Qlibrary.php
+			$result_salvarClientes =  QLib::lib_salvarFormulario($config2);//Declado em Lib/Qlibrary.php
 			$ret = json_decode($result_salvarClientes,true);
 			// lib_print($ret);
 			// if(isset($config['dados_cliente']) && is_array($config['dados_cliente'])){

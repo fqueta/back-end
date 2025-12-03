@@ -727,7 +727,8 @@ class FinancialAccountController extends Controller
             'paidAmount' => 'nullable|numeric|min:0|max:999999999.99',
             'supplierName' => 'nullable|string|max:255',
             'priority' => 'nullable|string|in:low,medium,high',
-            'clientId' => 'nullable|exists:clients,id',
+            // Valida cliente diretamente em users com permission_id = 7
+            'clientId' => 'nullable|exists:users,id,permission_id,7',
             'contractNumber' => 'nullable|string|max:100',
             'discountAmount' => 'nullable|numeric|min:0|max:999999999.99',
             'interestAmount' => 'nullable|numeric|min:0|max:999999999.99'

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Curso;
 
 class CursosSeeder extends Seeder
 {
@@ -16,1137 +17,156 @@ class CursosSeeder extends Seeder
      * EN: Normalizes seeder records to match the consolidated `cursos`
      *     migration, stripping legacy columns and fixing types/JSON.
      */
+    /**
+     * Executa o seeder dos cursos, priorizando dados legados de cursos.json (PT/EN).
+     *
+     * PT: Tenta carregar registros de `database/seeders/data/cursos.json`. Caso não exista
+     *     ou seja inválido, usa o dataset legado abaixo como fallback. Cada linha é
+     *     normalizada para o esquema atual do modelo Curso e gravada de forma idempotente.
+     * EN: Tries to load records from `database/seeders/data/cursos.json`. If missing or
+     *     invalid, it falls back to the legacy inline dataset below. Each row is normalized
+     *     to match the current Curso model and persisted idempotently.
+     */
     public function run()
     {
-        // Registros originais (mantidos para compatibilidade; serão normalizados abaixo)
-        $rows = [
-            [
-                'id' => 1,
-                'token' => '5dd2928692120',
-                'categoria' => 'cursos_online',
-                'nome' => 'Iniciante - Ainda não sou Piloto e não tenho ensino médio',
-                'tipo' => 0,
-                'codigo' => '',
-                'titulo' => 'Iniciante - Ainda não sou Piloto e não tenho ensino médio',
-                'descricao' => '<p>O objetivo deste curso é apresentar todos os conceitos básicos da física trazendo aplicações para a aviação. Você verá conceitos de aceleração centrípeta e centrífuga, velocidade, velocidade angular e muito mais. </p>',
-                'modulos' => null,
-                'conteudo' => '[{"idItem":"1","nome":"F\\u00edsica b\\u00e1sica","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5dd2928692120"},{"idItem":"2","nome":"F\\u00edsica avan\\u00e7ada teste","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5dd2928692120"}]',
-                'inscricao' => 100,
-                'Pagamento' => null,
-                'obs' => '',
-                'valor' => 350,
-                'parcelas' => 5,
-                'meta_descricao' => 'Conceitos básicos da física com aplicações para a aviação.',
-                'valor_parcela' => 70,
-                'Aquemsedestina' => null,
-                'autor' => 6,
-                'url' => 'fisica-basica',
-                'duracao' => 14722,
-                'unidade_duracao' => 'seg',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 's',
-                'ordenar' => 0,
-                'data' => '2019-11-18 09:46:54',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '2019-11-19 15:11:31',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","libera_conteudo":{"tipo_inicio":"imediata","tipo":"uma_vez"}}',
-                'aeronaves' => '',
-                'professor' => 26,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"14/01/2024 19:01:28","tab":"cursos","nome":"Todos cursos|Iniciante - Ainda nu00e3o sou Piloto e nu00e3o tenho ensino mu00e9dio"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 3,
-                'token' => '5e14c4a924200',
-                'categoria' => 'cursos_presencias_pratico',
-                'nome' => 'Intermediário - Já iniciei minha Formação',
-                'tipo' => 0,
-                'codigo' => '',
-                'titulo' => 'Intermediário - Já iniciei minha Formação',
-                'descricao' => '<p class="destaque" style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</span></p><p style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</span></p><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 1.75rem; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">EXPERIÊNCIA</span></h3><p style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</span></p><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 1.75rem; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">VOCÊ PODE</span></h3><p style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</span></p><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 1.75rem; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">PRÓXIMA ETAPA</span></h3><p style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de <a href="https://aeroclubejf.com.br/cursos/curso-de-piloto-comercial-de-aviao/" style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit; color: rgb(0, 123, 255); transition: all 0.3s ease 0s; box-shadow: none;"><span style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: bolder;">piloto comercial</span></a>, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</span></p><br><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 1.75rem; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO)</span></h3><p style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</span></p><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 1.75rem; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">OBJETIVO:</span></h3><p style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</span></p><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 1.75rem; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">PRÉ-REQUISITOS (PRÁTICO)</span></h3><ul style="margin-right: 0px; margin-bottom: 1rem; margin-left: 20px; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">18 anos de idade</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">2º grau completo</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Ser portador do Exame Médico (CMA) de 2ª Classe</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</span></li></ul><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 1.75rem; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">TREINAMENTO:</span></h3><p style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">A carga horária para a prática de voo será de 44 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</span></p><ul style="margin-right: 0px; margin-bottom: 1rem; margin-left: 20px; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">01 hora de Adaptação (AD)</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">19 horas de Pré-Solo (PS)</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">10 horas de Aperfeiçoamento (AP)</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">10 horas de Navegação (NV)</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">03 horas de Noturno (NT)</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">01 hora de Pre-cheque (endosso)</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Avaliação final de curso – minimo de 1.5 horas / máximo de 03 horas (não incluso na carga horaria do treinamento)</span></li></ul><div id="texto" style="margin: 0px; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: inherit; font-size: 1.75rem; font-style: inherit;"><span style="background-color: inherit;"><span style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: bolder;">Prazos médios para a conclusão dos cursos práticos de Piloto Privado e de Piloto Comercial no Aeroclube de Juiz de Fora:</span></span></h3><p style="margin-bottom: 1rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">O aluno que realiza os cursos práticos de PPA e PCA não possui um limite de dias mínimos para a conclusão destes cursos. Vale ressaltar que, durante os cursos, o aluno possui vários fatores que contribuem para que o ritmo da instrução flua de forma eficaz para o aprendizado, como consolidação dos conhecimentos por meio de provas, comprovação da capacidade técnica a cada missão e dedicação da instrução.</span></p></div><p style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">No curso de PPA, o aluno é preparado, principalmente, para realizar o pouso com a aeronave, manobras básicas e o voo solo. Também serão realizadas provas sobre os temas de regulamento de tráfico, conhecimentos gerais e a aeronave ou aeronaves que serão utilizadas. Com os mesmos temas, o aluno também precisará realizar as mesmas provas no curso de Piloto Comercial, além de aprender a fazer a aproximação com a aeronave e vários tipos de pouso com o avião, entre outros assuntos e missões.</span></p><p style="margin-bottom: 1rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">Para o cálculo dos períodos, são sempre levados em consideração as condições meteorológicas, as manutenções das aeronaves utilizadas, a situação fisiológica favorável e os estudos atualizados dos alunos.</span></p><div style="margin: 0px; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><p style="margin-bottom: 1rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">No curso de PPA, são necessárias a realização de 44 missões. Portanto, o aluno conseguindo com que todos os seus voos sejam marcados na escala de forma continua, e as condições citadas acima sejam favoráveis, há a possibilidade de conclusão do curso em no minimo 42 dias. O prazo médio para a conclusão do curso de Piloto Privado é de 60 a 90 dias, isto é, de 2 a 3 meses, com dedicação integral ao curso.</span></p><p style="margin-bottom: 1rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Já o curso prático de Piloto Comercial segue a mesma lógica, sendo necessária a realização de 124 missões. Portanto, se o aluno conseguir agendar seus voos sem que nenhuma condição seja desfavorável, ele poderá concluir seu curso em, no mínimo, 124 dias. Para o Aeroclube de Juiz de Fora, o período sugerido para a conclusão do curso de Piloto Comercial é, em torno, de 150 a 200 dias, apresentando dedicação exclusiva ao curso.</span></p><p style="margin-bottom: 1rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">O prazo pode diminuir ou aumentar, dependendo das condições do período.</span></p><p style="margin-bottom: 1rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Prazos de conclusão, menores dos que comentados acima, podem existir, porem demandam que certos fatores contribuam para que este objetivo seja alcançado. O Aeroclube de Juiz de Fora, sempre prezará pela qualidade da instrução ministrada e pela segurança da operação e nunca pela velocidade em ministrar os cursos.</span></p><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: inherit; font-size: 1.75rem; font-style: inherit;"><span style="background-color: inherit;"><span style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: bolder;">Voo de Exame (Cheque):</span></span></h3><p style="margin-bottom: 1rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">O orçamento apresentado não contempla o Voo de Exame do aluno (cheque), que deverá ser realizado ao término do treinamento com o examinador credenciado da Anac e/ou do Aeroclube. Este voo não é contado como treinamento e não está incluso na carga horaria do curso de PPA ou PCA (tanto para a habilitação MNTE IFR quanto para MLTE IFR).</span></p><p style="margin-bottom: 1rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Após o aluno ter concluído com proficiência todas as missões do curso prático no qual esteja matriculado, será encaminhado para o Voo de Exame do aluno (cheque) de PPA ou PCA, pelo último instrutor que tenha realizado o voo e realizado seu endosso para o Voo de Exame do aluno (cheque).</span></p><p style="margin-bottom: 1rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">O Examinador do Aeroclube e/ou Anac, poderá realizar o Voo de Exame do aluno (cheque) com no mínimo de 1.5 horas (uma hora e trinta minutos) e no máximo de 3 (três) horas de voo, para determinar a proficiência e sua aprovação ou não no Voo de Exame do aluno (cheque).</span></p><p style="margin-bottom: 1rem; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">O valor desta hora de voo (1.5h / 3h) será cobrada do aluno proporcionalmente após o término do voo independente de seu resultado, e de acordo com o modelo da aeronave utilizada, portanto vale ressaltar que o Aeroclube de Juiz de Fora, nos orçamentos enviados, oferta apenas a carga horária miníma de treinamento para as habilitações de PPA, PCA, MNTE IFR ou MLTE IFR, devendo o aluno após a conclusão do curso prático no qual se matriculou, e após realizar o seu Voo de Exame do aluno (cheque), realizar o pagamento proporcional desta hora junto ao Aeroclube de Juiz de Fora, independente do resultado obtido. opa lorem<br></span></p></div>',
-                'modulos' => null,
-                'conteudo' => '',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '<h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 1.75rem; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">PRÉ-REQUISITOS (TEÓRICO)</span></h3><h3><br></h3><ul style="margin-right: 0px; margin-bottom: 1rem; margin-left: 20px; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">18 anos de idade</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">2º grau completo</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Ser portador do Exame Médico (CMA) de 2ª Classe</span></li></ul><h3><br></h3><h3 style="margin-bottom: 0.5rem; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: 1.2; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 1.75rem; color: rgb(122, 122, 122); text-align: justify;"><span style="background-color: inherit;">MATÉRIAS:</span></h3><h3><br></h3><ul style="margin-right: 0px; margin-bottom: 1rem; margin-left: 20px; padding: 0px; border: 0px none; outline: currentcolor none 0px; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: Roboto, sans-serif; font-size: 16px; color: rgb(122, 122, 122); text-align: justify;"><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">A Aviação Civil;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Combate ao fogo em aeronave;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Conhecimentos Técnicos de Aeronaves;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Medicina de Aviação;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Meteorologia;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Navegação;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Palestra “O piloto privado – avião”;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Regulamentação da Aviação Civil;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Regulamentos de Tráfego Aéreo;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Segurança de voo;</span></li><li style="margin: 0px; padding: 0px; border: 0px; outline: 0px; font-variant: inherit; font-stretch: inherit; line-height: inherit; vertical-align: baseline; font-family: inherit; font-style: inherit; font-weight: inherit;"><span style="background-color: inherit;">Teoria de voo.</span></li></ul><h3><br></h3><p><br></p>',
-                'valor' => 0,
-                'parcelas' => 5,
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 22,
-                'url' => 'cursos-de-teste',
-                'duracao' => 0,
-                'unidade_duracao' => 'seg',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 0,
-                'data' => '2020-01-07 14:50:11',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","gratis":"n","libera_conteudo":{"tipo_inicio":"imediata","tipo":"uma_vez"},"adc":{"cor":"FFFFFF"}}',
-                'aeronaves' => '',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"14/01/2024 19:01:28","tab":"cursos","nome":"Todos cursos|Intermediu00e1rio - Ju00e1 iniciei minha Formau00e7u00e3o"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 60,
-                'token' => '5e2b1808604c5',
-                'categoria' => 'cursos_presencias_pratico',
-                'nome' => 'Curso Prático de Instrutor de Voo',
-                'tipo' => 1,
-                'codigo' => '',
-                'titulo' => 'Curso Prático de Instrutor de Voo',
-                'descricao' => '<p>loren ipsom<br></p>',
-                'modulos' => null,
-                'conteudo' => '',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 22,
-                'url' => 'curso-pratico-de-instrutor-de-voo',
-                'duracao' => 0,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 'n',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 0,
-                'data' => '2020-01-24 13:15:35',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","video":"https://www.youtube.com/watch?v=PFNQ6cJ7EFI","gratis":"n","libera_conteudo":{"tipo_inicio":"imediata","tipo":"uma_vez"},"adc":{"cor":"FFFFFF"}}',
-                'aeronaves' => '["5c597b4aa85de","5c76cca8d33d4","5cb4ad7904706","5e345e78d9c61"]',
-                'professor' => 26,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"27/04/2020 11:04:42","tab":"cursos","nome":"Todos cursos|Curso Pru00e1tico de Instrutor de Voo"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 61,
-                'token' => '5e2b1992a9e6f',
-                'categoria' => 'cursos_presencias_pratico',
-                'nome' => 'Recheque MLTE IFR',
-                'tipo' => 0,
-                'codigo' => '',
-                'titulo' => 'Recheque MLTE IFR',
-                'descricao' => '',
-                'modulos' => '{"1":{"titulo":"Adaptação","limite":"1"},"2":{"titulo":"Apresentação","limite":"10","aviao":["18","17","6"]}}',
-                'conteudo' => '',
-                'inscricao' => null,
-                'Pagamento' => null,
-                'obs' => '',
-                'valor' => null,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 22,
-                'url' => 'recheque-mlte-ifr',
-                'duracao' => 0,
-                'unidade_duracao' => 'seg',
-                'ativo' => 'n',
-                'publicar' => 'n',
-                'destaque' => 's',
-                'ordenar' => 0,
-                'data' => '2020-01-24 13:22:00',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '',
-                'aeronaves' => '',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"22","excluido_data":"01/02/2020 10:02:24","tab":"cursos","nome":"Todos cursos|Recheque MLTE IFR"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 62,
-                'token' => '5e2ef771ef433',
-                'categoria' => 'cursos_online',
-                'nome' => 'METEOROLOGIA',
-                'tipo' => 0,
-                'codigo' => '',
-                'titulo' => 'METEOROLOGIA',
-                'descricao' => '<p>Disciplina básica do curso de Piloto Privado. Matéria de Meteorologia auxilia o piloto a ler metar, <br></p>',
-                'modulos' => null,
-                'conteudo' => '[{"idItem":"3","nome":"meteorologia","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e2ef771ef433"}]',
-                'inscricao' => null,
-                'Pagamento' => null,
-                'obs' => '',
-                'valor' => null,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 39,
-                'url' => 'meteorologia',
-                'duracao' => 0,
-                'unidade_duracao' => 'seg',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 's',
-                'ordenar' => 0,
-                'data' => '2020-01-27 11:52:02',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '2020-01-27 12:01:14',
-                'config' => '',
-                'aeronaves' => '',
-                'professor' => 26,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"22","excluido_data":"28/01/2020 16:01:25","tab":"cursos","nome":"Todos cursos|METEOROLOGIA"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 63,
-                'token' => '5e307eda7e28e',
-                'categoria' => 'cursos_online',
-                'nome' => 'curso piloto privado',
-                'tipo' => 0,
-                'codigo' => '',
-                'titulo' => 'CURSO PILOTO PRIVADO',
-                'descricao' => '<p><span style="color: rgb(122, 122, 122); font-family: Roboto, sans-serif; font-size: 16px; text-align: justify; background-color: rgba(255, 255, 255, 0.9);">Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</span><br></p>',
-                'modulos' => null,
-                'conteudo' => '',
-                'inscricao' => null,
-                'Pagamento' => null,
-                'obs' => '',
-                'valor' => null,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 22,
-                'url' => 'curso-piloto-privado',
-                'duracao' => 277,
-                'unidade_duracao' => 'seg',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 's',
-                'ordenar' => 0,
-                'data' => '2020-01-28 15:42:06',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '',
-                'aeronaves' => '',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"40","excluido_data":"29/01/2020 15:01:51","tab":"cursos","nome":"Todos cursos|curso piloto privado"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 64,
-                'token' => '5e31c31404efa',
-                'categoria' => 'cursos_online',
-                'nome' => 'Instrutor de voo Avião Teórico EAD',
-                'tipo' => 1,
-                'codigo' => '',
-                'titulo' => 'Instrutor de voo Avião Teórico EAD',
-                'descricao' => '<h5>INSTRUTOR DE VOO DE AVIÃO</h5><p>O curso de Instrutor de Voo requer formação prévia como Piloto Comercial.</p><p>Trata-se de uma ótima opção para quem deseja adquirir experiência antes de buscar novas oportunidades na aviação comercial. O curso de Instrutor de Voo permite, ainda, que o piloto de avião atue como instrutor em escolas de aviação civil. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5>EXPERIÊNCIA:</h5><p>Para se tornar um Instrutor de Voo, você deve ter concluído o curso de Piloto Comercial prático.</p><h5>VOCÊ PODE:</h5><p>Esse curso habilita o piloto comercial a exercer a função de instrutor de voo em escolas de aviação civil.</p><h5>PRÓXIMA ETAPA:</h5><p>Avançar em sua carreira profissional, fazendo preparatórios para especialidades como Piloto de Linha Aérea.</p><h5>PRÉ-REQUISITOS (TEÓRICO):</h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador da licença de Piloto Comercial </li></ul><h5>MATÉRIAS:</h5><ul><li>Relações Interpessoais;</li><li>Recursos Áudio Visuais;</li><li>Instrutor e a Comunicação;</li><li>Fichas de Voo;</li><li>Briefing e Debriefing;</li><li>Medicina Aeroespacial;</li><li>Direitos Aeronáuticos;</li><li>Segurança de Voo;</li><li>Sistema de Aviação Civil;</li><li>Processo Ensino – Aprendizagem.</li></ul><h5>TREINAMENTO PRÁTICO:</h5><p><b>Está dividido em 27 horas (com voo de avaliação incluso), sendo:</b></p><ul><li>05 horas de adaptação (caso não tenha experiência na aeronave escolhida);</li><li>16 horas de preparação do Instrutor;</li><li>05 horas de navegação;</li><li>1 hora de voo de Cheque com examinador credenciado pela ANAC</li></ul><h5>Novo sistema de cursos é adotado pelo Aeroclube de Juiz de Fora</h5><p>Uma nova dinâmica de estudos nos cursos de Piloto Privado, Piloto Comercial e Instrutor de Voo de Avião será implantada pelo Aeroclube de Juiz de Fora, a nova modalidade de estudos foi aperfeiçoada pela diretoria da instituição, em parceria com o grupo SENAI de Juiz de Fora, para beneficiar os alunos quanto à agilidade das aulas práticas e o aperfeiçoamento dos cursos.</p><h5>Como será o curso de Instrutor de Voo?</h5><p>O curso de Instrutor de voo tem carga horária de 27 horas. O aluno tem uma expectativa de finalização, dentro desse novo modelo que passa a ser aplicado pelo Aeroclube, de 30 dias.</p><h5>Quais aeronaves serão utilizadas no curso de Instrutor de Voo?</h5><p>Para o curso de Instrutor de Voo, são utilizadas preferencialmente as aeronaves convencionais, como AeroBoero e Paulistinha, para melhorar a destreza do aluno, porem caso o mesmo nao seja familiarizado com a operação de aeronaves convencionais, o curso passa a ser ministrado nas aeronaves Cessna 150 ou 152.</p><h5>E se o aluno de Instrutor de Voo não conseguir concluir o curso em 30 dias?</h5><p>Se o aluno de Instrutor de Voo, não puder concluir o curso dentro de 30 dias, ele segue a mesma situação do curso de Piloto Privado e Piloto Comercial. O aluno será realocado na turma subsequente, se ele puder ficar. Caso ele não possa, ele será realocado em uma turma posterior e terá que ser criado um acordo com disponibilidade entre o aeroclube e o aluno para ele poder concluir o curso. Vale lembrar que, para o curso de Instrutor de Voo tem a validade de horas de voo de 90 dias no máximo para cheque, e a validade do contrato com o aeroclube é de 180 dias para conclusão.</p><p>O prazo pode diminuir ou aumentar, dependendo das condições do período e de aprendizado do aluno.</p><p>Prazos de conclusão, menores dos que comentados acima, podem existir, porem demandam que certos fatores contribuam para que este objetivo seja alcançado. O Aeroclube de Juiz de Fora, sempre prezará pela qualidade da instrução ministrada e pela segurança da operação e nunca pela velocidade em ministrar os cursos.</p><h5>Voo de Exame (Cheque):</h5><p>O Voo de Exame do aluno (cheque), deverá ser realizado ao término do treinamento com o examinador credenciado da Anac e/ou do Aeroclube. Este voo não é contado como treinamento e não está incluso na carga horaria dos cursos de Piloto Privado ou Piloto Comercial (tanto para a habilitação MNTE IFR quanto para MLTE IFR).</p><p>Após o aluno ter concluído com proficiência todas as missões do curso prático no qual esteja matriculado, será encaminhado para o Voo de Exame (cheque) de Piloto Privado ou Piloto Comercial, pelo último instrutor que tenha realizado o voo e seu endosso para o Voo de Exame do aluno (cheque).</p><p>O Examinador do Aeroclube e/ou Anac, poderá realizar o Voo de Exame do aluno (cheque) com no mínimo de 1.5 horas (uma hora e trinta minutos) e no máximo de 3 (três) horas de voo, para determinar a proficiência e sua aprovação ou não no Voo de Exame do aluno (cheque).</p><p>O valor desta hora de voo (1.5h / 3h) será cobrada do aluno proporcionalmente após o término do voo independente de seu resultado, e de acordo com o modelo da aeronave utilizada, portanto vale ressaltar que o Aeroclube de Juiz de Fora, nos orçamentos enviados, oferta apenas a carga horária mínima de treinamento para as licenças de Piloto Privado, Piloto Comercial, com habilitações MNTE IFR ou MLTE IFR, devendo o aluno após a conclusão do curso prático no qual se matriculou, realizar o seu Voo de Exame (cheque), fazendo o pagamento proporcional desta hora junto ao Aeroclube de Juiz de Fora, independente do resultado obtido.</p>',
-                'modulos' => '{"1":{"titulo":"","limite":""}}',
-                'conteudo' => '[{"idItem":5,"nome":"INVA - O INSTRUTOR DE V\\u00d4O","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"6","nome":"INVA - A AVIA\\u00c7\\u00c3O CIVIL","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"7","nome":"INVA - INSTRU\\u00c7\\u00c3O T\\u00c9CNICA DA AERONAVE","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"8","nome":"INVA - SEGURAN\\u00c7A DE V\\u00d4O","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"10","nome":"INVA - NO\\u00c7\\u00d5ES DE DIREITO AERON\\u00c1UTICO","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"11","nome":"INVA - O INSTRUTOR E A COMUNICA\\u00c7\\u00c3O","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"14","nome":"INVA - RELA\\u00c7\\u00d5ES INTERPESSOAIS ","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"16","nome":"INVA - RECURSOS AUDIOVISUAIS","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"18","nome":"INVA - PROCESSO ENSINO APRENDIZAGEM ","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"20","nome":"INVA - A AVALIA\\u00c7\\u00c3O E A CR\\u00cdTICA","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"21","nome":"INVA - TEORIA DE V\\u00d4O","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"22","nome":"INVA - INSTRU\\u00c7\\u00c3O AEROM\\u00c9DICA ","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"23","nome":"INVA- ABERTURA DO CURSO ","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"},{"idItem":"24","nome":"INVA- ENCERRAMENTO DO CURSO ","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31c31404efa"}]',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '<p>O curso de Instrutor de Voo requer formação prévia como Piloto Comercial. Uma ótima opção para quem deseja adquirir experiência antes de buscar novas oportunidades na aviação comercial. O curso de Instrutor de Voo permite, ainda, que o piloto de avião atue como instrutor em escolas de aviação civil.O curso de Instrutor de Voo requer formação prévia como Piloto Comercial. Uma ótima opção para quem deseja adquirir experiência antes de buscar novas oportunidades na aviação comercial. O curso de Instrutor de Voo permite, ainda, que o piloto de avião atue como instrutor em escolas de aviação civil.<br></p>',
-                'valor' => 900,
-                'parcelas' => 1,
-                'meta_descricao' => '',
-                'valor_parcela' => 900,
-                'Aquemsedestina' => null,
-                'autor' => 22,
-                'url' => 'instrutor-de-voo-aviao-teorico-ead',
-                'duracao' => 0,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 's',
-                'destaque' => 's',
-                'ordenar' => 6,
-                'data' => '2020-01-29 14:44:58',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '2020-01-29 15:01:27',
-                'config' => '{"proximo_curso":"","gratis":"n","comissao":"3,00","tx2":[{"name_label":"","name_valor":""}],"tipo_desconto_taxa":"v","desconto_taxa":"","pagina_divulgacao":"","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_venda":{"link":"","label":""},"adc":{"recheck":"n","recorrente":"n","cor":"FFFFFF"},"ead":{"id_eadcontrol":""}}',
-                'aeronaves' => '["5c2280d606784","5c2289226284d","5c2b9279ae5b9","5c76cca8d33d4"]',
-                'professor' => 0,
-                'excluido' => 'n',
-                'reg_excluido' => '{"excluidopor":"137","excluido_data":"21/06/2024 11:06:32","tab":"cursos","nome":"Todos cursos|Instrutor de Voo Aviu00e3o Teu00f3rico Presencial"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 65,
-                'token' => '5e31c3366ea69',
-                'categoria' => 'cursos_online',
-                'nome' => 'Piloto Comercial Avião Teórico EAD',
-                'tipo' => 1,
-                'codigo' => '',
-                'titulo' => 'Piloto Comercial Avião Teórico EAD',
-                'descricao' => '<h3><b>CURSO TEÓRICO DE PILOTO COMERCIAL DE AVIÃO (EAD)</b></h3><div>Para facilitar os estudos de forma a disponibilizar as aulas direto na sua casa, por meio de mídia eletrônica, o Aeroclube de Juiz de Fora lançou seu Curso Teórico de PCA à Distância. Dessa forma, o aluno tem a comodidade de não precisar sair de casa para acompanhar as aulas teóricas e, ainda, economiza por continuar estudando no conforto de sua residência.</div><div><br></div><h3><b>REQUISITOS:</b></h3><ul><li>Ensino médio completo (2º grau);</li><li>Recomenda-se a realização do exame CMA - Certificado Médico Aeronáutico em hospital ou clínica credenciada;</li><li>Orientações sobre as atividades</li></ul><div>Em nossa plataforma de ensino você encontrará aquilo de que necessita para bem conduzir os seus estudos. Você navegará pelas disciplinas de forma dinâmica e prática, sendo informado pelo sistema sobre o que já foi completado e aquilo que ainda resta ser feito.</div><div><br></div><div>O sistema lhe avisará sobre o que é obrigatório e o que é opcional. Você encontrará aulas em vídeos, e também exercícios propostos e leituras recomendadas.</div><div><br></div><div><b style="color: inherit; font-size: 19px;">Grade Curricular e Distribuição das Disciplinas</b></div><h3><span style="font-size: 13px;">A programação do curso obedece a distribuição por ciclos (básico, técnico e complementar). Depois de iniciado, o curso deve ser concluído no período máximo de 6 meses. As provas serão realizadas todas dentro da plataforma de ensino.</span></h3><div><br></div><div>O aluno deverá realizar o seu curso respeitando as seguintes regras:</div><div><br></div><div>As disciplinas são organizadas em três blocos sequenciais: Básico, Técnico e Complementar;</div><div>Considera-se concluída a disciplina em que o aluno, tendo percorrido todo o seu conteúdo e realizado as atividades propostas, realizou avaliação online.</div><div><br></div><div><b>As disciplinas que serão cursadas:</b></div><div><br></div><div>Palestras introdutórias: “O Piloto Comercial de Avião: Preparação e Atividade” e “Apresentação da EJ”;</div><div>Segurança de Voo;</div><div>Inglês Técnico;</div><div>Conhecimentos Técnicos da Aeronave;</div><div>Meteorologia;</div><div>Teoria de Voo;</div><div>Regulamentos de Tráfego Aéreo;</div><div>Navegação Aérea;</div><div>A Aviação Civil;</div><div>Segurança na Aviação contra Atos de Interferência Ilícita;</div><div>Regulamentação da Profissão de Aeronauta;</div><div>Regulamentação da Aviação Civil;</div><div>Física;</div><div>Matemática;</div><div>Instrução Aeromédica.</div><div><br></div><div>O curso é projetado para que o aluno usufrua de autonomia em seus estudos, entretanto, seguem muito relevantes as interações humanas. Para cada tipo de necessidade de interação, desenhou-se um tipo de tutoria. São elas:</div><div><br></div><h4><b>Tutoria de conteúdo</b></h4><div>O professor-tutor responde a dúvidas sobre o conteúdo ministrado, propõe exercícios e atividades. Ele orienta o aluno para que obtenha melhor desempenho;</div><div><br></div><h4><b>Tutoria da plataforma</b></h4><div>A equipe técnica esclarece dúvidas sobre o uso de recursos da plataforma de ensino à distância;</div><div><br></div><h4><b>Tutoria de curso</b></h4><div>A Coordenação orienta sobre questões atinentes à organização do curso, de suas disciplinas, de seus pré-requisitos, além de colher sugestões e reclamações para a melhoria contínua dos processos de ensino.</div><div><br></div><div><h3><b>O contato entre aluno e escola</b></h3><br></div><h4><b>Canais interativos</b></h4><div>São aqueles em que os interlocutores encontram-se simultaneamente disponíveis para o ato de comunicação. São eles:</div><div><br></div><div><b>WhatsApp</b> - Para as tutorias de tecnologia e de curso (de segunda a sexta, entre 9h e 18h);</div><div><br></div><h4><b>Canais não interativos</b></h4><div>São aqueles em que os interlocutores não estão simultaneamente disponíveis para o ato de comunicação.</div><div><br></div><div>Os canais não interativos respondem em até 48 horas úteis do acionamento.</div><div><br></div><h4><b>Frequência mínima</b></h4><div>No método "EAD" a frequência sempre será de 100%, ou seja, o aluno obrigatoriamente deverá concluir todos os conteúdos do curso.</div><div><br></div><h4><b>Saiba mais</b></h4><div>O curso EAD, Ensino a distância é referente apenas a parte teórica do curso.</div><div><br></div><div>O curso EAD segue padrões de qualidade da semelhante aos cursos presenciais, com foco na qualidade de ensino e aprovação nas provas ANAC - Agência Nacional de Aviação Civil</div>',
-                'modulos' => null,
-                'conteudo' => '[{"idItem":4,"nome":"O PILOTO COMERCIAL-AVI\\u00c3O: prePara\\u00e7\\u00e3o e atividade","tab":null,"campo_enc_item":null,"url_alt_item":null}]',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '<p>Este curso é o segundo passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso tem 100 aulas obrigatórias e mais de 200 aulas extras. A duração depende do desempenho do aluno. Com uma média de 4 aulas por dia, o tempo médio de conclusão é de 90 dias. No final desta segunda etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p>',
-                'valor' => 990,
-                'parcelas' => 0,
-                'meta_descricao' => 'CURSO DE PILOTO COMERCIAL DE AVIÃO, COMO TRABALHAR SENDO PILOTO',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 114,
-                'url' => 'piloto-comercial-aviao-teorico-ead',
-                'duracao' => 400,
-                'unidade_duracao' => 'seg',
-                'ativo' => 's',
-                'publicar' => 's',
-                'destaque' => 's',
-                'ordenar' => 3,
-                'data' => '2020-01-29 14:58:50',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '2020-01-29 15:01:01',
-                'config' => '{"proximo_curso":"","gratis":"n","comissao":"3,00","tx2":[{"name_label":"","name_valor":""}],"tipo_desconto_taxa":"v","desconto_taxa":"","pagina_divulgacao":"","video":"","pagina_venda":{"link":"","label":""},"adc":{"recheck":"n","recorrente":"n","cor":"FFFFFF"},"ead":{"id_eadcontrol":""}}',
-                'aeronaves' => '',
-                'professor' => 0,
-                'excluido' => 'n',
-                'reg_excluido' => '{"excluidopor":"40","excluido_data":"29/01/2020 15:01:05","tab":"cursos","nome":"Todos cursos|CURSO DE PILOTO COMERCIAL DE AVIu00c3O"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 66,
-                'token' => '5e31c957ac434',
-                'categoria' => 'cursos_online',
-                'nome' => 'Piloto Privado Avião Teórico EAD',
-                'tipo' => 1,
-                'codigo' => '',
-                'titulo' => 'Piloto Privado Avião Teórico EAD',
-                'descricao' => '<h3 style="-webkit-font-smoothing: antialiased; margin-top: 6px; margin-bottom: 10px; padding: 0px 0px 5px; border-width: 0px 0px 1px; border-top-style: initial; border-right-style: initial; border-bottom-style: solid; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: rgb(229, 229, 229); border-left-color: initial; border-image: initial; list-style: none; transition: all 0.1s ease-out 0s; letter-spacing: normal; font-size: 15px !important; line-height: 24px !important;"><b style="color: inherit; font-size: 17px;">CURSO TEÓRICO DE PILOTO PRIVADO DE AVIÃO (EAD)</b></h3><p>Para facilitar os estudos de forma a disponibilizar as aulas direto na sua casa, por meio de mídia eletrônica, o Aeroclube de Juiz de Fora lançou seu Curso Teórico de PPA à Distância. Dessa forma, o aluno tem a comodidade de não precisar sair de casa para acompanhar as aulas teóricas e, ainda, economiza por continuar estudando no conforto de sua residência.</p><h5><b>REQUISITOS:</b></h5><ul><li>Ensino médio completo (2º grau);</li><li>Recomenda-se a realização do exame CMA - Certificado Médico Aeronáutico em hospital ou clínica credenciada;</li><li>Orientações sobre as atividades</li></ul><p>Em nossa plataforma de ensino você encontrará aquilo de que necessita para bem conduzir os seus estudos. Você navegará pelas disciplinas de forma dinâmica e prática, sendo informado pelo sistema sobre o que já foi completado e aquilo que ainda resta ser feito.</p><p>O sistema lhe avisará sobre o que é obrigatório e o que é opcional. Você encontrará aulas em vídeos, e também exercícios propostos e leituras recomendadas.</p><h5><b>Grade Curricular e Distribuição das Disciplinas</b></h5><p>A programação do curso obedece a distribuição por ciclos (básico, técnico e complementar). Depois de iniciado, o curso deve ser concluído no período máximo de 6 meses. As provas serão realizadas todas dentro da plataforma de ensino.</p><p>O aluno deverá realizar o seu curso respeitando as seguintes regras:</p><ul><li>As disciplinas são organizadas em três blocos sequenciais: Básico, Técnico e Complementar;</li><li>Considera-se concluída a disciplina em que o aluno, tendo percorrido todo o seu conteúdo e realizado as atividades propostas, realizou avaliação online.</li><li>As disciplinas que serão cursadas:</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Meteorologia;</li><li>Navegação;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Teoria de voo.</li><li>Tutoria</li></ul><p>O curso é projetado para que o aluno usufrua de autonomia em seus estudos, entretanto, seguem muito relevantes as interações humanas. Para cada tipo de necessidade de interação, desenhou-se um tipo de tutoria. São elas:</p><h5><b>Tutoria de conteúdo</b></h5><p>O professor-tutor responde a dúvidas sobre o conteúdo ministrado, propõe exercícios e atividades. Ele orienta o aluno para que obtenha melhor desempenho;</p><h5><b>Tutoria da plataforma</b></h5><p>A equipe técnica esclarece dúvidas sobre o uso de recursos da plataforma de ensino à distância;</p><h5><b>Tutoria de curso</b></h5><p>A Coordenação orienta sobre questões atinentes à organização do curso, de suas disciplinas, de seus pré-requisitos, além de colher sugestões e reclamações para a melhoria contínua dos processos de ensino.</p><h5><b>O contato entre aluno e escola</b></h5><h6>Canais interativos</h6><p>São aqueles em que os interlocutores encontram-se simultaneamente disponíveis para o ato de comunicação. São eles:</p><p><b>Whatsapp</b> - Para as tutorias de tecnologia e de curso (de segunda a sexta, entre 9h e 18h);</p><h6>Canais não interativos</h6><p>São aqueles em que os interlocutores não estão simultaneamente disponíveis para o ato de comunicação.</p><p>Os canais não interativos respondem em até 48 horas úteis do acionamento.</p><h5><b>Frequência mínima</b></h5><p>No método "EAD" a frequência sempre será de 100%, ou seja, o aluno obrigatoriamente deverá concluir todos os conteúdos do curso.</p><h5><b>Saiba mais</b></h5><p>O curso EAD, Ensino a distância é referente apenas a parte teórica do curso.</p><p>O curso EAD segue padrões de qualidade da semelhante aos cursos presenciais, com foco na qualidade de ensino e aprovação nas provas ANAC - Agência Nacional de Aviação Civil</p><p><br></p>',
-                'modulos' => null,
-                'conteudo' => '[]',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '<p class=MsoNormal>Este curso é o primeiro passo para quem deseja se tornar um\r\npiloto de avião. O aluno estará apto a pilotar aviões monomotores em condições\r\nvisuais. O curso tem 100 aulas obrigatórias e mais de 200 aulas extras. A duração depende do desempenho do aluno. Com uma média de 4 aulas por dia, o tempo médio de conclusão é de 60 dias. No final desta primeira\r\netapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de\r\nAviação Civil). Caso seja aprovado, estará apto a concluir o treinamento\r\nprático.<o:p></o:p></p>',
-                'valor' => 990,
-                'parcelas' => '',
-                'meta_descricao' => 'Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso tem 100 aulas obrigatórias e mais de 20 aula',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 114,
-                'url' => 'piloto-privado-aviao-teorico-ead',
-                'duracao' => 400,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 's',
-                'destaque' => 's',
-                'ordenar' => 1,
-                'data' => '2020-01-29 15:10:24',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '2021-01-17 12:01:20',
-                'config' => '{"proximo_curso":"","gratis":"n","comissao":"3,00","ocultar_inscricao":"s","tx2":[{"name_label":"","name_valor":""}],"tipo_desconto_taxa":"v","desconto_taxa":"","pagina_divulgacao":"https://aeroclubejf.eadcontrol.com.br/cursos/cursos-online/mentoria-piloto-privado-aviao-teorico-ead","video":"https://www.youtube.com/watch?v=Zcd2uHMsDcg","pagina_venda":{"link":" https://aeroclubejf.eadcontrol.com.br/cursos/cursos-online/mentoria-piloto-privado-aviao-teorico-ead/comprar","label":"Matricule-se"},"adc":{"recheck":"n","recorrente":"n","cor":"0400FF"},"ead":{"id_eadcontrol":"1"}}',
-                'aeronaves' => '',
-                'professor' => 0,
-                'excluido' => 'n',
-                'reg_excluido' => '{"excluidopor":"137","excluido_data":"05/02/2024 22:02:13","tab":"cursos","nome":"Todos cursos|Piloto Privado Aviu00e3o Teu00f3rico EAD"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 67,
-                'token' => '5e31d4951f8dc',
-                'categoria' => 'cursos_online',
-                'nome' => 'Piloto Comercial Avião IFR EAD',
-                'tipo' => 1,
-                'codigo' => '',
-                'titulo' => 'Piloto Comercial Avião IFR EAD',
-                'descricao' => '<h3 style="-webkit-font-smoothing: antialiased; font-family: HelveticaNeueLTPro-Bd; margin-top: 6px; margin-bottom: 10px; padding: 0px 0px 5px; border-width: 0px 0px 1px; border-top-style: initial; border-right-style: initial; border-bottom-style: solid; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: rgb(229, 229, 229); border-left-color: initial; border-image: initial; list-style: none; transition: all 0.1s ease-out 0s; letter-spacing: normal; font-size: 15px !important; line-height: 24px !important;"><b style="color: inherit; font-family: " open="" sans",="" arial,="" helvetica,="" sans-serif;="" font-size:="" 17px;"="">CURSO TEÓRICO DE PILOTO COMERCIAL DE AVIÃO (EAD)</b><br></h3><p>Para facilitar os estudos de forma a disponibilizar as aulas direto na sua casa, por meio de mídia eletrônica, o Aeroclube de Juiz de Fora lança seu Curso Teórico de PCA à Distância. Dessa forma, o aluno tem a comodidade de não precisar sair de casa para acompanhar as aulas teóricas e, ainda, economiza por continuar estudando no conforto de sua residência.<br></p><h5><b>REQUISITOS:</b></h5><ul><li>Ensino médio completo (2º grau);</li><li>Recomenda-se a realização do exame CMA - Certificado Médico Aeronáutico em hospital ou clínica credenciada;</li><li>Recomenda-se ser portador de licença de Piloto Privado Avião</li></ul><p><b>Orientações sobre as atividades</b></p><p>Em nossa plataforma de ensino você encontrará aquilo de que necessita para bem conduzir os seus estudos. Você navegará pelas disciplinas de forma dinâmica e prática, sendo informado pelo sistema sobre o que já foi completado e aquilo que ainda resta ser feito.</p><p>O sistema lhe avisará sobre o que é obrigatório e o que é opcional. Você encontrará aulas em vídeos, mas também exercícios propostos e leituras recomendadas.</p><h5><b>Grade Curricular e Distribuição das Disciplinas</b></h5><p>A programação do curso obedece a distribuição por ciclos (básico, técnico e complementar). Depois de iniciado, o curso deve ser concluído no período máximo de 6 meses. As provas serão realizadas todas dentro da plataforma de ensino.</p><p><b>O aluno deverá realizar o seu curso respeitando as seguintes regras:</b></p><ul><li>As disciplinas são organizadas em três blocos sequenciais: Básico, Técnico e Complementar;</li><li>Considera-se concluída a disciplina em que o aluno, tendo percorrido todo o seu conteúdo e realizado as atividades propostas, realizou avaliação online.</li></ul><h5><b>As disciplinas que serão cursadas</b></h5><p><font face="Tahoma"><span style="font-size: 12pt; line-height: 107%;">-\r\nConhecimentos Técnicos da aeronave;<br></span></font><font face="Tahoma"><span style="font-size: 12pt; line-height: 107%;">-\r\nMeteorologia;<br></span></font><font face="Tahoma"><span style="font-size: 12pt; line-height: 107%;">-\r\nTeoria de Voo;<br></span></font><font face="Tahoma"><span style="font-size: 12pt; line-height: 107%;">-\r\nRegulamentos de Tráfego Aéreo;<br></span></font><font face="Tahoma"><span style="font-size: 12pt; line-height: 107%;">-\r\nNavegação Aérea;<br></span></font><br></p><h5><b>Tutoria</b></h5><p>O curso é projetado para que o aluno usufrua de autonomia em seus estudos, entretanto, seguem muito relevantes as interações humanas. Para cada tipo de necessidade de interação, desenhou-se um tipo de tutoria. São elas:</p><h5><b>Tutoria de conteúdo</b></h5><p>O professor-tutor responde a dúvidas sobre o conteúdo ministrado, propõe exercícios e atividades. Ele orienta o aluno para que obtenha melhor desempenho;</p><h5><b>Tutoria da plataforma</b></h5><p>A equipe técnica esclarece dúvidas sobre o uso de recursos da plataforma de ensino à distância;</p><h5><b>Tutoria de curso</b></h5><p>A Coordenação orienta sobre questões atinentes à organização do curso, de suas disciplinas, de seus pré-requisitos, além de colher sugestões e reclamações para a melhoria contínua dos processos de ensino.</p><h5><b>O contato entre aluno e escola</b></h5><p><b>Canais interativos</b></p><p>São aqueles em que os interlocutores encontram-se simultaneamente disponíveis para o ato de comunicação. São eles:</p><ul><li>Whatsapp - Para as tutorias de tecnologia e de curso (de segunda a sexta, entre 9h e 18h);</li></ul><p><b>Canais não interativos</b></p><p>São aqueles em que os interlocutores não estão simultaneamente disponíveis para o ato de comunicação.</p><p>Os canais não interativos respondem em até 48 horas úteis do acionamento.</p><h5><b>Frequência mínima</b></h5><p>No método "EAD" a frequência sempre será de 100%, ou seja, o aluno obrigatoriamente deverá concluir todos os conteúdos do curso.</p><h5><b>Saiba mais</b></h5><ul><li>O curso EAD, Ensino a distância é referente apenas a parte teórica do curso.</li><li>O curso EAD segue padrões de qualidade da semelhante aos cursos presenciais, com foco na qualidade de ensino e aprovação nas provas ANAC - Agência Nacional de Aviação Civil</li></ul><p><b style="color: inherit; font-size: 19px;">Visite:</b><br></p><p><span style="font-size: 13px;">https://pay.greenn.com.br/3309/offer/qO9IBM</span><br></p><p><br></p>',
-                'modulos' => null,
-                'conteudo' => '{"8":{"idItem":33,"nome":"PC - NAVEGA\\u00c7\\u00c3O A\\u00c9REA","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31d4951f8dc"},"9":{"idItem":32,"nome":"PC - REGULAMENTOS DE TR\\u00c1FEGO A\\u00c9REO","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31d4951f8dc"},"10":{"idItem":39,"nome":"PC - TEORIA DE V\\u00d5O","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31d4951f8dc"},"11":{"idItem":40,"nome":"PC - METEOROLOGIA ","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31d4951f8dc"},"12":{"idItem":41,"nome":"PC - CONHECIMENTOS T\\u00c9CNICOS DAS AERONAVES","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5e31d4951f8dc"}}',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '<p>O Curso Teórico de Piloto Comercial Avião (PCA) oferece a completa profissionalização para o piloto. Nessa fase dos estudos, o piloto aprende matérias da aviação de forma mais aprofundada, objetivando um conhecimento mais completo e abrangente da navegação aérea. Para atuar nessa etapa, é necessário apresentar a licença de Piloto Privado Avião.<br></p>',
-                'valor' => 1897,
-                'parcelas' => '',
-                'meta_descricao' => 'O Curso Teórico de Piloto Comercial Avião (PCA) oferece a completa profissionalização para o piloto. Nessa fase dos estudos, o piloto aprende matérias da aviação de forma mais aprofundada, objetivando',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 114,
-                'url' => 'piloto-comercial-aviao-ifr-ead',
-                'duracao' => 440,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 's',
-                'destaque' => 's',
-                'ordenar' => 3,
-                'data' => '2020-01-29 15:53:47',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '2020-05-10 13:05:01',
-                'config' => '{"proximo_curso":"107","gratis":"n","comissao":"2,00","ocultar_inscricao":"s","tx2":[{"name_label":"","name_valor":""}],"pagina_divulgacao":"https://aeroclubejf.eadcontrol.com.br/cursos/cursos-online/piloto-comercial-aviao-ead-teorico","video":"https://www.youtube.com/watch?v=zQgCoAgxHFI","pagina_venda":{"link":"https://aeroclubejf.eadcontrol.com.br/cursos/cursos-online/piloto-comercial-aviao-ead-teorico/comprar","label":"Matricule-se"},"adc":{"recorrente":"n","cor":"092E00"},"ead":{"id_eadcontrol":"2"}}',
-                'aeronaves' => '',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"137","excluido_data":"05/02/2024 22:02:13","tab":"cursos","nome":"Todos cursos|Piloto Comercial Aviu00e3o IFR EAD"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 70,
-                'token' => '5e8738af96a10',
-                'categoria' => 'cursos_presencias_pratico',
-                'nome' => 'PCA(MNTE)-2020',
-                'tipo' => 1,
-                'codigo' => '',
-                'titulo' => 'Curso de Piloto Comercial de Avião - MNTE',
-                'descricao' => '<h5><b>Habilitação MNTE</b></h5><p>O Curso de Piloto Comercial é o primeiro rumo à profissionalização. O Aeroclube de Juiz de Fora oferece treinamento teórico e prático que permite ao piloto avançar com segurança em sua carreira. Paralelamente, o piloto pode fazer o curso de voo por instrumentos (IFR). Este o torna apto a voar em condições meteorológicas adversas, utilizando apenas os instrumentos de bordo.</p><h5>EXPERIÊNCIA:</h5><p>O Curso de Piloto Comercial é o começo da profissionalização do piloto. O aluno poderá iniciá-lo após concluir o curso de Piloto Privado.</p><h5>VOCÊ PODERÁ</h5><p>Pilotar diversas aeronaves com qualificação e proficiência de um profissional, seja o voo visual ou por instrumentos.<br><br></p><h5>PRÉ- REQUISITOS (TEÓRICO)</h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador da licença de Piloto Privado</li><li>Ser portador do Exame Médico de 1ª Classe</li></ul><p><br></p><h5>MATÉRIAS</h5><ul><li>Aerodinâmica e Teoria de Voo;</li><li>A Aviação Civil;</li><li>Conhecimentos Técnicos (motores à reação);</li><li>Física;</li><li>Inglês;</li><li>Instrução Aeromédica;</li><li>Matemática;</li><li>Meteorologia;</li><li>Navegação Aérea (IFR);</li><li>O Piloto Comercial de Avião;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentação da Profissão de Aeronauta;</li><li>Regulamentos de Tráfego Aéreo (IFR);</li><li>Segurança da Aviação Civil contra atos de interferência ilícita;</li><li>Segurança de Voo;</li><li>Teoria de Voo.</li></ul><p><br></p><h5>TREINAMENTO PRÁTICO</h5><p>O curso de Piloto Comercial de avião é o início da carreira profissional de um piloto. O Aeroclube de Juiz de Fora oferece esse curso com qualidade e respeito, tornando o piloto profissional reconhecido no mercado.</p><p>Juntamente com esse curso, o piloto poderá realizar o curso de de voo por instrumentos (IFR), tornando o piloto ainda mais qualificado para, em condições adversas de tempo, continuar o voo de forma segura e de acordo com o regulamento.</p><h5>OBJETIVO:</h5><p>Qualificar ainda mais o currículo do piloto, fazendo com que ele possa pilotar de forma mais segura, com padrões mais avançados e profissionais.</p><h5>APÓS CONCLUÍDO:</h5><p>Você poderá realizar treinamento para Instrutor de Voo ou pilotar aviões pequenos, acumulando experiência para a sua carreira.</p><h5>PRÉ-REQUISTOS:</h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador da licença de Piloto Privado</li><li>Ser portador do Exame Médico de 1ª Classe</li><li>Aprovação na Banca da ANAC de Piloto Comercial</li></ul><p><br></p><h5>TREINAMENTO:</h5><p><b>A carga horária para a prática de voo será de 124 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>10 horas de voo visuais (Adaptação/Locais);</li><li>10 horas de voo visuais (Aperfeiçoamento/Locais);</li><li>53 horas de voo navegações (Visuais);</li><li>06 horas de voo noturnas;</li><li>25 horas de voo em simulador (Abaterão 25 horas de voo);</li><li>20 horas de voo por instrumentos (MONOMOTOR);</li><li>Avaliação final de curso – minimo de 1.5 horas / máximo de 03 horas (não incluso na carga horária do treinamento)</li></ul><p><b>Prazos médios para a conclusão dos cursos práticos de Piloto Privado e de Piloto Comercial no Aeroclube de Juiz de Fora:</b></p><p>O aluno que realiza os cursos práticos de PPA e PCA não possui um limite de dias mínimos para a conclusão destes cursos. Vale ressaltar que, durante os cursos, o aluno possui vários fatores que contribuem para que o ritmo da instrução flua de forma eficaz para o aprendizado, como consolidação dos conhecimentos por meio de provas, comprovação da capacidade técnica a cada missão e dedicação da instrução.</p><p>No curso de PPA, o aluno é preparado, principalmente, para realizar o pouso com a aeronave, manobras básicas e o voo solo. Também serão realizadas provas sobre os temas de regulamento de tráfico, conhecimentos gerais e a aeronave ou aeronaves que serão utilizadas. Com os mesmos temas, o aluno também precisará realizar as mesmas provas no curso de Piloto Comercial, além de aprender a fazer a aproximação com a aeronave e vários tipos de pouso com o avião, entre outros assuntos e missões.</p><p>Para o cálculo dos períodos, são sempre levados em consideração as condições meteorológicas, as manutenções das aeronaves utilizadas, a situação fisiológica favorável e os estudos atualizados dos alunos.</p><p>No curso de PPA, são necessárias a realização de 44 missões. Portanto, o aluno conseguindo com que todos os seus voos sejam marcados na escala de forma continua, e as condições citadas acima sejam favoráveis, há a possibilidade de conclusão do curso em no minimo 42 dias. O prazo médio para a conclusão do curso de Piloto Privado é de 60 a 90 dias, isto é, de 2 a 3 meses, com dedicação integral ao curso.</p><p>Já o curso prático de Piloto Comercial segue a mesma lógica, sendo necessária a realização de 124 missões. Portanto, se o aluno conseguir agendar seus voos sem que nenhuma condição seja desfavorável, ele poderá concluir seu curso em, no mínimo, 124 dias. Para o Aeroclube de Juiz de Fora, o período sugerido para a conclusão do curso de Piloto Comercial é, em torno, de 150 a 200 dias, apresentando dedicação exclusiva ao curso.</p><p>O prazo pode diminuir ou aumentar, dependendo das condições do período.</p><p>Prazos de conclusão, menores dos que comentados acima, podem existir, porem demandam que certos fatores contribuam para que este objetivo seja alcançado. O Aeroclube de Juiz de Fora, sempre prezará pela qualidade da instrução ministrada e pela segurança da operação e nunca pela velocidade em ministrar os cursos.</p><p><b>Voo de Exame (Cheque):</b></p><p>O orçamento apresentado não contempla o Voo de Exame do aluno (cheque), que deverá ser realizado ao término do treinamento com o examinador credenciado da Anac e/ou do Aeroclube. Este voo não é contado como treinamento e não está incluso na carga horaria do curso de PPA ou PCA (tanto para a habilitação MNTE IFR quanto para MLTE IFR).</p><p>Após o aluno ter concluído com proficiência todas as missões do curso prático no qual esteja matriculado, será encaminhado para o Voo de Exame do aluno (cheque) de PPA ou PCA, pelo último instrutor que tenha realizado o voo e realizado seu endosso para o Voo de Exame do aluno (cheque).</p><p>O Examinador do Aeroclube e/ou Anac, poderá realizar o Voo de Exame do aluno (cheque) com no mínimo de 1.5 horas (uma hora e trinta minutos) e no máximo de 3 (três) horas de voo, para determinar a proficiência e sua aprovação ou não no Voo de Exame do aluno (cheque).</p><p>O valor desta hora de voo (1.5h / 3h) será cobrada do aluno proporcionalmente após o término do voo independente de seu resultado, e de acordo com o modelo da aeronave utilizada, portanto vale ressaltar que o Aeroclube de Juiz de Fora, nos orçamentos enviados, oferta apenas a carga horária miníma de treinamento para as habilitações de PPA, PCA, MNTE IFR ou MLTE IFR, devendo o aluno após a conclusão do curso prático no qual se matriculou, e após realizar o seu Voo de Exame do aluno (cheque), realizar o pagamento proporcional desta hora junto ao Aeroclube de Juiz de Fora, independente do resultado obtido.<br></p>',
-                'modulos' => null,
-                'conteudo' => '',
-                'inscricao' => null,
-                'Pagamento' => null,
-                'obs' => '',
-                'valor' => null,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 0,
-                'url' => 'pca(mnte)-2020',
-                'duracao' => 124,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 's',
-                'ordenar' => 0,
-                'data' => '2020-04-03 10:31:17',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '',
-                'aeronaves' => '["5c2280d606784","5c22876c1ed70","5c2289226284d","5c23b4eb4f9f9","5c271a2d5c219","5c2b9279ae5b9","5c597b4aa85de","5c76cca8d33d4"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"0","excluido_data":"03/04/2020 10:04:32","tab":"cursos","nome":"Todos cursos|PCA(MNTE)-2020"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 71,
-                'token' => '5e873c076770a',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Piloto Comercial Avião MNTE IFR ',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Piloto Comercial Avião Monomotor IFR',
-                'descricao' => '<h5><b>PILOTO COMERCIAL DE AVIÃO HABILITAÇÃO MNTE IFR</b> </h5><p>O Curso de Piloto Comercial é o primeiro rumo à profissionalização. O Aeroclube de Juiz de Fora oferece treinamento teórico e prático que permite ao piloto avançar com segurança em sua carreira. Paralelamente, o piloto pode fazer o curso de voo por instrumentos (IFR). Este o torna apto a voar em condições meteorológicas adversas, utilizando apenas os instrumentos de bordo.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Comercial é o começo da profissionalização do piloto. O aluno poderá iniciá-lo após concluir o curso de Piloto Privado.</p><h5><b>VOCÊ PODERÁ:</b></h5><p>Pilotar diversas aeronaves com qualificação e proficiência de um profissional, seja o voo visual ou por instrumentos.</p><h5><b>PRÉ- REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador da licença de Piloto Privado</li><li>Ser portador do Exame Médico de 1ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>Aerodinâmica e Teoria de Voo;</li><li>A Aviação Civil;</li><li>Conhecimentos Técnicos (motores à reação);</li><li>Física;</li><li>Inglês;</li><li>Instrução Aeromédica;</li><li>Matemática;</li><li>Meteorologia;</li><li>Navegação Aérea (IFR);</li><li>O Piloto Comercial de Avião;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentação da Profissão de Aeronauta;</li><li>Regulamentos de Tráfego Aéreo (IFR);</li><li>Segurança da Aviação Civil contra atos de interferência ilícita;</li><li>Segurança de Voo;</li><li>Teoria de Voo.</li></ul><h5><b>TREINAMENTO PRÁTICO:</b></h5><p>O curso de Piloto Comercial de avião é o início da carreira profissional de um piloto. O Aeroclube de Juiz de Fora oferece esse curso com qualidade e respeito, tornando o piloto profissional reconhecido no mercado.</p><p>Juntamente com esse curso, o piloto poderá realizar o curso de voo por instrumentos (IFR), tornando o piloto ainda mais qualificado para, em condições adversas de tempo, continuar o voo de forma segura e de acordo com o regulamento.</p><h5><b>OBJETIVO:</b></h5><p>Qualificar ainda mais o currículo do piloto, fazendo com que ele possa pilotar de forma mais segura, com padrões mais avançados e profissionais.</p><h5><b>APÓS CONCLUÍDO:</b></h5><p>Você poderá realizar treinamento para Instrutor de Voo ou pilotar aviões pequenos, acumulando experiência para a sua carreira.</p><h5><b>PRÉ-REQUISTOS:</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador da licença de Piloto Privado</li><li>Ser portador do Exame Médico de 1ª Classe</li><li>Aprovação na Banca da ANAC de Piloto Comercial</li></ul><h5 style="color: rgb(0, 0, 0);"><span style="font-weight: 700;">TREINAMENTO:</span></h5><h5><p style="font-size: 13px;"><span style="font-weight: 700;">A carga horária para a prática de voo será de 133 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</span></p><ul style="font-size: 13px;"><li><span style="font-weight: 700;">Módulo 1</span></li><li>Fase 1 – Adaptações na aeronave 06hrs</li><li>Fase 2 – Recuperações de atitudes anormais 04hrs</li><li>Fase 3 – Aquisição de experiência como piloto em comando 62hrs totais (NV)</li><li> – Noturnos: 06hrs</li><li>Fase 4 – Procedimentos IFR em simulador MNTE 27hrs</li><li> – Procedimentos IFR em aeronave MNTE 18hrs</li><li>Fase 5 – Avaliação para voo de cheque – Avaliação simulador 03hrs</li><li> – Procedimentos IFR em aeronave MNTE 04hrs</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 03 horas <span style="font-weight: 700;">(não incluso na carga horaria do treinamento)</span></li></ul></h5>',
-                'modulos' => '[{"etapa":"etapa1","titulo":"Compreendendo o equipamento a ser operado","limite":"1","valor":"100,00"},{"etapa":"etapa1","titulo":"Compreendendo o ambiente da instrução e sua operação","limite":"1","valor":"100,00"},{"etapa":"etapa1","titulo":"Compreendendo a sequência operacional e as filosofias operacionais","limite":"1","valor":"100,00"},{"etapa":"etapa1","titulo":"Compreendendo a sequência de missões e a execução de manobras","limite":"1","valor":"100,00"},{"etapa":"etapa1","titulo":"Compreendendo o nível de competência e o perfil do egresso","limite":"1","valor":"100,00"},{"etapa":"etapa1","titulo":"Planejando o voo","limite":"1","valor":"100,00"},{"etapa":"etapa2","titulo":"Fase 1 - Adaptaçao na aeronave ","limite":"10","aviao":["17","39","45"],"valor":""},{"etapa":"etapa2","titulo":"Fase 2 - Recuperação de altitudes anormais ","limite":"2","aviao":["17","39","45"],"valor":""},{"etapa":"etapa2","titulo":"Fase 3 - Navegação VFR CMD","limite":"57","aviao":["17","39","45"],"valor":"","aeronave":"18"},{"etapa":"etapa2","titulo":"Fase 3 - Noturno","limite":"6","aviao":["17","39"],"valor":"","aeronave":"18"},{"etapa":"etapa2","titulo":"Fase 4 - Simulador MNTE IFR","limite":"27","aviao":["20"],"valor":""},{"etapa":"etapa2","titulo":"Fase 4 - Treinamento MNTE IFR","limite":"18","aviao":["17","39"],"valor":"","aeronave":"18"},{"etapa":"etapa2","titulo":"Fase 5 - Avaliação MNTE IFR Simulador","limite":"3","aviao":["20"],"valor":"","aeronave":"20"},{"etapa":"etapa2","titulo":"Fase 5 - Avaliação MNTE IFR ","limite":"4","aviao":["17","39"],"valor":"","aeronave":"18"},{"etapa":"etapa2","titulo":"Fase 6 - Voo de cheque ( Avaliação Final )","limite":"2","aviao":["17","39"],"valor":"","aeronave":"18"},{"etapa":"etapa2","titulo":"Fase 7 - Hora Aditivada (Hora adicional para conclusão)","limite":"150","aviao":["17","39","45"],"valor":""},{"etapa":"etapa2","titulo":"Pacote de Horas de Voo (40 Horas)","limite":"40","aviao":["17","39","45"],"valor":""},{"etapa":"etapa2","titulo":"Pacote de Horas de Voo (70 Horas)","limite":"70","aviao":["17","39","45"],"valor":""}]',
-                'conteudo' => '',
-                'inscricao' => 600,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro curso rumo à profissionalização. O Aeroclube de Juiz de Fora oferece \r\ntreinamento teórico e prático que lhe permitirá avançar com \r\nsegurança em sua carreira. Paralelamente, você poderá fazer o curso de\r\n voo por instrumentos (IFR).<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => 'O Curso de Piloto Comercial é o primeiro rumo à profissionalização. O Aeroclube de Juiz de Fora oferece treinamento teórico e prático que permite ao piloto avançar com segurança em sua carreira. Paral',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 14,
-                'url' => 'piloto-comercial-aviao-mnte-ifr-',
-                'duracao' => 116,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 's',
-                'destaque' => 's',
-                'ordenar' => 4,
-                'data' => '2020-04-03 10:39:31',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"proximo_curso":"85","gratis":"n","tx2":{"0":{"name_label":"Taxa de Examinador Credenciado ANAC","name_valor":"500,00"},"2":{"name_label":"Taxa ANAC ","name_valor":"150,00"}},"tipo_desconto_taxa":"p","desconto_taxa":"","pagina_divulgacao":"","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_venda":{"link":"","label":""},"adc":{"recheck":"n","recorrente":"s","cor":"10C62E"}}',
-                'aeronaves' => '["5c271a2d5c219","5c2b9279ae5b9","5c2b966c9eefe","5fa96eb88594c"]',
-                'professor' => 0,
-                'excluido' => 'n',
-                'reg_excluido' => '',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 93,
-                'token' => '5f60a332b75ee',
-                'categoria' => 'cursos_semi_presencias',
-                'nome' => 'Cessna 150: Ground School Completo da Aeronave (Pré-voo, Acionamento, Decolagem, Cruzeiro e Pouso)',
-                'tipo' => 3,
-                'codigo' => '',
-                'titulo' => 'CESSNA 150: GROUND SCHOOL COMPLETO DA AERONAVE',
-                'descricao' => '<h3 style="margin-bottom: 15px; line-height: 1.2; font-size: 30px; color: rgb(48, 48, 48); font-family: Muli, sans-serif; text-transform: uppercase; text-align: center; text-indent: 15px; font-weight: 900 !important;">CESSNA 150</h3><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">O desenvolvimento do Modelo 150 começou em meados da década de 1950 com a decisão da Cessna Aircraft de produzir um sucessor do popular Cessna 140 que terminou a produção em 1951. As principais mudanças no design 150 foram o uso de trem de pouso triciclo, que é mais fácil aprender a usar do que o trem de pouso da roda traseira do Cessna 140 e substituir as pontas das asas arredondadas e os estabilizadores horizontais e verticais por perfis mais modernos e quadrados. Além disso, as abas de asa estreita e articulada dos 140 foram substituídas por abas Fowler maiores e muito mais eficazes.</p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">O protótipo do Cessna 150 voou pela primeira vez em 12 de setembro de 1957, com a produção começando em setembro de 1958 na fábrica de Cessna em Wichita, Kansas. 1.764 aeronaves também foram produzidas pela Reims Aviation sob licença na França. Estes 150 fabricados na França foram designados Reims F-150, o “F” indica que eles foram construídos na França.</p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">Os 150s fabricados nos Estados Unidos foram todos produzidos com o motor Continental O-200-A de 100 cv (75 kW), mas a aeronave construída por Reims é movida por um Continental O-200-As fabricado pela Rolls Royce. Algumas versões têm motores Continental O-240-A.</p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">Todos os Cessna 150 têm abas muito eficazes que se estendem por 40 graus.</p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">Os aviões de melhor desempenho na frota de 150 e 152 são o Cessna 150B 1962 e o Cessna 150C 1963. Graças ao peso bruto leve de 680 kg e a fuselagem traseira mais aerodinâmica, eles sobem mais rápido, têm os tetos mais altos e exigem as pistas mais curtas. Eles têm uma velocidade de cruzeiro de 109 nós (202 km / h), mais rápido do que qualquer outro ano modelo, tanto dos 150 quanto dos 152.</p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">Todos os modelos de 1966 em diante têm portas maiores e maior espaço para bagagem. Com o Modelo 150G de 1967, as portas foram inclinadas para fora 1,5 polegadas (38 mm) de cada lado para proporcionar mais espaço no cotovelo da cabine.</p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;"><br></p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;"><img src="data:image/jpeg;base64,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YWRvYmUuY29tL2V4aWYvMS4wL2F1eC8iCiAgICB4bWxuczpleGlmRVg9Imh0dHA6Ly9jaXBhLmpwL2V4aWYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIgogICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICAgeG1sbnM6Y3JzPSJodHRwOi8vbnMuYWRvYmUuY29tL2NhbWVyYS1yYXctc2V0dGluZ3MvMS4wLyIKICAgeG1wOk1vZGlmeURhdGU9IjIwMTktMDMtMDZUMTg6MTE6NDEtMDM6MDAiCiAgIHhtcDpDcmVhdGVEYXRlPSIyMDE5LTAyLTExVDExOjQ4OjAzLjYwIgogICB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBMaWdodHJvb20gQ2xhc3NpYyA4LjEgKFdpbmRvd3MpIgogICB4bXA6TWV0YWRhdGFEYXRlPSIyMDE5LTAzLTA2VDE4OjExOjQxLTAzOjAwIgogICBhdXg6U2VyaWFsTnVtYmVyPSIzNTIwNzcxNDYwNjUiCiAgIGF1eDpMZW5zSW5mbz0iNzUvMSAzMDAvMSAwLzAgMC8wIgogICBhdXg6TGVucz0iRUY3NS0zMDBtbSBmLzQtNS42IgogICBhdXg6TGVuc0lEPSIzOSIKICAgYXV4OkxlbnNTZXJpYWxOdW1iZXI9IjAwMDAwMDAwMDAiCiAgIGF1eDpJbWFnZU51bWJlcj0iMCIKICAgYXV4OkZsYXNoQ29tcGVuc2F0aW9uPSIwLzEiCiAgIGF1eDpGaXJtd2FyZT0iMS4wLjIiCiAgIGV4aWZFWDpMZW5zTW9kZWw9IkVGNzUtMzAwbW0gZi80LTUuNiIKICAgcGhvdG9zaG9wOkRhdGVDcmVhdGVkPSIyMDE5LTAyLTExVDExOjQ4OjAzLjYwIgogICB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOmJlODUyYjYxLTYzN2UtM2M0Zi1iMGJiLWViMjFkZTQ0MGZmNyIKICAgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSIwQUNGODhEQTIwRDY0ODAwNzBBQjk5QURBNDFFNDFBMyIKICAgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpiZTg1MmI2MS02MzdlLTNjNGYtYjBiYi1lYjIxZGU0NDBmZjciCiAgIGRjOmZvcm1hdD0iaW1hZ2UvanBlZyIKICAgY3JzOlJhd0ZpbGVOYW1lPSJJTUdfMTQ1NS5DUjIiCiAgIGNyczpWZXJzaW9uPSIxMS4xIgogICBjcnM6UHJvY2Vzc1ZlcnNpb249IjExLjAiCiAgIGNyczpXaGl0ZUJhbGFuY2U9IkFzIFNob3QiCiAgIGNyczpUZW1wZXJhdHVyZT0iNTg1MCIKICAgY3JzOlRpbnQ9Iis5IgogICBjcnM6U2F0dXJhdGlvbj0iMCIKICAgY3JzOlNoYXJwbmVzcz0iNDAiCiAgIGNyczpMdW1pbmFuY2VTbW9vdGhpbmc9IjAiCiAgIGNyczpDb2xvck5vaXNlUmVkdWN0aW9uPSIyNSIKICAgY3JzOlZpZ25ldHRlQW1vdW50PSIwIgogICBjcnM6U2hhZG93VGludD0iMCIKICAgY3JzOlJlZEh1ZT0iMCIKICAgY3JzOlJlZFNhdHVyYXRpb249IjAiCiAgIGNyczpHcmVlbkh1ZT0iMCIKICAgY3JzOkdyZWVuU2F0dXJhdGlvbj0iMCIKICAgY3JzOkJsdWVIdWU9IjAiCiAgIGNyczpCbHVlU2F0dXJhdGlvbj0iMCIKICAgY3JzOlZpYnJhbmNlPSIrMzMiCiAgIGNyczpIdWVBZGp1c3RtZW50UmVkPSIwIgogICBjcnM6SHVlQWRqdXN0bWVudE9yYW5nZT0iMCIKICAgY3JzOkh1ZUFkanVzdG1lbnRZZWxsb3c9IjAiCiAgIGNyczpIdWVBZGp1c3RtZW50R3JlZW49IjAiCiAgIGNyczpIdWVBZGp1c3RtZW50QXF1YT0iMCIKICAgY3JzOkh1ZUFkanVzdG1lbnRCbHVlPSIwIgogICBjcnM6SHVlQWRqdXN0bWVudFB1cnBsZT0iMCIKICAgY3JzOkh1ZUFkanVzdG1lbnRNYWdlbnRhPSIwIgogICBjcnM6U2F0dXJhdGlvbkFkanVzdG1lbnRSZWQ9IjAiCiAgIGNyczpTYXR1cmF0aW9uQWRqdXN0bWVudE9yYW5nZT0iMCIKICAgY3JzOlNhdHVyYXRpb25BZGp1c3RtZW50WWVsbG93PSIwIgogICBjcnM6U2F0dXJhdGlvbkFkanVzdG1lbnRHcmVlbj0iMCIKICAgY3JzOlNhdHVyYXRpb25BZGp1c3RtZW50QXF1YT0iMCIKICAgY3JzOlNhdHVyYXRpb25BZGp1c3RtZW50Qmx1ZT0iMCIKICAgY3JzOlNhdHVyYXRpb25BZGp1c3RtZW50UHVycGxlPSItMTAwIgogICBjcnM6U2F0dXJhdGlvbkFkanVzdG1lbnRNYWdlbnRhPSIwIgogICBjcnM6THVtaW5hbmNlQWRqdXN0bWVudFJlZD0iMCIKICAgY3JzOkx1bWluYW5jZUFkanVzdG1lbnRPcmFuZ2U9IjAiCiAgIGNyczpMdW1pbmFuY2VBZGp1c3RtZW50WWVsbG93PSIwIgogICBjcnM6THVtaW5hbmNlQWRqdXN0bWVudEdyZWVuPSIwIgogICBjcnM6THVtaW5hbmNlQWRqdXN0bWVudEFxdWE9IjAiCiAgIGNyczpMdW1pbmFuY2VBZGp1c3RtZW50Qmx1ZT0iMCIKICAgY3JzOkx1bWluYW5jZUFkanVzdG1lbnRQdXJwbGU9Ii0xIgogICBjcnM6THVtaW5hbmNlQWRqdXN0bWVudE1hZ2VudGE9IjAiCiAgIGNyczpTcGxpdFRvbmluZ1NoYWRvd0h1ZT0iMCIKICAgY3JzOlNwbGl0VG9uaW5nU2hhZG93U2F0dXJhdGlvbj0iMCIKICAgY3JzOlNwbGl0VG9uaW5nSGlnaGxpZ2h0SHVlPSIwIgogICBjcnM6U3BsaXRUb25pbmdIaWdobGlnaHRTYXR1cmF0aW9uPSIwIgogICBjcnM6U3BsaXRUb25pbmdCYWxhbmNlPSIwIgogICBjcnM6UGFyYW1ldHJpY1NoYWRvd3M9IjAiCiAgIGNyczpQYXJhbWV0cmljRGFya3M9IjAiCiAgIGNyczpQYXJhbWV0cmljTGlnaHRzPSIwIgogICBjcnM6UGFyYW1ldHJpY0hpZ2hsaWdodHM9IjAiCiAgIGNyczpQYXJhbWV0cmljU2hhZG93U3BsaXQ9IjI1IgogICBjcnM6UGFyYW1ldHJpY01pZHRvbmVTcGxpdD0iNTAiCiAgIGNyczpQYXJhbWV0cmljSGlnaGxpZ2h0U3BsaXQ9Ijc1IgogICBjcnM6U2hhcnBlblJhZGl1cz0iKzEuMCIKICAgY3JzOlNoYXJwZW5EZXRhaWw9IjI1IgogICBjcnM6U2hhcnBlbkVkZ2VNYXNraW5nPSIwIgogICBjcnM6UG9zdENyb3BWaWduZXR0ZUFtb3VudD0iMCIKICAgY3JzOkdyYWluQW1vdW50PSIwIgogICBjcnM6Q29sb3JOb2lzZVJlZHVjdGlvbkRldGFpbD0iNTAiCiAgIGNyczpDb2xvck5vaXNlUmVkdWN0aW9uU21vb3RobmVzcz0iNTAiCiAgIGNyczpMZW5zUHJvZmlsZUVuYWJsZT0iMCIKICAgY3JzOkxlbnNNYW51YWxEaXN0b3J0aW9uQW1vdW50PSIwIgogICBjcnM6UGVyc3BlY3RpdmVWZXJ0aWNhbD0iMCIKICAgY3JzOlBlcnNwZWN0aXZlSG9yaXpvbnRhbD0iMCIKICAgY3JzOlBlcnNwZWN0aXZlUm90YXRlPSIwLjAiCiAgIGNyczpQZXJzcGVjdGl2ZVNjYWxlPSIxMDAiCiAgIGNyczpQZXJzcGVjdGl2ZUFzcGVjdD0iMCIKICAgY3JzOlBlcnNwZWN0aXZlVXByaWdodD0iMCIKICAgY3JzOlBlcnNwZWN0aXZlWD0iMC4wMCIKICAgY3JzOlBlcnNwZWN0aXZlWT0iMC4wMCIKICAgY3JzOkF1dG9MYXRlcmFsQ0E9IjAiCiAgIGNyczpFeHBvc3VyZTIwMTI9IisxLjM2IgogICBjcnM6Q29udHJhc3QyMDEyPSIrMTMiCiAgIGNyczpIaWdobGlnaHRzMjAxMj0iLTEwMCIKICAgY3JzOlNoYWRvd3MyMDEyPSIwIgogICBjcnM6V2hpdGVzMjAxMj0iLTc0IgogICBjcnM6QmxhY2tzMjAxMj0iMCIKICAgY3JzOkNsYXJpdHkyMDEyPSIwIgogICBjcnM6RGVmcmluZ2VQdXJwbGVBbW91bnQ9IjAiCiAgIGNyczpEZWZyaW5nZVB1cnBsZUh1ZUxvPSIzMCIKICAgY3JzOkRlZnJpbmdlUHVycGxlSHVlSGk9IjcwIgogICBjcnM6RGVmcmluZ2VHcmVlbkFtb3VudD0iMCIKICAgY3JzOkRlZnJpbmdlR3JlZW5IdWVMbz0iNDAiCiAgIGNyczpEZWZyaW5nZUdyZWVuSHVlSGk9IjYwIgogICBjcnM6RGVoYXplPSIwIgogICBjcnM6VG9uZU1hcFN0cmVuZ3RoPSIwIgogICBjcnM6Q29udmVydFRvR3JheXNjYWxlPSJGYWxzZSIKICAgY3JzOk92ZXJyaWRlTG9va1ZpZ25ldHRlPSJGYWxzZSIKICAgY3JzOlRvbmVDdXJ2ZU5hbWU9IkxpbmVhciIKICAgY3JzOlRvbmVDdXJ2ZU5hbWUyMDEyPSJMaW5lYXIiCiAgIGNyczpDYW1lcmFQcm9maWxlPSJBZG9iZSBTdGFuZGFyZCIKICAgY3JzOkNhbWVyYVByb2ZpbGVEaWdlc3Q9IjVGQTBGQTkwQzc3ODVGOTRGRUQ3NENDOEFFMDgwNzc3IgogICBjcnM6TGVuc1Byb2ZpbGVTZXR1cD0iTGVuc0RlZmF1bHRzIgogICBjcnM6VXByaWdodFZlcnNpb249IjE1MTM4ODE2MCIKICAgY3JzOlVwcmlnaHRDZW50ZXJNb2RlPSIwIgogICBjcnM6VXByaWdodENlbnRlck5vcm1YPSIwLjUiCiAgIGNyczpVcHJpZ2h0Q2VudGVyTm9ybVk9IjAuNSIKICAgY3JzOlVwcmlnaHRGb2NhbE1vZGU9IjAiCiAgIGNyczpVcHJpZ2h0Rm9jYWxMZW5ndGgzNW1tPSIzNSIKICAgY3JzOlVwcmlnaHRQcmV2aWV3PSJGYWxzZSIKICAgY3JzOlVwcmlnaHRUcmFuc2Zvcm1Db3VudD0iNiIKICAgY3JzOlVwcmlnaHRGb3VyU2VnbWVudHNDb3VudD0iMCIKICAgY3JzOkhhc1NldHRpbmdzPSJUcnVlIgogICBjcnM6SGFzQ3JvcD0iRmFsc2UiCiAgIGNyczpBbHJlYWR5QXBwbGllZD0iVHJ1ZSI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249ImRlcml2ZWQiCiAgICAgIHN0RXZ0OnBhcmFtZXRlcnM9ImNvbnZlcnRlZCBmcm9tIGltYWdlL3gtY2Fub24tY3IyIHRvIGltYWdlL2pwZWcsIHNhdmVkIHRvIG5ldyBsb2NhdGlvbiIvPgogICAgIDxyZGY6bGkKICAgICAgc3RFdnQ6YWN0aW9uPSJzYXZlZCIKICAgICAgc3RFdnQ6aW5zdGFuY2VJRD0ieG1wLmlpZDpiZTg1MmI2MS02MzdlLTNjNGYtYjBiYi1lYjIxZGU0NDBmZjciCiAgICAgIHN0RXZ0OndoZW49IjIwMTktMDMtMDZUMTg6MTE6NDEtMDM6MDAiCiAgICAgIHN0RXZ0OnNvZnR3YXJlQWdlbnQ9IkFkb2JlIFBob3Rvc2hvcCBMaWdodHJvb20gQ2xhc3NpYyA4LjEgKFdpbmRvd3MpIgogICAgICBzdEV2dDpjaGFuZ2VkPSIvIi8+CiAgICA8L3JkZjpTZXE+CiAgIDwveG1wTU06SGlzdG9yeT4KICAgPHhtcE1NOkRlcml2ZWRGcm9tCiAgICBzdFJlZjpkb2N1bWVudElEPSIwQUNGODhEQTIwRDY0ODAwNzBBQjk5QURBNDFFNDFBMyIKICAgIHN0UmVmOm9yaWdpbmFsRG9jdW1lbnRJRD0iMEFDRjg4REEyMEQ2NDgwMDcwQUI5OUFEQTQxRTQxQTMiLz4KICAgPGNyczpUb25lQ3VydmU+CiAgICA8cmRmOlNlcT4KICAgICA8cmRmOmxpPjAsIDA8L3JkZjpsaT4KICAgICA8cmRmOmxpPjI1NSwgMjU1PC9yZGY6bGk+CiAgICA8L3JkZjpTZXE+CiAgIDwvY3JzOlRvbmVDdXJ2ZT4KICAgPGNyczpUb25lQ3VydmVSZWQ+CiAgICA8cmRmOlNlcT4KICAgICA8cmRmOmxpPjAsIDA8L3JkZjpsaT4KICAgICA8cmRmOmxpPjI1NSwgMjU1PC9yZGY6bGk+CiAgICA8L3JkZjpTZXE+CiAgIDwvY3JzOlRvbmVDdXJ2ZVJlZD4KICAgPGNyczpUb25lQ3VydmVHcmVlbj4KICAgIDxyZGY6U2VxPgogICAgIDxyZGY6bGk+MCwgMDwvcmRmOmxpPgogICAgIDxyZGY6bGk+MjU1LCAyNTU8L3JkZjpsaT4KICAgIDwvcmRmOlNlcT4KICAgPC9jcnM6VG9uZUN1cnZlR3JlZW4+CiAgIDxjcnM6VG9uZUN1cnZlQmx1ZT4KICAgIDxyZGY6U2VxPgogICAgIDxyZGY6bGk+MCwgMDwvcmRmOmxpPgogICAgIDxyZGY6bGk+MjU1LCAyNTU8L3JkZjpsaT4KICAgIDwvcmRmOlNlcT4KICAgPC9jcnM6VG9uZUN1cnZlQmx1ZT4KICAgPGNyczpUb25lQ3VydmVQVjIwMTI+CiAgICA8cmRmOlNlcT4KICAgICA8cmRmOmxpPjAsIDA8L3JkZjpsaT4KICAgICA8cmRmOmxpPjI1NSwgMjU1PC9yZGY6bGk+CiAgICA8L3JkZjpTZXE+CiAgIDwvY3JzOlRvbmVDdXJ2ZVBWMjAxMj4KICAgPGNyczpUb25lQ3VydmVQVjIwMTJSZWQ+CiAgICA8cmRmOlNlcT4KICAgICA8cmRmOmxpPjAsIDA8L3JkZjpsaT4KICAgICA8cmRmOmxpPjI1NSwgMjU1PC9yZGY6bGk+CiAgICA8L3JkZjpTZXE+CiAgIDwvY3JzOlRvbmVDdXJ2ZVBWMjAxMlJlZD4KICAgPGNyczpUb25lQ3VydmVQVjIwMTJHcmVlbj4KICAgIDxyZGY6U2VxPgogICAgIDxyZGY6bGk+MCwgMDwvcmRmOmxpPgogICAgIDxyZGY6bGk+MjU1LCAyNTU8L3JkZjpsaT4KICAgIDwvcmRmOlNlcT4KICAgPC9jcnM6VG9uZUN1cnZlUFYyMDEyR3JlZW4+CiAgIDxjcnM6VG9uZUN1cnZlUFYyMDEyQmx1ZT4KICAgIDxyZGY6U2VxPgogICAgIDxyZGY6bGk+MCwgMDwvcmRmOmxpPgogICAgIDxyZGY6bGk+MjU1LCAyNTU8L3JkZjpsaT4KICAgIDwvcmRmOlNlcT4KICAgPC9jcnM6VG9uZUN1cnZlUFYyMDEyQmx1ZT4KICAgPGNyczpMb29rPgogICAgPHJkZjpEZXNjcmlwdGlvbgogICAgIGNyczpOYW1lPSJBZG9iZSBDb2xvciIKICAgICBjcnM6QW1vdW50PSIxLjAwMDAwMCIKICAgICBjcnM6VVVJRD0iQjk1MkMyMzExMTFDRDhFMEVDQ0YxNEI4NkJBQTcwNzciCiAgICAgY3JzOlN1cHBvcnRzQW1vdW50PSJmYWxzZSIKICAgICBjcnM6U3VwcG9ydHNNb25vY2hyb21lPSJmYWxzZSIKICAgICBjcnM6U3VwcG9ydHNPdXRwdXRSZWZlcnJlZD0iZmFsc2UiPgogICAgPGNyczpHcm91cD4KICAgICA8cmRmOkFsdD4KICAgICAgPHJkZjpsaSB4bWw6bGFuZz0ieC1kZWZhdWx0Ij5Qcm9maWxlczwvcmRmOmxpPgogICAgIDwvcmRmOkFsdD4KICAgIDwvY3JzOkdyb3VwPgogICAgPGNyczpQYXJhbWV0ZXJzPgogICAgIDxyZGY6RGVzY3JpcHRpb24KICAgICAgY3JzOlZlcnNpb249IjExLjEiCiAgICAgIGNyczpQcm9jZXNzVmVyc2lvbj0iMTEuMCIKICAgICAgY3JzOkNvbnZlcnRUb0dyYXlzY2FsZT0iRmFsc2UiCiAgICAgIGNyczpDYW1lcmFQcm9maWxlPSJBZG9iZSBTdGFuZGFyZCIKICAgICAgY3JzOkxvb2tUYWJsZT0iRTEwOTUxNDlGREIzOUQ3QTA1N0JBQjIwODgzN0UyRTEiPgogICAgIDxjcnM6VG9uZUN1cnZlUFYyMDEyPgogICAgICA8cmRmOlNlcT4KICAgICAgIDxyZGY6bGk+MCwgMDwvcmRmOmxpPgogICAgICAgPHJkZjpsaT4yMiwgMTY8L3JkZjpsaT4KICAgICAgIDxyZGY6bGk+NDAsIDM1PC9yZGY6bGk+CiAgICAgICA8cmRmOmxpPjEyNywgMTI3PC9yZGY6bGk+CiAgICAgICA8cmRmOmxpPjIyNCwgMjMwPC9yZGY6bGk+CiAgICAgICA8cmRmOmxpPjI0MCwgMjQ2PC9yZGY6bGk+CiAgICAgICA8cmRmOmxpPjI1NSwgMjU1PC9yZGY6bGk+CiAgICAgIDwvcmRmOlNlcT4KICAgICA8L2NyczpUb25lQ3VydmVQVjIwMTI+CiAgICAgPGNyczpUb25lQ3VydmVQVjIwMTJSZWQ+CiAgICAgIDxyZGY6U2VxPgogICAgICAgPHJkZjpsaT4wLCAwPC9yZGY6bGk+CiAgICAgICA8cmRmOmxpPjI1NSwgMjU1PC9yZGY6bGk+CiAgICAgIDwvcmRmOlNlcT4KICAgICA8L2NyczpUb25lQ3VydmVQVjIwMTJSZWQ+CiAgICAgPGNyczpUb25lQ3VydmVQVjIwMTJHcmVlbj4KICAgICAgPHJkZjpTZXE+CiAgICAgICA8cmRmOmxpPjAsIDA8L3JkZjpsaT4KICAgICAgIDxyZGY6bGk+MjU1LCAyNTU8L3JkZjpsaT4KICAgICAgPC9yZGY6U2VxPgogICAgIDwvY3JzOlRvbmVDdXJ2ZVBWMjAxMkdyZWVuPgogICAgIDxjcnM6VG9uZUN1cnZlUFYyMDEyQmx1ZT4KICAgICAgPHJkZjpTZXE+CiAgICAgICA8cmRmOmxpPjAsIDA8L3JkZjpsaT4KICAgICAgIDxyZGY6bGk+MjU1LCAyNTU8L3JkZjpsaT4KICAgICAgPC9yZGY6U2VxPgogICAgIDwvY3JzOlRvbmVDdXJ2ZVBWMjAxMkJsdWU+CiAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgICA8L2NyczpQYXJhbWV0ZXJzPgogICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvY3JzOkxvb2s+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg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',
-                'modulos' => null,
-                'conteudo' => '[{"idItem":"50","nome":"Videoaula do Cessna 150: Ground School Completo da Aeronave (Pr\\u00e9-voo, Acionamento, Decolagem, Cruzeiro e Pouso)","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5f60a332b75ee"}]',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '',
-                'valor' => null,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 14,
-                'url' => 'cessna-150-ground-school-completo-da-aeronave-pre-voo-acionamento-decolagem-cruzeiro-e-pouso',
-                'duracao' => 3520,
-                'unidade_duracao' => 'seg',
-                'ativo' => 'n',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 10,
-                'data' => '2020-09-15 08:47:55',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '2020-09-15 09:09:01',
-                'config' => '{"turma":"","gratis":"s","libera_conteudo":{"tipo_inicio":"imediata","tipo":"uma_vez","qtd":"06:00:00"},"certificado":{"gera":"auto","requisito":"100"},"requisito":"","cma":"","video":"","adc":{"cor":"FFFFFF"}}',
-                'aeronaves' => '',
-                'professor' => 103,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"07/11/2020 20:11:15","tab":"cursos","nome":"Todos cursos|Cessna 150: Ground School Completo da Aeronave (Pru00e9-voo, Acionamento, Decolagem, Cruzeiro e Pouso)"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 94,
-                'token' => '5f60b85095488',
-                'categoria' => 'cursos_semi_presencias',
-                'nome' => 'Cessna 152: Ground School Completo da Aeronave (Pré-voo, Acionamento, Decolagem, Cruzeiro e Pouso)',
-                'tipo' => 3,
-                'codigo' => '',
-                'titulo' => 'CESSNA 152: GROUND SCHOOL COMPLETO DA AERONAVE',
-                'descricao' => '<h3 style="margin-bottom: 15px; line-height: 1.2; font-size: 30px; color: rgb(48, 48, 48); font-family: Muli, sans-serif; text-transform: uppercase; text-align: center; text-indent: 15px; font-weight: 900 !important;">CESSNA 152</h3><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">O Cessna 152 tem reputação de aeronave extremamente fácil de pilotar e robusta. Bastante estável, é apreciada para voo de lazer e viagem. Com baixa carga alar (peso / área das asas) e asas de perfil convencional de alta sustentação, pode operar em pistas curtas e mal preparadas (saibro, cascalho, grama, etc).</p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">Os flaps são do tipo slotted (fenda), e defletem em ângulo de até 40 graus. A atuação dos mesmos é elétrica, com motor instalado na asa direita comandado através de switch no painel.</p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">As asas são do tipo alta semi-cantilever e o trem de pouso é do tipo triciclo, fixo, com amortecedores do tipo lâmina no trem principal e hidráulico no trem do nariz e rodas carenadas.</p><p style="margin-bottom: 15px; font-size: 16px; font-family: Muli, sans-serif; color: rgb(99, 99, 99); line-height: 26px; text-align: justify; text-indent: 15px;">O design do Cessna 152 transpira simplicidade e praticidade. O alarme de perda de sustentação, que em outras aeronaves é um dispositivo elétrico, neste Cessna é um mecanismo aerodinâmico, um apito no bordo de ataque acionado pela sucção do ar para fora da asa, sucção esta causada pela depressão barométrica no bordo de ataque da asa. Acontecimento característico da perda de sustentação. As asas altas, por sua vez, abrigam os tanques de combustível. Isto permite a alimentação do motor por gravidade, sem a necessidade de uma bomba de combustível adicional (boost pump ou auxiliary pump) elétrica. Os amortecedores também mostram a simplicidade do design da Cessna. Do tipo lâmina de aço, os amortecedores do trem de pouso principal não possuem nenhum mecanismo hidráulico como em outras aeronaves da mesma categoria, como os monomotores de asa baixa da Piper Aircraft.</p>',
-                'modulos' => null,
-                'conteudo' => '[{"idItem":"51","nome":"CESSNA 152: GROUND SCHOOL COMPLETO DA AERONAVE","tab":"modulos_ead","campo_enc_item":"nome","url_alt_item":"ead\\/iframe?sec=bW9kdWxvcy1lYWQ=&acao=alt&listPos=conteCurso&token_curso=5f60b85095488"}]',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 14,
-                'url' => 'cessna-152-ground-school-completo-da-aeronave-pre-voo-acionamento-decolagem-cruzeiro-e-pouso',
-                'duracao' => 4,
-                'unidade_duracao' => 'seg',
-                'ativo' => 'n',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 9,
-                'data' => '2020-09-15 09:50:39',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '2020-09-15 09:09:52',
-                'config' => '{"turma":"","gratis":"n","libera_conteudo":{"tipo_inicio":"imediata","tipo":"uma_vez","qtd":"00:00:00"},"validade":"","certificado":{"gera":"auto","requisito":"","aproveitamento":""},"requisito":"","video":"https://www.youtube.com/watch?v=RogI6p5oIxg","adc":{"cor":"FFFFFF"}}',
-                'aeronaves' => '',
-                'professor' => 103,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"07/11/2020 20:11:15","tab":"cursos","nome":"Todos cursos|Cessna 152: Ground School Completo da Aeronave (Pru00e9-voo, Acionamento, Decolagem, Cruzeiro e Pouso)"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 111,
-                'token' => '628e35310d2b4',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Piloto Comercial Avião Prático (Pacote de 20 Horas VFR)',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Piloto Comercial Avião Prático (Pacote de 20 Horas VFR)',
-                'descricao' => '<h5><b>O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</b><br></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>VOCÊ PODE:</b></h5><p>Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</p><h5><b>PRÓXIMA ETAPA:</b></h5><p>Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>A Aviação Civil;</li><li>Combate ao fogo em aeronave;</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Medicina de Aviação;</li><li>Meteorologia;</li><li>Navegação;</li><li>Palestra “O piloto privado – avião”;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Segurança de voo;</li><li>Teoria de voo.</li></ul><h5><b>TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO):</b></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>OBJETIVO:</b></h5><p>Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (PRÁTICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li><li>Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</li></ul><h5><b>TREINAMENTO:</b></h5><p><b>A carga horária para a prática de voo será de 42 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>Fase 1 – Introdução ao voo 2hrs</li><li>Fase 2 – O Controle da aeronave 2hrs</li><li>Fase 3 – A coordenação de altitude e potência 4hrs</li><li>Fase 4 – Treinamentos de manobras e aproximações 8hrs</li><li>Fase 5 – Procedimentos avançados de emergência 4hrs</li><li>Fase 6 – Treinamento de voo noturno 3hrs</li><li>Fase 7 – Treinamento de voo solo 6hrs</li><li>Fase 8 – Procedimentos de navegação 12hrs</li><li>Fase 9 – Avaliação para voo de cheque (endosso) 1hr</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 03 horas (não incluso na carga horaria do treinamento)</li></ul>',
-                'modulos' => '[{"titulo":"20 horas de Voo","limite":"20","aviao":["9","17","35"]}]',
-                'conteudo' => '',
-                'inscricao' => 300,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro passo para se tornar um piloto de \r\navião. Você estará apto a pilotar aviões monomotores em condições \r\nvisuais.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 137,
-                'url' => 'piloto-comercial-aviao-pratico-(pacote-de-20-horas-vfr)',
-                'duracao' => 20,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 's',
-                'ordenar' => 2,
-                'data' => '2022-05-25 10:55:32',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","tx":{"combustivel":"","checador":"","anac":"","noturno":""},"requisito":"87","cma":"cma_segunda_classe","banca":"s","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_divulgacao":"","pagina_venda":{"link":"","label":""},"adc":{"recorrente":"n","cor":"B7BAEB"}}',
-                'aeronaves' => '["5c2b9279ae5b9","5c76cca8d33d4"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"29/06/2022 11:06:42","tab":"cursos","nome":"Todos cursos|Piloto Comercial Aviu00e3o Pru00e1tico (Pacote de 20 Horas VFR)"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 112,
-                'token' => '629147a4625b7',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Piloto Privado Avião Prático (Pacote de 40 Horas) ',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Piloto Privado Avião Prático (Pacote de 40 Horas)',
-                'descricao' => '<h5><b>O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</b><br></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>VOCÊ PODE:</b></h5><p>Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</p><h5><b>PRÓXIMA ETAPA:</b></h5><p>Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>A Aviação Civil;</li><li>Combate ao fogo em aeronave;</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Medicina de Aviação;</li><li>Meteorologia;</li><li>Navegação;</li><li>Palestra “O piloto privado – avião”;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Segurança de voo;</li><li>Teoria de voo.</li></ul><h5><b>TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO):</b></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>OBJETIVO:</b></h5><p>Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (PRÁTICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li><li>Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</li></ul><h5><b>TREINAMENTO:</b></h5><p><b>A carga horária para a prática de voo será de 42 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>Fase 1 – Introdução ao voo 2hrs</li><li>Fase 2 – O Controle da aeronave 2hrs</li><li>Fase 3 – A coordenação de altitude e potência 4hrs</li><li>Fase 4 – Treinamentos de manobras e aproximações 8hrs</li><li>Fase 5 – Procedimentos avançados de emergência 4hrs</li><li>Fase 6 – Treinamento de voo noturno 3hrs</li><li>Fase 7 – Treinamento de voo solo 6hrs</li><li>Fase 8 – Procedimentos de navegação 12hrs</li><li>Fase 9 – Avaliação para voo de cheque (endosso) 1hr</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 03 horas (não incluso na carga horaria do treinamento)</li></ul>',
-                'modulos' => '[{"titulo":"40 horas de Voo","limite":"40","aviao":["24"]}]',
-                'conteudo' => '',
-                'inscricao' => 300,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro passo para se tornar um piloto de \r\navião. Você estará apto a pilotar aviões monomotores em condições \r\nvisuais.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 137,
-                'url' => 'piloto-privado-aviao-pratico-(pacote-de-40-horas)-',
-                'duracao' => 40,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 2,
-                'data' => '2022-05-27 18:50:54',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","tx":{"combustivel":"","checador":"","anac":"","noturno":""},"requisito":"87","cma":"cma_segunda_classe","banca":"s","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_divulgacao":"","pagina_venda":{"link":"","label":""},"adc":{"recorrente":"n","cor":"464AEB"}}',
-                'aeronaves' => '["5c2b9279ae5b9","5c76cca8d33d4"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"29/06/2022 11:06:42","tab":"cursos","nome":"Todos cursos|Piloto Privado Aviu00e3o Pru00e1tico (Pacote de 40 Horas) "}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 113,
-                'token' => '629150940d7b4',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Piloto Privado Avião Prático Convencional (Pacote de 10 Horas)',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Piloto Privado Avião Prático Convencional (Pacote de 10 Horas)',
-                'descricao' => '<h5><b>O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</b><br></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>VOCÊ PODE:</b></h5><p>Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</p><h5><b>PRÓXIMA ETAPA:</b></h5><p>Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>A Aviação Civil;</li><li>Combate ao fogo em aeronave;</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Medicina de Aviação;</li><li>Meteorologia;</li><li>Navegação;</li><li>Palestra “O piloto privado – avião”;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Segurança de voo;</li><li>Teoria de voo.</li></ul><h5><b>TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO):</b></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>OBJETIVO:</b></h5><p>Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (PRÁTICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li><li>Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</li></ul><h5><b>TREINAMENTO:</b></h5><p><b>A carga horária para a prática de voo será de 42 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>Fase 1 – Introdução ao voo 2hrs</li><li>Fase 2 – O Controle da aeronave 2hrs</li><li>Fase 3 – A coordenação de altitude e potência 4hrs</li><li>Fase 4 – Treinamentos de manobras e aproximações 8hrs</li><li>Fase 5 – Procedimentos avançados de emergência 4hrs</li><li>Fase 6 – Treinamento de voo noturno 3hrs</li><li>Fase 7 – Treinamento de voo solo 6hrs</li><li>Fase 8 – Procedimentos de navegação 12hrs</li><li>Fase 9 – Avaliação para voo de cheque (endosso) 1hr</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 03 horas (não incluso na carga horaria do treinamento)</li></ul>',
-                'modulos' => '[{"titulo":"10 horas de Voo","limite":"10","aviao":["6"]}]',
-                'conteudo' => '',
-                'inscricao' => 300,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro passo para se tornar um piloto de \r\navião. Você estará apto a pilotar aviões monomotores em condições \r\nvisuais.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 137,
-                'url' => 'piloto-privado-aviao-pratico-convencional-(pacote-de-10-horas)',
-                'duracao' => 10,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 2,
-                'data' => '2022-05-27 19:29:13',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","tx":{"combustivel":"","checador":"","anac":"","noturno":""},"requisito":"87","cma":"cma_segunda_classe","banca":"s","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_divulgacao":"","pagina_venda":{"link":"","label":""},"adc":{"recorrente":"n","cor":"1209EB"}}',
-                'aeronaves' => '["5c2280d606784","5c2b9279ae5b9","5c76cca8d33d4"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"29/06/2022 11:06:42","tab":"cursos","nome":"Todos cursos|Piloto Privado Aviu00e3o Pru00e1tico Convencional (Pacote de 10 Horas)"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 114,
-                'token' => '629150cb68f11',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Piloto Privado Avião Prático Convencional (Pacote de 20 Horas) ',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Piloto Privado Avião Prático (Pacote de 20 Horas)',
-                'descricao' => '<h5><b>O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</b><br></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>VOCÊ PODE:</b></h5><p>Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</p><h5><b>PRÓXIMA ETAPA:</b></h5><p>Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>A Aviação Civil;</li><li>Combate ao fogo em aeronave;</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Medicina de Aviação;</li><li>Meteorologia;</li><li>Navegação;</li><li>Palestra “O piloto privado – avião”;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Segurança de voo;</li><li>Teoria de voo.</li></ul><h5><b>TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO):</b></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>OBJETIVO:</b></h5><p>Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (PRÁTICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li><li>Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</li></ul><h5><b>TREINAMENTO:</b></h5><p><b>A carga horária para a prática de voo será de 42 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>Fase 1 – Introdução ao voo 2hrs</li><li>Fase 2 – O Controle da aeronave 2hrs</li><li>Fase 3 – A coordenação de altitude e potência 4hrs</li><li>Fase 4 – Treinamentos de manobras e aproximações 8hrs</li><li>Fase 5 – Procedimentos avançados de emergência 4hrs</li><li>Fase 6 – Treinamento de voo noturno 3hrs</li><li>Fase 7 – Treinamento de voo solo 6hrs</li><li>Fase 8 – Procedimentos de navegação 12hrs</li><li>Fase 9 – Avaliação para voo de cheque (endosso) 1hr</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 03 horas (não incluso na carga horaria do treinamento)</li></ul>',
-                'modulos' => '[{"titulo":"20 horas de Voo","limite":"20","aviao":["6"]}]',
-                'conteudo' => '',
-                'inscricao' => 300,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro passo para se tornar um piloto de \r\navião. Você estará apto a pilotar aviões monomotores em condições \r\nvisuais.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 137,
-                'url' => 'piloto-privado-aviao-pratico-convencional-(pacote-de-20-horas)-',
-                'duracao' => 20,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 2,
-                'data' => '2022-05-27 19:29:55',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","tx":{"combustivel":"","checador":"","anac":"","noturno":""},"requisito":"87","cma":"cma_segunda_classe","banca":"s","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_divulgacao":"","pagina_venda":{"link":"","label":""},"adc":{"recorrente":"n","cor":"1209EB"}}',
-                'aeronaves' => '["5c2280d606784","5c2b9279ae5b9","5c76cca8d33d4"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"29/06/2022 11:06:42","tab":"cursos","nome":"Todos cursos|Piloto Privado Aviu00e3o Pru00e1tico Convencional (Pacote de 20 Horas) "}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 115,
-                'token' => '629150f656266',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Piloto Privado Avião Prático Convencional (Pacote de 36 Horas)',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Piloto Privado Avião Prático Convencional (Pacote de 40 Horas)',
-                'descricao' => '<h5><b>O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</b><br></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>VOCÊ PODE:</b></h5><p>Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</p><h5><b>PRÓXIMA ETAPA:</b></h5><p>Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>A Aviação Civil;</li><li>Combate ao fogo em aeronave;</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Medicina de Aviação;</li><li>Meteorologia;</li><li>Navegação;</li><li>Palestra “O piloto privado – avião”;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Segurança de voo;</li><li>Teoria de voo.</li></ul><h5><b>TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO):</b></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>OBJETIVO:</b></h5><p>Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (PRÁTICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li><li>Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</li></ul><h5><b>TREINAMENTO:</b></h5><p><b>A carga horária para a prática de voo será de 42 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>Fase 1 – Introdução ao voo 2hrs</li><li>Fase 2 – O Controle da aeronave 2hrs</li><li>Fase 3 – A coordenação de altitude e potência 4hrs</li><li>Fase 4 – Treinamentos de manobras e aproximações 8hrs</li><li>Fase 5 – Procedimentos avançados de emergência 4hrs</li><li>Fase 6 – Treinamento de voo noturno 3hrs</li><li>Fase 7 – Treinamento de voo solo 6hrs</li><li>Fase 8 – Procedimentos de navegação 12hrs</li><li>Fase 9 – Avaliação para voo de cheque (endosso) 1hr</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 03 horas (não incluso na carga horaria do treinamento)</li></ul>',
-                'modulos' => '[{"titulo":"36 horas de Voo","limite":"36","aviao":["6"]}]',
-                'conteudo' => '',
-                'inscricao' => 300,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro passo para se tornar um piloto de \r\navião. Você estará apto a pilotar aviões monomotores em condições \r\nvisuais.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 137,
-                'url' => 'piloto-privado-aviao-pratico-convencional-(pacote-de-36-horas)',
-                'duracao' => 36,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 2,
-                'data' => '2022-05-27 19:30:43',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","tx":{"combustivel":"","checador":"","anac":"","noturno":""},"requisito":"87","cma":"cma_segunda_classe","banca":"s","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_divulgacao":"","pagina_venda":{"link":"","label":""},"adc":{"recorrente":"n","cor":"1209EB"}}',
-                'aeronaves' => '["5c2280d606784"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"14","excluido_data":"29/06/2022 11:06:42","tab":"cursos","nome":"Todos cursos|Piloto Privado Aviu00e3o Pru00e1tico Convencional (Pacote de 36 Horas)"}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 116,
-                'token' => '62bf4f1095a55',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Time Building ( Horas Avulsas)',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Time Building ( Horas Avulsas)',
-                'descricao' => '<h5><b>O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</b><br></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>VOCÊ PODE:</b></h5><p>Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</p><h5><b>PRÓXIMA ETAPA:</b></h5><p>Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>A Aviação Civil;</li><li>Combate ao fogo em aeronave;</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Medicina de Aviação;</li><li>Meteorologia;</li><li>Navegação;</li><li>Palestra “O piloto privado – avião”;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Segurança de voo;</li><li>Teoria de voo.</li></ul><h5><b>TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO):</b></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>OBJETIVO:</b></h5><p>Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (PRÁTICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li><li>Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</li></ul><h5><b>TREINAMENTO:</b></h5><p><b>A carga horária para a prática de voo será de 42 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>Fase 1 – Introdução ao voo 2hrs</li><li>Fase 2 – O Controle da aeronave 2hrs</li><li>Fase 3 – A coordenação de altitude e potência 4hrs</li><li>Fase 4 – Treinamentos de manobras e aproximações 8hrs</li><li>Fase 5 – Procedimentos avançados de emergência 4hrs</li><li>Fase 6 – Treinamento de voo noturno 3hrs</li><li>Fase 7 – Treinamento de voo solo 6hrs</li><li>Fase 8 – Procedimentos de navegação 12hrs</li><li>Fase 9 – Avaliação para voo de cheque (endosso) 1hr</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 03 horas (não incluso na carga horaria do treinamento)</li></ul>',
-                'modulos' => '[{"titulo":"Horas Avulsas IFR","limite":"100","aviao":["18","17","39"],"valor":""},{"titulo":"Horas Avulsas VFR","limite":"100","aviao":["24","18","17","39","45"],"valor":"","aeronave":"45"},{"titulo":"Horas Avulsas VFR Noturno","limite":"100","aviao":["24","18","17","39","45"],"valor":"","aeronave":"18"},{"titulo":"Horas Avulsas MLTE ","limite":"100","aviao":["44"],"valor":""},{"titulo":"Hora avulsa Simulador MLTE","limite":"100","aviao":["21"],"valor":""},{"titulo":"Hora Avulsa Simulador MNTE","limite":"100","aviao":["20"],"valor":""}]',
-                'conteudo' => '',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro passo para se tornar um piloto de \r\navião. Você estará apto a pilotar aviões monomotores em condições \r\nvisuais.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 14,
-                'url' => 'time-building-(-horas-avulsas)',
-                'duracao' => 100,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 's',
-                'destaque' => 's',
-                'ordenar' => 15,
-                'data' => '2022-07-01 16:47:43',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"proximo_curso":"90","gratis":"n","tx2":[{"name_label":"","name_valor":""}],"tipo_desconto_taxa":"v","desconto_taxa":"","pagina_divulgacao":"","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_venda":{"link":"","label":""},"adc":{"recheck":"n","recorrente":"s","cor":"060613"}}',
-                'aeronaves' => '["5c271a2d5c219","5c2b9279ae5b9","5c2b966c9eefe","5c332c39e0630","5c76cca8d33d4","5fa96eb88594c","64d17b788ef7b","64d17cb86ff7b"]',
-                'professor' => 0,
-                'excluido' => 'n',
-                'reg_excluido' => '',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 117,
-                'token' => '62dbe8e5a6f76',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Revalidação de Habilitação Multimotor IFR ou VFR',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Revalidação de Habilitação Multimotor IFR ou VFR',
-                'descricao' => '<h5>Seu negócio é voar, o nosso é cuidar das suas habilitações para mante-lo sempre atualizado e preparado</h5><p>Mantendo suas habilitações atualizadas, você economiza tempo e dinheiro, além de estar sempre pronto para o mercado de trabalho você ainda poderá realizar seus vôos particulares com tranquilidade. O Aeroclube de Juiz de Fora facilita sua revalidação com horário agendado de sua preferência e cuida de todo processo junto a ANAC. Temos Examinadores disponíveis e condições de reserva de voos para todos os dias da semana.</p>',
-                'modulos' => '[{"etapa":"etapa2","titulo":"Adaptação","limite":"2","aviao":["44"],"valor":"","aeronave":"44"},{"etapa":"etapa2","titulo":"Avaliação Simulador MLTE IFR","limite":"10","aviao":["21"],"valor":"","aeronave":"20"},{"etapa":"etapa2","titulo":"Avaliação Aeronave MLTE","limite":"2","aviao":["44"],"valor":"","aeronave":"44"}]',
-                'conteudo' => '',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '<p>Mantendo suas habilitações atualizadas, você economiza tempo e dinheiro, além de estar sempre pronto para o mercado de trabalho você ainda poderá realizar seus vôos particulares com tranquilidade. O Aeroclube de Juiz de Fora facilita sua revalidação com horário agendado de sua preferência e cuida de todo processo junto a ANAC. Temos Examinadores disponíveis e condições de reserva de voos para todos os dias da semana.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => 'Seu negócio é voar, o nosso é cuidar das suas habilitações para mante-lo sempre atualizado e preparado\r\nMantendo suas habilitações atualizadas, você economiza tempo e dinheiro, além de estar sempre pr',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 22,
-                'url' => 'revalidacao-de-habilitacao-multimotor-ifr-ou-vfr',
-                'duracao' => 3,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 's',
-                'destaque' => 's',
-                'ordenar' => 12,
-                'data' => '2022-07-23 09:26:43',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"proximo_curso":"","gratis":"n","tx2":{"0":{"name_label":"Taxa de Examinador Credenciado ANAC","name_valor":"500,00"},"2":{"name_label":"Envio de Processo ","name_valor":""}},"pagina_divulgacao":"","video":"https://www.youtube.com/watch?v=874S0iPR9kE&t=36s","pagina_venda":{"link":"","label":""},"adc":{"recheck":"s","recorrente":"s","cor":"FFC200"}}',
-                'aeronaves' => '["5c332c39e0630","64d17b788ef7b"]',
-                'professor' => 0,
-                'excluido' => 'n',
-                'reg_excluido' => '',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 118,
-                'token' => '62dbe97383ca8',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Revalidação de Habilitação Instrutor de Voo',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Revalidação de Habilitação Instrutor de Voo',
-                'descricao' => '<h5>Seu negócio é voar, o nosso é cuidar das suas habilitações para mante-lo sempre atualizado e preparado</h5><p>Mantendo suas habilitações atualizadas, você economiza tempo e dinheiro, além de estar sempre pronto para o mercado de trabalho você ainda poderá realizar seus vôos particulares com tranquilidade. O Aeroclube de Juiz de Fora facilita sua revalidação com horário agendado de sua preferência e cuida de todo processo junto a ANAC. Temos Examinadores disponíveis e condições de reserva de voos para todos os dias da semana.</p>',
-                'modulos' => '[{"etapa":"etapa2","titulo":"Adaptação","limite":"1","aviao":["24","18","17","39","45"],"valor":"","aeronave":"18"},{"etapa":"etapa2","titulo":"Avaliação Aeronave MNTE","limite":"1","aviao":["24","18","17","39","45"],"valor":"","aeronave":"18"}]',
-                'conteudo' => '',
-                'inscricao' => 0,
-                'Pagamento' => null,
-                'obs' => '<p>Mantendo suas habilitações atualizadas, você economiza tempo e dinheiro, além de estar sempre pronto para o mercado de trabalho você ainda poderá realizar seus vôos particulares com tranquilidade. O Aeroclube de Juiz de Fora facilita sua revalidação com horário agendado de sua preferência e cuida de todo processo junto a ANAC. Temos Examinadores disponíveis e condições de reserva de voos para todos os dias da semana.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => 'Seu negócio é voar, o nosso é cuidar das suas habilitações para mante-lo sempre atualizado e preparado\r\nMantendo suas habilitações atualizadas, você economiza tempo e dinheiro, além de estar sempre pr',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 22,
-                'url' => 'revalidacao-de-habilitacao-instrutor-de-voo',
-                'duracao' => 2,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 's',
-                'publicar' => 's',
-                'destaque' => 's',
-                'ordenar' => 13,
-                'data' => '2022-07-23 09:28:56',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"proximo_curso":"","gratis":"n","tx2":{"0":{"name_label":"Taxa de Examinador Credenciado ANAC","name_valor":"500,00"},"2":{"name_label":"Envio de Processo ","name_valor":""}},"pagina_divulgacao":"","video":"https://www.youtube.com/watch?v=874S0iPR9kE&t=36s","pagina_venda":{"link":"","label":""},"adc":{"recheck":"s","recorrente":"s","cor":"FFC200"}}',
-                'aeronaves' => '["5c271a2d5c219","5c2b9279ae5b9"]',
-                'professor' => 0,
-                'excluido' => 'n',
-                'reg_excluido' => '',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 122,
-                'token' => '635fe9f8b4c95',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Pacote de 35 Horas de voo VFR ',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Pacote de 35 Horas de voo VFR ',
-                'descricao' => '<h5><b>O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</b><br></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>VOCÊ PODE:</b></h5><p>Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</p><h5><b>PRÓXIMA ETAPA:</b></h5><p>Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>A Aviação Civil;</li><li>Combate ao fogo em aeronave;</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Medicina de Aviação;</li><li>Meteorologia;</li><li>Navegação;</li><li>Palestra “O piloto privado – avião”;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Segurança de voo;</li><li>Teoria de voo.</li></ul><h5><b>TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO):</b></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>OBJETIVO:</b></h5><p>Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (PRÁTICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li><li>Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</li></ul><h5><b>TREINAMENTO:</b></h5><p><b>A carga horária para a prática de voo será de 40 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>Fase 1 – Introdução ao voo 2hrs</li><li>Fase 2 – O Controle da aeronave 2hrs</li><li>Fase 3 – A coordenação de altitude e potência 4hrs</li><li>Fase 4 – Treinamentos de manobras e aproximações 8hrs</li><li>Fase 5 – Procedimentos avançados de emergência 4hrs</li><li>Fase 6 – Treinamento de voo noturno 3hrs</li><li>Fase 7 – Treinamento de voo solo 6hrs</li><li>Fase 8 – Procedimentos de navegação 11hrs</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 05 horas (não incluso na carga horaria do treinamento)</li></ul>',
-                'modulos' => '[{"titulo":"Introdução ao voo","limite":"2","aviao":["9","24","18","17"]},{"titulo":"Treinamento de voo","limite":"33","aviao":["9","24","18","17"]}]',
-                'conteudo' => '',
-                'inscricao' => 300,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro passo para se tornar um piloto de \r\navião. Você estará apto a pilotar aviões monomotores em condições \r\nvisuais.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 14,
-                'url' => 'pacote-de-35-horas-de-voo-vfr-',
-                'duracao' => 35,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 'n',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 25,
-                'data' => '2022-10-31 12:30:27',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","tx":{"combustivel":"","checador":"","anac":"","noturno":""},"proximo_curso":"72","requisito":"","cma":"cma_segunda_classe","banca":"s","pagina_divulgacao":"","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_venda":{"link":"","label":""},"adc":{"recorrente":"n","cor":"464AEB"}}',
-                'aeronaves' => '["5c2b9279ae5b9","5c76cca8d33d4"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"137","excluido_data":"23/12/2022 11:12:25","tab":"cursos","nome":"Todos cursos|Pacote de 35 Horas de voo VFR "}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 119,
-                'token' => '6310cbc3a8eae',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Pacote de 70 horas de voo VFR ',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Pacote de 70 horas de voo VFR ',
-                'descricao' => '<h5><b>PILOTO COMERCIAL DE AVIÃO HABILITAÇÃO MNTE IFR</b> </h5><p>O Curso de Piloto Comercial é o primeiro rumo à profissionalização. O Aeroclube de Juiz de Fora oferece treinamento teórico e prático que permite ao piloto avançar com segurança em sua carreira. Paralelamente, o piloto pode fazer o curso de voo por instrumentos (IFR). Este o torna apto a voar em condições meteorológicas adversas, utilizando apenas os instrumentos de bordo.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Comercial é o começo da profissionalização do piloto. O aluno poderá iniciá-lo após concluir o curso de Piloto Privado.</p><h5><b>VOCÊ PODERÁ:</b></h5><p>Pilotar diversas aeronaves com qualificação e proficiência de um profissional, seja o voo visual ou por instrumentos.</p><h5><b>PRÉ- REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador da licença de Piloto Privado</li><li>Ser portador do Exame Médico de 1ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>Aerodinâmica e Teoria de Voo;</li><li>A Aviação Civil;</li><li>Conhecimentos Técnicos (motores à reação);</li><li>Física;</li><li>Inglês;</li><li>Instrução Aeromédica;</li><li>Matemática;</li><li>Meteorologia;</li><li>Navegação Aérea (IFR);</li><li>O Piloto Comercial de Avião;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentação da Profissão de Aeronauta;</li><li>Regulamentos de Tráfego Aéreo (IFR);</li><li>Segurança da Aviação Civil contra atos de interferência ilícita;</li><li>Segurança de Voo;</li><li>Teoria de Voo.</li></ul><h5><b>TREINAMENTO PRÁTICO:</b></h5><p>O curso de Piloto Comercial de avião é o início da carreira profissional de um piloto. O Aeroclube de Juiz de Fora oferece esse curso com qualidade e respeito, tornando o piloto profissional reconhecido no mercado.</p><h5><b>OBJETIVO:</b></h5><p>Qualificar ainda mais o currículo do piloto, fazendo com que ele possa pilotar de forma mais segura, com padrões mais avançados e profissionais.</p><h5><b>APÓS CONCLUÍDO:</b></h5><p>Você poderá realizar treinamento para Instrutor de Voo ou pilotar aviões pequenos, acumulando experiência para a sua carreira.</p><h5><b>PRÉ-REQUISTOS:</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador da licença de Piloto Privado</li><li>Ser portador do Exame Médico de 1ª Classe</li><li>Aprovação na Banca da ANAC de Piloto Comercial</li></ul><h5 style="color: rgb(0, 0, 0);"><span style="font-weight: 700;">TREINAMENTO:</span></h5><h5><p style="font-size: 13px;"><span style="font-weight: 700;">A carga horária para a prática de voo será de 70 horas de voo.</span></p></h5>',
-                'modulos' => '[{"titulo":"Adaptação","limite":"6","aviao":["24","18","17","6","35"]},{"titulo":"Recuperações de atitudes anormais","limite":"4","aviao":["24","18","17","6","35"]},{"titulo":"Navegação","limite":"60","aviao":["24","18","17","35"]}]',
-                'conteudo' => '',
-                'inscricao' => 300,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro curso rumo à profissionalização. O Aeroclube de Juiz de Fora oferece \r\ntreinamento teórico e prático que lhe permitirá avançar com \r\nsegurança em sua carreira. Paralelamente, você poderá fazer o curso de\r\n voo por instrumentos (IFR).<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => 'O Curso de Piloto Comercial é o primeiro rumo à profissionalização. O Aeroclube de Juiz de Fora oferece treinamento teórico e prático que permite ao piloto avançar com segurança em sua carreira. Paral',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 14,
-                'url' => 'pacote-de-70-horas-de-voo-vfr-',
-                'duracao' => 70,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 'n',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 22,
-                'data' => '2022-09-01 12:15:09',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","tx":{"combustivel":"","checador":"","anac":"","noturno":""},"requisito":"69","cma":"cma_primeira_classe","banca":"s","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_divulgacao":"","pagina_venda":{"link":"","label":""},"adc":{"recorrente":"n","cor":"B7BAEB"}}',
-                'aeronaves' => '["5c2b9279ae5b9","5c2b966c9eefe"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"137","excluido_data":"23/12/2022 11:12:25","tab":"cursos","nome":"Todos cursos|Pacote de 70 horas de voo VFR "}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 121,
-                'token' => '6320817e8b875',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Pacote de 20 horas de voo VFR ',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Pacote de 20 horas de voo VFR ',
-                'descricao' => '<h5><b>O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</b><br></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>VOCÊ PODE:</b></h5><p>Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</p><h5><b>PRÓXIMA ETAPA:</b></h5><p>Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>A Aviação Civil;</li><li>Combate ao fogo em aeronave;</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Medicina de Aviação;</li><li>Meteorologia;</li><li>Navegação;</li><li>Palestra “O piloto privado – avião”;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Segurança de voo;</li><li>Teoria de voo.</li></ul><h5><b>TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO):</b></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>OBJETIVO:</b></h5><p>Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (PRÁTICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li><li>Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</li></ul><h5><b>TREINAMENTO:</b></h5><p><b>A carga horária para a prática de voo será de 40 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>Fase 1 – Introdução ao voo 2hrs</li><li>Fase 2 – O Controle da aeronave 2hrs</li><li>Fase 3 – A coordenação de altitude e potência 4hrs</li><li>Fase 4 – Treinamentos de manobras e aproximações 8hrs</li><li>Fase 5 – Procedimentos avançados de emergência 4hrs</li><li>Fase 6 – Treinamento de voo noturno 3hrs</li><li>Fase 7 – Treinamento de voo solo 6hrs</li><li>Fase 8 – Procedimentos de navegação 11hrs</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 05 horas (não incluso na carga horaria do treinamento)</li></ul>',
-                'modulos' => '[{"titulo":"Introdução ao voo","limite":"2","aviao":["9","24","18","17"]},{"titulo":"Treinamento de voo ","limite":"18","aviao":["9","24","18","17"]}]',
-                'conteudo' => '',
-                'inscricao' => 300,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro passo para se tornar um piloto de \r\navião. Você estará apto a pilotar aviões monomotores em condições \r\nvisuais.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 14,
-                'url' => 'pacote-de-20-horas-de-voo-vfr-',
-                'duracao' => 20,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 'n',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 25,
-                'data' => '2022-09-13 10:12:19',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","tx":{"combustivel":"","checador":"","anac":"","noturno":""},"proximo_curso":"69","requisito":"","cma":"cma_segunda_classe","banca":"s","pagina_divulgacao":"","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_venda":{"link":"","label":""},"adc":{"recorrente":"n","cor":"464AEB"}}',
-                'aeronaves' => '["5c2b9279ae5b9","5c76cca8d33d4"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"137","excluido_data":"23/12/2022 11:12:25","tab":"cursos","nome":"Todos cursos|Pacote de 20 horas de voo VFR "}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ],
-            [
-                'id' => 120,
-                'token' => '6310cdc9cb53a',
-                'categoria' => 'cursos_presencias',
-                'nome' => 'Pacote de 40 Horas de voo VFR ',
-                'tipo' => 2,
-                'codigo' => '',
-                'titulo' => 'Pacote de 40 Horas de voo VFR ',
-                'descricao' => '<h5><b>O ALUNO ESTARÁ APTO A PILOTAR AERONAVES MONOMOTORAS EM CONDIÇÕES VISUAIS</b><br></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso teórico tem a duração de 6 meses. No final desta primeira etapa o aluno se submeterá a uma prova teórica da ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a concluir o treinamento prático.</p><h5><b>EXPERIÊNCIA:</b></h5><p>O Curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>VOCÊ PODE:</b></h5><p>Pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará em torno de 10 horas de voo solo, inclusive navegações.</p><h5><b>PRÓXIMA ETAPA:</b></h5><p>Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial, e assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (TEÓRICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li></ul><h5><b>MATÉRIAS:</b></h5><ul><li>A Aviação Civil;</li><li>Combate ao fogo em aeronave;</li><li>Conhecimentos Técnicos de Aeronaves;</li><li>Medicina de Aviação;</li><li>Meteorologia;</li><li>Navegação;</li><li>Palestra “O piloto privado – avião”;</li><li>Regulamentação da Aviação Civil;</li><li>Regulamentos de Tráfego Aéreo;</li><li>Segurança de voo;</li><li>Teoria de voo.</li></ul><h5><b>TREINAMENTO PRÁTICO (CURSO DE PILOTO PRIVADO):</b></h5><p>Este curso é o primeiro passo para quem deseja se tornar um piloto de avião. O aluno estará apto a pilotar aviões monomotores em condições visuais. O curso Prático pode ser realizado em até 60 dias. No final o aluno se submeterá a um voo de cheque com o Examinador Credenciado do Aeroclube para a obtenção da licença de Piloto Privado de Avião que será emitida pela ANAC (Agência Nacional de Aviação Civil). Caso seja aprovado, estará apto a conduzir aeronaves monomotoras VFR. O curso de Piloto Privado é o primeiro passo de um piloto, portanto não é necessária nenhuma experiência prévia com pilotagens de aviões.</p><h5><b>OBJETIVO:</b></h5><p>Poderá pilotar aviões monomotores em condições visuais após formado. Durante o curso você fará 44 horas de voo, inclusive navegações. Para quem quer seguir carreira na aviação, a próxima etapa é fazer o curso de piloto comercial e, assim, aprender a pilotar aviões por instrumentos e aeronaves multimotoras.</p><h5><b>PRÉ-REQUISITOS (PRÁTICO):</b></h5><ul><li>18 anos de idade</li><li>2º grau completo</li><li>Ser portador do Exame Médico (CMA) de 2ª Classe</li><li>Ser portador do CCT (Certificado de Conhecimentos Técnicos) de PPA</li></ul><h5><b>TREINAMENTO:</b></h5><p><b>A carga horária para a prática de voo será de 40 horas de voo (não incluindo o cheque), obedecendo às seguintes fases:</b></p><ul><li>Fase 1 – Introdução ao voo 2hrs</li><li>Fase 2 – O Controle da aeronave 2hrs</li><li>Fase 3 – A coordenação de altitude e potência 4hrs</li><li>Fase 4 – Treinamentos de manobras e aproximações 8hrs</li><li>Fase 5 – Procedimentos avançados de emergência 4hrs</li><li>Fase 6 – Treinamento de voo noturno 3hrs</li><li>Fase 7 – Treinamento de voo solo 6hrs</li><li>Fase 8 – Procedimentos de navegação 11hrs</li><li>Avaliação final de curso – mínimo de 02 horas / máximo de 05 horas (não incluso na carga horaria do treinamento)</li></ul>',
-                'modulos' => '[{"titulo":"Introdução ao voo","limite":"2","aviao":["24","18","17"]},{"titulo":"Treinamentos de voo","limite":"38","aviao":["24","18","17"]}]',
-                'conteudo' => '',
-                'inscricao' => 300,
-                'Pagamento' => null,
-                'obs' => '<p>Este é o seu primeiro passo para se tornar um piloto de \r\navião. Você estará apto a pilotar aviões monomotores em condições \r\nvisuais.<br></p>',
-                'valor' => 0,
-                'parcelas' => '',
-                'meta_descricao' => '',
-                'valor_parcela' => 0,
-                'Aquemsedestina' => null,
-                'autor' => 14,
-                'url' => 'pacote-de-40-horas-de-voo-vfr-',
-                'duracao' => 40,
-                'unidade_duracao' => 'Hrs',
-                'ativo' => 'n',
-                'publicar' => 'n',
-                'destaque' => 'n',
-                'ordenar' => 23,
-                'data' => '2022-09-01 12:22:35',
-                'atualiza' => '0000-00-00 00:00:00',
-                'atualizacao' => '0000-00-00 00:00:00',
-                'config' => '{"turma":"","exigir_turma":"s","gratis":"n","tx":{"combustivel":"","checador":"","anac":"","noturno":""},"requisito":"","cma":"cma_segunda_classe","banca":"s","video":"https://www.youtube.com/watch?v=874S0iPR9kE","pagina_divulgacao":"","pagina_venda":{"link":"","label":""},"adc":{"recorrente":"n","cor":"464AEB"}}',
-                'aeronaves' => '["5c2b9279ae5b9","5c76cca8d33d4"]',
-                'professor' => 0,
-                'excluido' => 's',
-                'reg_excluido' => '{"excluidopor":"137","excluido_data":"23/12/2022 11:12:25","tab":"cursos","nome":"Todos cursos|Pacote de 40 Horas de voo VFR "}',
-                'deletado' => 'n',
-                'reg_deletado' => '',
-                'tabela_site' => ''
-            ]
+        // Primeiro tenta carregar de cursos.json (gerado a partir de cursos.sql)
+        $jsonRows = $this->loadJsonRows(base_path('database/seeders/data/cursos.json'));
+
+        /**
+         * PT: Usa exclusivamente os dados de cursos.json; se o arquivo estiver ausente,
+         *     inválido ou sem registros, a seeder não será executada.
+         * EN: Use data exclusively from cursos.json; if the file is missing,
+         *     invalid, or empty, the seeder will not run.
+         */
+        $rows = is_array($jsonRows) ? $jsonRows : [];
+        if (empty($rows)) {
+            $this->command?->warn('CursosSeeder: arquivo cursos.json ausente/vazio ou inválido. Seeder NÃO será executada.');
+            return;
+        }
+
+        // PT: Preserva o ID vindo do cursos.json quando disponível.
+        // EN: Preserve the ID from cursos.json when available.
+        foreach ($rows as $legacy) {
+            $data = $this->normalizeRow($legacy);
+
+            // PT: Se o JSON trouxer 'id', utilizamos esse ID explicitamente.
+            // EN: If JSON provides 'id', use that ID explicitly.
+            $id = isset($legacy['id']) && is_numeric($legacy['id']) ? (int) $legacy['id'] : null;
+
+            if ($id !== null) {
+                // PT: Buscar por ID ignorando escopos globais (pode existir registro marcado como excluído).
+                // EN: Find by ID ignoring global scopes (record might be marked as deleted).
+                $existing = Curso::withoutGlobalScopes()->find($id);
+
+                if ($existing) {
+                    // PT: Atualiza o registro existente mantendo o mesmo ID.
+                    // EN: Update existing record keeping the same ID.
+                    $existing->fill($data);
+                    $existing->save();
+                } else {
+                    // PT: Cria um novo registro com o ID explícito.
+                    // EN: Create a new record with the explicit ID.
+                    $curso = new Curso();
+                    $curso->id = $id; // atribuição direta não passa por mass-assignment
+                    $curso->fill($data);
+                    $curso->save();
+                }
+            } else {
+                // PT: Sem ID no JSON, usa chave por 'token' (ou 'nome') para idempotência.
+                // EN: Without ID in JSON, use 'token' (or 'nome') as upsert key.
+                $key = ['token' => $data['token'] ?? ($data['nome'] ?? uniqid('curso_'))];
+                Curso::updateOrCreate($key, $data);
+            }
+        }
+    }
+
+    /**
+     * PT: Carrega linhas de um arquivo JSON (cursos.json) e retorna como array.
+     * EN: Load rows from a JSON file (cursos.json) and return as array.
+     */
+    private function loadJsonRows(string $path): ?array
+    {
+        try {
+            if (!file_exists($path)) {
+                return null;
+            }
+            $json = file_get_contents($path);
+            $data = json_decode($json, true);
+            if (!is_array($data)) {
+                return null;
+            }
+            return $data;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * PT: Normaliza uma linha legada para os campos aceitos pelo modelo Curso.
+     * EN: Normalize a legacy row to the fields accepted by the Curso model.
+     */
+    private function normalizeRow(array $legacy): array
+    {
+        // Gerar token se ausente
+        $token = $legacy['token'] ?? null;
+        if (!$token || !is_string($token) || trim($token) === '') {
+            $token = uniqid('curso_', true);
+        }
+
+        // Preferir modulos; se ausente, tentar mapear de 'conteudo'
+        $modulos = $legacy['modulos'] ?? null;
+        if (($modulos === null || $modulos === '' || $modulos === []) && isset($legacy['conteudo'])) {
+            $modulos = $legacy['conteudo'];
+        }
+
+        // Campos que o modelo aceita (ver App\Models\Curso::$fillable)
+        $data = [
+            'nome'             => $legacy['nome'] ?? null,
+            'titulo'           => $legacy['titulo'] ?? ($legacy['nome'] ?? null),
+            'ativo'            => $legacy['ativo'] ?? 'n',
+            'destaque'         => $legacy['destaque'] ?? 'n',
+            'publicar'         => $legacy['publicar'] ?? 'n',
+            'duracao'          => $legacy['duracao'] ?? 0,
+            'unidade_duracao'  => $legacy['unidade_duracao'] ?? null,
+            'tipo'             => $legacy['tipo'] ?? null,
+            'categoria'        => $legacy['categoria'] ?? null,
+            'token'            => $token,
+            'autor'            => $legacy['autor'] ?? null,
+            'config'           => $legacy['config'] ?? null,
+            'aeronaves'        => $this->nullifyEmpty($legacy['aeronaves'] ?? null),
+            'modulos'          => $this->nullifyEmpty($modulos),
+            'inscricao'        => $legacy['inscricao'] ?? null,
+            'valor'            => $legacy['valor'] ?? null,
+            'parcelas'         => $legacy['parcelas'] ?? null,
+            'valor_parcela'    => $legacy['valor_parcela'] ?? null,
+            // Campos de lixeira/registro
+            'excluido'         => $legacy['excluido'] ?? null,
+            'deletado'         => $legacy['deletado'] ?? null,
+            'excluido_por'     => $legacy['excluido_por'] ?? null,
+            'deletado_por'     => $legacy['deletado_por'] ?? null,
+            'reg_excluido'     => $legacy['reg_excluido'] ?? null,
+            'reg_deletado'     => $legacy['reg_deletado'] ?? null,
         ];
 
-        // Colunas permitidas pelo schema atual da tabela `cursos`
-        $allowed = [
-            'id', 'token', 'categoria', 'nome', 'tipo', 'titulo',
-            'inscricao', 'valor', 'parcelas', 'valor_parcela',
-            'autor', 'duracao', 'unidade_duracao', 'ativo', 'publicar', 'destaque',
-            'config', 'aeronaves', 'modulos',
-            'excluido', 'deletado', 'excluido_por', 'deletado_por', 'reg_excluido', 'reg_deletado',
-            'campo_id', 'campo_bus',
-            'created_at', 'updated_at',
-        ];
-
-        // Normaliza cada registro para o esquema atual
-        $normalized = array_map(function (array $r) use ($allowed) {
-            // Remove chaves não suportadas
-            $r = array_intersect_key($r, array_flip($allowed));
-
-            // Ajusta tipos: 'tipo' e 'autor' devem ser strings
-            if (isset($r['tipo'])) {
-                $r['tipo'] = (string) $r['tipo'];
+        // Sanitizar strings vazias para null onde apropriado
+        foreach (['unidade_duracao','categoria','autor'] as $k) {
+            if (isset($data[$k]) && is_string($data[$k]) && trim($data[$k]) === '') {
+                $data[$k] = null;
             }
-            if (isset($r['autor'])) {
-                $r['autor'] = is_string($r['autor']) ? $r['autor'] : (string) $r['autor'];
-            }
+        }
 
-            // Campos JSON: garantir JSON válido ou null
-            if (array_key_exists('aeronaves', $r)) {
-                if ($r['aeronaves'] === '' || $r['aeronaves'] === null) {
-                    $r['aeronaves'] = json_encode([]);
-                } elseif (is_array($r['aeronaves'])) {
-                    $r['aeronaves'] = json_encode($r['aeronaves']);
-                } elseif (is_string($r['aeronaves'])) {
-                    $decoded = json_decode($r['aeronaves'], true);
-                    $r['aeronaves'] = json_last_error() === JSON_ERROR_NONE ? json_encode($decoded) : json_encode([]);
-                }
-            }
-            if (array_key_exists('modulos', $r)) {
-                if ($r['modulos'] === '' || $r['modulos'] === null) {
-                    $r['modulos'] = json_encode([]);
-                } elseif (is_array($r['modulos'])) {
-                    $r['modulos'] = json_encode($r['modulos']);
-                } elseif (is_string($r['modulos'])) {
-                    $decoded = json_decode($r['modulos'], true);
-                    $r['modulos'] = json_last_error() === JSON_ERROR_NONE ? json_encode($decoded) : json_encode([]);
-                }
-            }
-            foreach (['reg_excluido','reg_deletado'] as $jsonKey) {
-                if (array_key_exists($jsonKey, $r)) {
-                    if ($r[$jsonKey] === '') {
-                        $r[$jsonKey] = null;
-                    } elseif (is_array($r[$jsonKey])) {
-                        $r[$jsonKey] = json_encode($r[$jsonKey]);
-                    } elseif (is_string($r[$jsonKey])) {
-                        $decoded = json_decode($r[$jsonKey], true);
-                        $r[$jsonKey] = json_last_error() === JSON_ERROR_NONE ? json_encode($decoded) : null;
-                    }
-                }
-            }
+        return $data;
+    }
 
-            // Campo JSON 'config': garantir JSON válido ou null
-            if (array_key_exists('config', $r)) {
-                if ($r['config'] === '' || $r['config'] === null) {
-                    $r['config'] = null;
-                } elseif (is_array($r['config'])) {
-                    $r['config'] = json_encode($r['config']);
-                } elseif (is_string($r['config'])) {
-                    $decoded = json_decode($r['config'], true);
-                    $r['config'] = json_last_error() === JSON_ERROR_NONE ? json_encode($decoded) : null;
-                }
-            }
-
-            // Numéricos: converter strings vazias para defaults/NULL conforme schema
-            // Inteiros com default
-            $r['parcelas'] = isset($r['parcelas']) && is_numeric($r['parcelas'])
-                ? (int) $r['parcelas']
-                : 1; // default da migration
-            $r['duracao'] = isset($r['duracao']) && is_numeric($r['duracao'])
-                ? (int) $r['duracao']
-                : 0; // default da migration
-
-            // Decimais (nullable)
-            foreach (['inscricao','valor','valor_parcela'] as $decKey) {
-                if (array_key_exists($decKey, $r)) {
-                    if ($r[$decKey] === '' || $r[$decKey] === null) {
-                        $r[$decKey] = null;
-                    } elseif (is_numeric($r[$decKey])) {
-                        // Armazenar como string com ponto, para compatibilidade decimal
-                        $r[$decKey] = (string) (float) $r[$decKey];
-                    } else {
-                        $r[$decKey] = null;
-                    }
-                }
-            }
-
-            // Flags de lixeira: default 'n' se ausentes
-            $r['excluido'] = isset($r['excluido']) ? $r['excluido'] : 'n';
-            $r['deletado'] = isset($r['deletado']) ? $r['deletado'] : 'n';
-
-            // Campos opcionais não presentes no dataset
-            $r['excluido_por'] = $r['excluido_por'] ?? null;
-            $r['deletado_por'] = $r['deletado_por'] ?? null;
-            $r['campo_id'] = $r['campo_id'] ?? null;
-            $r['campo_bus'] = $r['campo_bus'] ?? null;
-
-            // Enums principais: default 'n' se ausentes
-            $r['ativo'] = $r['ativo'] ?? 'n';
-            $r['destaque'] = $r['destaque'] ?? 'n';
-            $r['publicar'] = $r['publicar'] ?? 'n';
-
-            return $r;
-        }, $rows);
-
-        DB::table('cursos')->insert($normalized);
+    /**
+     * PT: Converte valores vazios ('' ou [ ]) para null para evitar ruídos.
+     * EN: Convert empty values ('' or [ ]) to null to avoid noise.
+     */
+    private function nullifyEmpty($value)
+    {
+        if ($value === '' || $value === []) {
+            return null;
+        }
+        return $value;
     }
 }

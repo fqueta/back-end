@@ -69,7 +69,6 @@ class PermissionService
         $status = isset($user->status) ? strtolower((string) $user->status) : null;
         $ativo  = isset($user->ativo)  ? strtolower((string) $user->ativo)  : null;
         $isActive = ($status === 'actived') || ($ativo === 's');
-
         if (!$isActive) {
             // Revoga o token atual (Sanctum) para impedir novos acessos
             try {
@@ -90,7 +89,8 @@ class PermissionService
 
         // Verifica permissão para a rota atual
         $routeName = request()->route()->getName();
-        return $this->can($user, $routeName, $permissao);
+        $ret = $this->can($user, $routeName, $permissao);
+        return $ret;
     }
     private function get_url_by_route($name=''){
         $url = '';
@@ -99,6 +99,10 @@ class PermissionService
             $url = '/settings/permissions';
         }elseif($name=='api.users.index' || $name == 'api.users.update' || $name == 'api.users.show' || $name == 'api.users.store' || $name == 'api.users.destroy'){
             $url = '/settings/users';
+        }elseif($name=='api.parcelamentos.index' || $name == 'api.parcelamentos.update' || $name == 'api.parcelamentos.show' || $name == 'api.parcelamentos.store' || $name == 'api.parcelamentos.destroy'){
+            $url = '/settings/table-installment';
+        }elseif($name=='api.situacoes-matricula.index' || $name == 'api.situacoes-matricula.update' || $name == 'api.situacoes-matricula.show' || $name == 'api.situacoes-matricula.store' || $name == 'api.situacoes-matricula.destroy'){
+            $url = '/school/enrollment-situation';
         }elseif($name=='api.metrics.index' || $name == 'api.metrics.update' || $name == 'api.metrics.show' || $name == 'api.metrics.store' || $name == 'api.metrics.destroy'){
             $url = '/settings/metrics';
         }elseif($name=='api.clients.index' || $name == 'api.clients.update' || $name == 'api.clients.show' || $name == 'api.clients.store' || $name == 'api.clients.destroy' || $name == 'api.clients.restore' || $name == 'api.clients.forceDelete' || $name == 'api.clients.attendances.store'){
@@ -111,6 +115,9 @@ class PermissionService
             $url = '/aircraft';
         }elseif($name=='api.aeronaves.index' || $name=='api.aeronaves.store' || $name == 'api.aeronaves.update' || $name == 'api.aeronaves.show' || $name == 'api.aeronaves.destroy' || $name == 'api.aeronaves.restore' || $name == 'api.aeronaves.forceDelete' || $name == 'api.aeronaves.trash'){
             $url = '/settings/aircrafts';
+        }
+        if($name=='api.options.index' || $name == 'api.options.update' || $name == 'api.options.show' || $name == 'api.options.store' || $name == 'api.options.destroy' || $name == 'api.options.all.get' || $name == 'api.options.all'){
+            $url = '/settings/system';
         }
         if($name=='api.categories.index' || $name == 'api.categories.update' || $name == 'api.categories.show' || $name == 'api.categories.store' || $name == 'api.categories.destroy' || $name == 'api.categories.restore' || $name == 'api.categories.forceDelete' || $name == 'api.categories.trash' || $name == 'api.categories.tree'){
             $url = '/categories';
@@ -144,6 +151,14 @@ class PermissionService
         }
         if($name=='api.cursos.index' || $name == 'api.cursos.update' || $name == 'api.cursos.show' || $name == 'api.cursos.store' || $name == 'api.cursos.destroy' || $name == 'api.cursos.all'){
             $url = '/school/courses';
+        }
+        if($name=='api.turmas.index' || $name == 'api.turmas.update' || $name == 'api.turmas.show' || $name == 'api.turmas.store' || $name == 'api.turmas.destroy' || $name == 'api.turmas.all'){
+            $url = '/school/classes';
+        }
+        if(
+            $name=='api.matriculas.index' || $name == 'api.matriculas.update' || $name == 'api.matriculas.show' || $name == 'api.matriculas.store' || $name == 'api.matriculas.destroy' || $name == 'api.matriculas.all'
+            ){
+            $url = '/sales';
         }
         /**
          * @params string 'api.financial.categories.index | api.financial.categories.update | api.financial.categories.show | api.financial.categories.store | api.financial.categories.destroy'

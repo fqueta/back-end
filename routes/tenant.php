@@ -29,9 +29,12 @@ use App\Http\Controllers\api\ProductController;
 use App\Http\Controllers\api\ServiceController;
 use App\Http\Controllers\api\ServiceUnitController;
 use App\Http\Controllers\api\ServiceOrderController;
+use App\Http\Controllers\api\SituacaoMatriculaController;
+use App\Http\Controllers\api\ParcelamentoController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\api\CursoController;
+use App\Http\Controllers\TurmaController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\TesteController;
@@ -120,14 +123,26 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::put('clients/{id}/restore', [ClientController::class, 'restore'])->name('clients.restore');
         Route::delete('clients/{id}/force', [ClientController::class, 'forceDelete'])->name('clients.forceDelete');
 
+        // Responsáveis (clientes com permission_id=8)
+        Route::get('responsaveis', [ClientController::class, 'responsaveisIndex'])->name('responsaveis.index');
+        Route::post('responsaveis', [ClientController::class, 'responsaveisStore'])->name('responsaveis.store');
+        Route::get('responsaveis/{id}', [ClientController::class, 'responsaveisShow'])->name('responsaveis.show');
+        Route::put('responsaveis/{id}', [ClientController::class, 'responsaveisUpdate'])->name('responsaveis.update');
+        Route::patch('responsaveis/{id}', [ClientController::class, 'responsaveisUpdate']);
+        Route::delete('responsaveis/{id}', [ClientController::class, 'responsaveisDestroy'])->name('responsaveis.destroy');
+        Route::get('responsaveis/trash', [ClientController::class, 'responsaveisTrash'])->name('responsaveis.trash');
+        Route::put('responsaveis/{id}/restore', [ClientController::class, 'responsaveisRestore'])->name('responsaveis.restore');
+        Route::delete('responsaveis/{id}/force', [ClientController::class, 'responsaveisForceDelete'])->name('responsaveis.forceDelete');
+
         // Rotas para options
-        Route::apiResource('options', OptionController::class,['parameters' => [
-            'options' => 'id'
-        ]]);
+        Route::get('options/all', [OptionController::class, 'index'])->name('options.all.get');
         Route::post('options/all', [OptionController::class, 'fast_update_all'])->name('options.all');
         Route::get('options/trash', [OptionController::class, 'trash'])->name('options.trash');
         Route::put('options/{id}/restore', [OptionController::class, 'restore'])->name('options.restore');
         Route::delete('options/{id}/force', [OptionController::class, 'forceDelete'])->name('options.forceDelete');
+        Route::apiResource('options', OptionController::class,['parameters' => [
+            'options' => 'id'
+        ]]);
 
         // Rotas para posts
         Route::apiResource('posts', PostController::class,['parameters' => [
@@ -136,6 +151,14 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::get('posts/trash', [PostController::class, 'trash'])->name('posts.trash');
         Route::put('posts/{id}/restore', [PostController::class, 'restore'])->name('posts.restore');
         Route::delete('posts/{id}/force', [PostController::class, 'forceDelete'])->name('posts.forceDelete');
+
+        // Rotas para situações de matrícula (post_type=situacao_matricula)
+        Route::apiResource('situacoes-matricula', SituacaoMatriculaController::class, ['parameters' => [
+            'situacoes-matricula' => 'id'
+        ]]);
+        Route::get('situacoes-matricula/trash', [SituacaoMatriculaController::class, 'trash'])->name('situacoes-matricula.trash');
+        Route::put('situacoes-matricula/{id}/restore', [SituacaoMatriculaController::class, 'restore'])->name('situacoes-matricula.restore');
+        Route::delete('situacoes-matricula/{id}/force', [SituacaoMatriculaController::class, 'forceDelete'])->name('situacoes-matricula.forceDelete');
 
         // Rotas para aircraft
         Route::get('aircraft/trash', [AircraftController::class, 'trash'])->name('aircraft.trash');
@@ -299,12 +322,36 @@ Route::name('api.')->prefix('api/v1')->middleware([
             'cursos' => 'id'
         ]]);
 
+        // Rotas para parcelamentos (planos de pagamento de cursos)
+        Route::get('parcelamentos/trash', [ParcelamentoController::class, 'trash'])->name('parcelamentos.trash');
+        Route::put('parcelamentos/{id}/restore', [ParcelamentoController::class, 'restore'])->name('parcelamentos.restore');
+        Route::delete('parcelamentos/{id}/force', [ParcelamentoController::class, 'forceDelete'])->name('parcelamentos.forceDelete');
+        Route::apiResource('parcelamentos', ParcelamentoController::class, ['parameters' => [
+            'parcelamentos' => 'id'
+        ]]);
+
         // Alias em inglês para compatibilidade
         Route::get('courses/trash', [CursoController::class, 'trash'])->name('courses.trash');
         Route::put('courses/{id}/restore', [CursoController::class, 'restore'])->name('courses.restore');
         Route::delete('courses/{id}/force', [CursoController::class, 'forceDelete'])->name('courses.forceDelete');
         Route::apiResource('courses', CursoController::class, ['parameters' => [
             'courses' => 'id'
+        ]]);
+
+        // Rotas para turmas (PT-BR)
+        Route::get('turmas/trash', [TurmaController::class, 'trash'])->name('turmas.trash');
+        Route::put('turmas/{id}/restore', [TurmaController::class, 'restore'])->name('turmas.restore');
+        Route::delete('turmas/{id}/force', [TurmaController::class, 'forceDelete'])->name('turmas.forceDelete');
+        Route::apiResource('turmas', TurmaController::class, ['parameters' => [
+            'turmas' => 'id'
+        ]]);
+
+        // Alias em inglês para turmas (compatibilidade)
+        Route::get('classes/trash', [TurmaController::class, 'trash'])->name('classes.trash');
+        Route::put('classes/{id}/restore', [TurmaController::class, 'restore'])->name('classes.restore');
+        Route::delete('classes/{id}/force', [TurmaController::class, 'forceDelete'])->name('classes.forceDelete');
+        Route::apiResource('classes', TurmaController::class, ['parameters' => [
+            'classes' => 'id'
         ]]);
 
         // Rotas para services

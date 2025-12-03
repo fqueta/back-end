@@ -6,38 +6,30 @@
     "order": 1
   },
   {
-    "title": "Vendas",
+    "title": "Vendas e Propostas",
     "icon": "Shop",
     "submenu": [
-      { "title": "Flow de Vendas", "url": "/sales" },
-      { "title": "Ganhos", "url": "/sales/ganhos" }
-    ]
-  },
-  {
-    "title": "Flow de Atendimento",
-    "icon": "Headset",
-    "url": "/customers/leads"
-  },
-  {
-    "title": "Escola",
-    "submenu": [
-      { "title": "Atendimento (FloW)", "url": "/sales" },
-      { "title": "Interessados", "url": "/school/interested" },
-      { "title": "Matrículas", "url": "/school/enroll" },
-      { "title": "Todos cursos", "url": "/school/courses" },
-      { "title": "Atendidos por", "url": "/school/followed" },
-      { "title": "Todas turmas", "url": "/school/classes" },
-      { "title": "Rescisões", "url": "/school/termination" },
-      { "title": "Ganhos", "url": "/school/ganhos" },
-      { "title": "Agendados", "url": "/school/agendados" }
+      { "title": "Atendimento (FloW)", "url": "/sales" }
     ]
   },
   {
     "title": "Clientes",
     "icon": "Users",
     "submenu": [
-      { "title": "Clientes", "url": "/clients" },
-      { "title": "Grupo de cliente", "url": "/clients/groups" }
+        { "title": "Atendimento (FloW)", "url": "/customers/leads" },
+        { "title": "Arquivo Clientes", "url": "/clients" }
+    ]
+  },
+  {
+    "title": "Escola",
+    "submenu": [
+      { "title": "Interessados", "url": "/school/interested" },
+      { "title": "Matrículas", "url": "/school/enroll" },
+      { "title": "Todos cursos", "url": "/school/courses" },
+      { "title": "Todas turmas", "url": "/school/classes" },
+      { "title": "Rescisões", "url": "/school/termination" },
+      { "title": "Ganhos", "url": "/school/ganhos" },
+      { "title": "Situações", "url": "/school/enrollment-situation" }
     ]
   },
   {

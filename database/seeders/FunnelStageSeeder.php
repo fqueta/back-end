@@ -28,7 +28,7 @@ class FunnelStageSeeder extends Seeder
         if (Qlib::is_crm_aero()) {
             // Funil de leads (place = atendimento)
             $leadsFunnel = Funnel::create([
-                'name' => 'Funil de leads',
+                'name' => 'Leads',
                 'description' => 'Captação e atendimento de leads',
                 'color' => '#06b6d4',
                 'isActive' => true,
@@ -134,7 +134,7 @@ class FunnelStageSeeder extends Seeder
 
             // Funil de Vendas (place = vendas)
             $salesFunnel = Funnel::create([
-                'name' => 'Funil de Vendas',
+                'name' => 'Interessados',
                 'description' => 'Processo comercial de vendas',
                 'color' => '#10b981',
                 'isActive' => true,
@@ -220,9 +220,87 @@ class FunnelStageSeeder extends Seeder
                 ]));
             }
 
+            // Funil de Matriculado (place = atendimento)
+            $enrolledFunnel = Funnel::create([
+                'name' => 'Matriculado',
+                'description' => 'Acompanhamento de alunos matriculados',
+                'color' => '#14b8a6',
+                'isActive' => true,
+                'settings' => [
+                    'autoAdvance' => false,
+                    'requiresApproval' => false,
+                    'notificationEnabled' => true,
+                    'place' => 'vendas',
+                ],
+            ]);
+
+            // Etapas do funil Matriculado
+            $enrolledStages = [
+                [
+                    'name' => 'Cursando',
+                    'description' => 'Aluno em curso ativo',
+                    'color' => '#3b82f6',
+                    'order' => 1,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => null,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+                [
+                    'name' => 'Curso Concluido',
+                    'description' => 'Aluno concluiu o curso',
+                    'color' => '#10b981',
+                    'order' => 2,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => null,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => true,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+                [
+                    'name' => 'Sequencia LTV',
+                    'description' => 'Ações de relacionamento e retenção (LTV)',
+                    'color' => '#f59e0b',
+                    'order' => 3,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => null,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+                [
+                    'name' => 'Black List',
+                    'description' => 'Lista de bloqueio / inadimplência / restrições',
+                    'color' => '#ef4444',
+                    'order' => 4,
+                    'settings' => [
+                        'autoAdvanceAfterDays' => null,
+                        'autoAdvance' => false,
+                        'notifyOnStageChange' => false,
+                        'requireApproval' => false,
+                        'place' => 'atendimento',
+                    ],
+                ],
+            ];
+
+            foreach ($enrolledStages as $stageData) {
+                Stage::create(array_merge($stageData, [
+                    'funnel_id' => $enrolledFunnel->id,
+                    'isActive' => true,
+                ]));
+            }
+
             $this->command->info('✅ Funnels (CRM Aero) criados com sucesso!');
-            $this->command->info("🧲 Criados {$leadsFunnel->stages()->count()} stages para o Funil de leads");
-            $this->command->info("💼 Criados {$salesFunnel->stages()->count()} stages para o Funil de Vendas");
+            $this->command->info("🧲 Criados {$leadsFunnel->stages()->count()} stages para o Leads");
+            $this->command->info("💼 Criados {$salesFunnel->stages()->count()} stages para o Interessados");
+            $this->command->info("🎓 Criados {$enrolledFunnel->stages()->count()} stages para o Matriculado");
             return;
         }
 
@@ -486,9 +564,73 @@ class FunnelStageSeeder extends Seeder
             ]));
         }
 
+        // Criar Funil de Matriculado (default)
+        $enrolledFunnel = Funnel::create([
+            'name' => 'Matriculado',
+            'description' => 'Acompanhamento de alunos matriculados',
+            'color' => '#14b8a6',
+            'isActive' => true,
+            'settings' => [
+                'autoAdvance' => false,
+                'requiresApproval' => false,
+                'notificationEnabled' => true,
+            ]
+        ]);
+
+        $enrolledStages = [
+            [
+                'name' => 'Cursando',
+                'description' => 'Aluno em curso ativo',
+                'color' => '#3b82f6',
+                'order' => 1,
+                'settings' => [
+                    'autoAdvanceAfterDays' => null,
+                    'requiresDocuments' => false,
+                ]
+            ],
+            [
+                'name' => 'Curso Concluido',
+                'description' => 'Aluno concluiu o curso',
+                'color' => '#10b981',
+                'order' => 2,
+                'settings' => [
+                    'autoAdvanceAfterDays' => null,
+                    'requiresDocuments' => false,
+                ]
+            ],
+            [
+                'name' => 'Sequencia LTV',
+                'description' => 'Ações de relacionamento e retenção (LTV)',
+                'color' => '#f59e0b',
+                'order' => 3,
+                'settings' => [
+                    'autoAdvanceAfterDays' => null,
+                    'requiresDocuments' => false,
+                ]
+            ],
+            [
+                'name' => 'Black List',
+                'description' => 'Lista de bloqueio / inadimplência / restrições',
+                'color' => '#ef4444',
+                'order' => 4,
+                'settings' => [
+                    'autoAdvanceAfterDays' => null,
+                    'requiresDocuments' => false,
+                ]
+            ],
+        ];
+
+        foreach ($enrolledStages as $stageData) {
+            Stage::create(array_merge($stageData, [
+                'funnel_id' => $enrolledFunnel->id,
+                'isActive' => true
+            ]));
+        }
+
         $this->command->info('✅ Funnels e Stages criados com sucesso!');
         $this->command->info("📊 Criados {$salesFunnel->stages()->count()} stages para o Funil de Vendas");
         $this->command->info("🔧 Criados {$maintenanceFunnel->stages()->count()} stages para o Funil de Manutenção");
         $this->command->info("🎧 Criados {$supportFunnel->stages()->count()} stages para o Funil de Suporte");
+        $this->command->info("🎓 Criados {$enrolledFunnel->stages()->count()} stages para o Matriculado");
     }
 }
