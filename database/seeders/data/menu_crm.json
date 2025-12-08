@@ -36,10 +36,9 @@
     "title": "Gerenciar Site",
     "icon": "FileText",
     "submenu": [
-      { "title": "Paginas do site", "url": "/site/menus-site" },
-      { "title": "Componentes", "url": "/site/coteudo-site" },
-      { "title": "Comentários", "url": "/site/comentarios" },
-      { "title": "Modalidade", "url": "/site/modalidade" }
+      { "title": "Paginas do site", "url": "/site/paginas" },
+      { "title": "Componentes", "url": "/site/conteudo-site" },
+      { "title": "Tipos de conteúdo", "url": "/site/content-types" }
     ]
   },
   {

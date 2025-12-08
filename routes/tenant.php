@@ -31,6 +31,10 @@ use App\Http\Controllers\api\ServiceUnitController;
 use App\Http\Controllers\api\ServiceOrderController;
 use App\Http\Controllers\api\SituacaoMatriculaController;
 use App\Http\Controllers\api\ParcelamentoController;
+use App\Http\Controllers\api\ContentTypeController;
+use App\Http\Controllers\api\ComponentController;
+use App\Http\Controllers\api\UploadController;
+use App\Http\Controllers\api\PaginaController;
 use App\Http\Controllers\api\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\api\CursoController;
@@ -151,6 +155,26 @@ Route::name('api.')->prefix('api/v1')->middleware([
         Route::get('posts/trash', [PostController::class, 'trash'])->name('posts.trash');
         Route::put('posts/{id}/restore', [PostController::class, 'restore'])->name('posts.restore');
         Route::delete('posts/{id}/force', [PostController::class, 'forceDelete'])->name('posts.forceDelete');
+
+        // CRUD: Tipos de conteúdo (posts: post_type=tipo_conteudo)
+        Route::apiResource('tipos-conteudo', ContentTypeController::class, ['parameters' => [
+            'tipos-conteudo' => 'id'
+        ]]);
+
+        // CRUD: Componentes (posts: post_type=componentes)
+        Route::apiResource('componentes', ComponentController::class, ['parameters' => [
+            'componentes' => 'id'
+        ]]);
+
+        // CRUD: Uploads de arquivos (posts: post_type=files_uload)
+        Route::apiResource('uploads', UploadController::class, ['parameters' => [
+            'uploads' => 'id'
+        ]]);
+
+        // CRUD: Páginas (posts: post_type=paginas)
+        Route::apiResource('paginas', PaginaController::class, ['parameters' => [
+            'paginas' => 'id'
+        ]]);
 
         // Rotas para situações de matrícula (post_type=situacao_matricula)
         Route::apiResource('situacoes-matricula', SituacaoMatriculaController::class, ['parameters' => [

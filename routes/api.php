@@ -20,6 +20,8 @@ use App\Http\Controllers\api\ProductUnitController;
 use App\Http\Controllers\api\ProductController;
 use App\Http\Controllers\api\ServiceController;
 use App\Http\Controllers\api\ServiceUnitController;
+use App\Http\Controllers\api\ContentTypeController;
+use App\Http\Controllers\api\ComponentController;
 use App\Http\Controllers\api\SituacaoMatriculaController;
 use App\Http\Controllers\api\ServiceOrderController;
 use App\Http\Controllers\api\RegisterController;
@@ -190,6 +192,16 @@ Route::name('api.')->prefix('v1')->middleware([
         Route::get('metrics/filter', [MetricasController::class, 'filter']);
         Route::apiResource('metrics', MetricasController::class,['parameters' => [
             'metrics' => 'id'
+        ]]);
+
+        // CRUD: Tipos de conteúdo (posts: post_type=tipo_conteudo)
+        Route::apiResource('tipos-conteudo', ContentTypeController::class, ['parameters' => [
+            'tipos-conteudo' => 'id'
+        ]]);
+
+        // CRUD: Componentes (posts: post_type=componentes)
+        Route::apiResource('componentes', ComponentController::class, ['parameters' => [
+            'componentes' => 'id'
         ]]);
 
         // Rotas para tracking events
