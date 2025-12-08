@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use function PHPUnit\Framework\isArray;
+// Removido import indevido de função do PHPUnit; usar nativo is_array
 
 class ClientController extends Controller
 {
@@ -375,7 +375,7 @@ class ClientController extends Controller
         // $validated['permission_id'] = $this->cliente_permission_id; // Força sempre grupo cliente
         $validated['config'] = isset($validated['config']) ? $this->sanitizeInput($validated['config']) : [];
 
-        if(isArray($validated['config'])){
+        if (is_array($validated['config'])) {
             $validated['config'] = json_encode($validated['config']);
         }
         // dd($validated);
@@ -497,7 +497,7 @@ class ClientController extends Controller
         // Tratar config se fornecido
         if (isset($validated['config'])) {
             $validated['config'] = $this->sanitizeInput($validated['config']);
-            if (isArray($validated['config'])) {
+        if (is_array($validated['config'])) {
                 $validated['config'] = json_encode($validated['config']);
             }
         }
@@ -803,7 +803,7 @@ class ClientController extends Controller
         $validated['tipo_pessoa'] = $validated['tipo_pessoa'] ?? 'pf';
         $validated['permission_id'] = $this->responsavel_permission_id; // força responsável
         $validated['config'] = isset($validated['config']) ? $this->sanitizeInput($validated['config']) : [];
-        if(isArray($validated['config'])){
+        if (is_array($validated['config'])) {
             $validated['config'] = json_encode($validated['config']);
         }
 
@@ -912,7 +912,7 @@ class ClientController extends Controller
 
         if (isset($validated['config'])) {
             $validated['config'] = $this->sanitizeInput($validated['config']);
-            if (isArray($validated['config'])) {
+        if (is_array($validated['config'])) {
                 $validated['config'] = json_encode($validated['config']);
             }
         }

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Sanctum\PersonalAccessToken;
-use function PHPUnit\Framework\isArray;
+// Removido import indevido de função do PHPUnit; usar nativo is_array
 
 class UserController extends Controller
 {
@@ -438,7 +438,7 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        if (isset($validated['config']) && isArray($validated['config'])) {
+        if (isset($validated['config']) && is_array($validated['config'])) {
             $validated['config'] = json_encode($validated['config']);
         }
         // Normalizar campos únicos opcionais: strings vazias viram null
