@@ -77,14 +77,14 @@
             background-image: url('{{ $background_data_uri }}');
             background-repeat: no-repeat;
             background-position: center center;
-            background-size: 210mm 297mm; /* force exact A4 background size */
+            background-size: 100% 100%; /* fill entire A4 page */
         }
         @elseif(!empty($background_url))
         .page {
             background-image: url('{{ $background_url }}');
             background-repeat: no-repeat;
             background-position: center center;
-            background-size: 210mm 297mm; /* force exact A4 background size */
+            background-size: 100% 100%; /* fill entire A4 page */
         }
         @endif
     </style>

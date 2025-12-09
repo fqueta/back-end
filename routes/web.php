@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\App;
 
 Route::get('/ini', function () {
     return Inertia::render('welcome');
@@ -41,4 +42,18 @@ Route::get('/preview/password-reset-email', function () {
     }
 
     return view('emails.password_reset', compact('resetLink', 'logoDataUri', 'logoSrc'));
+});
+
+// Preview local do background A4 full-bleed para validar CSS do PDF
+Route::get('/debug/pdf/background', function () {
+    if (!App::environment('local')) {
+        abort(404);
+    }
+
+    $bg = request('bg');
+    $background_url = $bg ?: null;
+
+    return view('pdf.debug-background', [
+        'background_url' => $background_url,
+    ]);
 });
