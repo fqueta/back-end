@@ -1,5 +1,16 @@
 <?php
 
+// Detect OS family to provide sensible default wkhtmltopdf/wkhtmltoimage paths.
+// Windows uses the default installer path; Linux typically installs to /usr/bin.
+// These act as fallbacks if the corresponding env vars are not set.
+$osFamily = PHP_OS_FAMILY;
+$defaultPdfBinary = $osFamily === 'Windows'
+    ? 'C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe'
+    : '/usr/bin/wkhtmltopdf';
+$defaultImgBinary = $osFamily === 'Windows'
+    ? 'C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltoimage.exe'
+    : '/usr/bin/wkhtmltoimage';
+
 return [
 
     /*
@@ -35,8 +46,8 @@ return [
     
     'pdf' => [
         'enabled' => true,
-        // Windows default path; override via env WKHTML_PDF_BINARY
-        'binary'  => env('WKHTML_PDF_BINARY', 'C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe'),
+        // OS-aware default path; override via env WKHTML_PDF_BINARY
+        'binary'  => env('WKHTML_PDF_BINARY', $defaultPdfBinary),
         // Limit to 120s to avoid hanging processes
         'timeout' => 120,
         'options' => [
@@ -56,8 +67,8 @@ return [
     
     'image' => [
         'enabled' => true,
-        // Windows default path; override via env WKHTML_IMG_BINARY
-        'binary'  => env('WKHTML_IMG_BINARY', 'C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltoimage.exe'),
+        // OS-aware default path; override via env WKHTML_IMG_BINARY
+        'binary'  => env('WKHTML_IMG_BINARY', $defaultImgBinary),
         'timeout' => 60,
         'options' => [],
         'env'     => [],
