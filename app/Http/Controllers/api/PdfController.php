@@ -465,6 +465,10 @@ class PdfController extends Controller
                 ->setOption('margin-right', '0mm')
                 ->setOption('margin-bottom', '0mm')
                 ->setOption('margin-left', '0mm')
+                // Function-level comment: Lock scaling at 1:1 to avoid auto zoom adjustments.
+                // PT: Garante zoom 1:1 para evitar reescalonamento automático.
+                // EN: Ensure 1:1 zoom to prevent automatic rescaling.
+                ->setOption('zoom', '1.0')
                 // Function-level comment: Avoid auto shrinking to preserve full-bleed backgrounds.
                 // PT: Desativa smart shrinking para evitar bordas/brancos no fundo.
                 // EN: Disable smart shrinking to prevent borders/whites on full-bleed backgrounds.

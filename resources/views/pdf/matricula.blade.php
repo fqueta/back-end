@@ -202,7 +202,7 @@
         @foreach($extra_pages as $p)
             @php
                 $pageBg = $p['background_data_uri'] ?? $p['background_url'] ?? null;
-                $pageBgStyle = ($pageBg ? "background-image: url('$pageBg'); background-repeat: no-repeat; background-position: center center; background-size: 210mm 297mm;" : '') . ' page-break-before: always; break-before: page; page-break-after: always; break-after: page; height: 297mm; width: 210mm;';
+                $pageBgStyle = ($pageBg ? "background-image: url('$pageBg'); background-repeat: no-repeat; background-position: center center; background-size: 100% 100%;" : '') . ' page-break-before: always; break-before: page; page-break-after: always; break-after: page; height: 297mm; width: 210mm;';
                 $hasTitle = !empty($p['title']);
                 $hasHtml = !empty($p['html']);
             @endphp
