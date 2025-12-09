@@ -301,6 +301,10 @@ class PdfController extends Controller
             $listaPaginas = isset($galerias->galeria) && is_array($galerias->galeria) ? $galerias->galeria : [];
         }
         $extraPages = [];
+        // Function-level comment: Ensure extraPagesRaw is initialized to avoid undefined variable errors.
+        // PT: Inicializa $extraPagesRaw para garantir existência antes de uso.
+        // EN: Initialize $extraPagesRaw to ensure it exists before usage.
+        $extraPagesRaw = [];
 
         if(is_array($listaPaginas)){
             foreach($listaPaginas as $key => $item){
