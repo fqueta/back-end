@@ -2885,4 +2885,77 @@ class Qlib
             return false;
         }
     }
+    //retorna o componete se informado o shortcode
+    /**
+     * Metodo para retornar um post apartir de um shortcode o 2 parametro é para selecionar o config->id_curso caso não seja nulo
+     * @param string $shortcode
+     * @return json
+     */
+    /**
+     * PT: Retorna um componente pelo shortcode. Se possível, reutiliza o mapeamento
+     *     do ComponentController::show para obter o payload enriquecido (curso_nome,
+     *     galeria com public_url, etc.). Quando $id_curso é informado, injeta no
+     *     config antes de mapear.
+     * EN: Get component by shortcode. Reuses ComponentController::show mapping to
+     *     return an enriched payload (course name, gallery with public_url, etc.).
+     *     If $id_curso is provided, injects it into config before mapping.
+     *
+     * @param string $shortcode
+     * @param int|false $id_curso Optional course id to inject into config
+     * @return array|null Enriched component payload or null if not found
+     */
+    static function get_post_by_shortcode($shortcode, $id_curso = false)
+    {
+        $component = Post::query()
+            ->where('post_type', 'componentes')
+            ->where('deletado', '!=', 's')
+            ->where('post_name', '=', $shortcode)
+            ->first();
+
+        if (!$component) {
+            return null;
+        }
+
+        // Normaliza config em array e injeta id_curso, se informado
+        // Comentário de função: Garante que $component->config seja sempre array
+        // antes de acessar índices, evitando erros 500 quando for null/objeto/string.
+        $config = $component->config;
+        if (is_string($config)) {
+            $decoded = json_decode($config, true);
+            $config = is_array($decoded) ? $decoded : [];
+        } elseif (is_object($config)) {
+            $config = (array) $config;
+        }
+        if (!is_array($config)) {
+            $config = [];
+        }
+        if ($id_curso) {
+            $config['id_curso'] = (int) $id_curso;
+        }
+        $component->config = $config;
+
+        // Reutiliza o mapeamento do controller de API (show)
+        try {
+            $controller = new \App\Http\Controllers\api\ComponentController();
+            $response = $controller->show((int) $component->ID);
+            // JsonResponse -> extrai como array
+            if ($response instanceof \Illuminate\Http\JsonResponse) {
+                $data = $response->getData(true);
+                return is_array($data) ? $data : json_decode((string) $response->getContent(), true);
+            }
+        } catch (\Throwable $e) {
+            // Fallback: retorna dados mínimos caso show não esteja disponível
+            return [
+                'id' => $component->ID,
+                'nome' => $component->post_title,
+                'tipo_conteudo' => $component->guid,
+                'ordenar' => $component->menu_order,
+                'ativo' => ($component->post_status === 'publish') ? 's' : 'n',
+                'obs' => $component->post_content,
+                'config' => $component->config,
+            ];
+        }
+
+        return null;
+    }
 }

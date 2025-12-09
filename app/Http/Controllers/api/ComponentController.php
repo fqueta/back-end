@@ -8,9 +8,59 @@ use App\Models\Curso;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ComponentController extends Controller
 {
+    /**
+     * Enriquecer itens de galeria com URL pública multi-tenant.
+     * PT: Recebe array de objetos {id, nome?, descricao?} e adiciona
+     *     `public_url` resolvida a partir do upload (Post com post_type=files_uload).
+     * EN: Enrich gallery items with tenant-aware `public_url`, given
+     *     objects {id, nome?, descricao?} pointing to upload posts.
+     *
+     * @param array $galeria Array de objetos com pelo menos `id`
+     * @return array Mesma estrutura, acrescentando `public_url` quando possível
+     */
+    protected function enrichGalleryPublicUrls(array $galeria): array
+    {
+        return array_values(array_map(function ($g) {
+            if (!is_array($g) || !isset($g['id'])) {
+                return $g;
+            }
+            $id = (int) $g['id'];
+            if ($id <= 0) {
+                return $g;
+            }
+            $upload = Post::query()->where('post_type', 'files_uload')->find($id);
+            if (!$upload) {
+                return $g;
+            }
+            $url = $upload->guid;
+            if (!empty($url)) {
+                if (Str::startsWith($url, ['http://', 'https://'])) {
+                    $pathOnly = parse_url($url, PHP_URL_PATH);
+                    if (is_string($pathOnly) && Str::startsWith(ltrim($pathOnly, '/'), 'storage/')) {
+                        $rel = ltrim($pathOnly, '/');
+                        $rel = preg_replace('#^storage/tenant[^/]+/uploads/#', 'storage/uploads/', $rel);
+                        $rel = preg_replace('#^storage/uploads/#', 'uploads/', $rel);
+                        $url = function_exists('tenant_asset') ? tenant_asset($rel) : asset($rel);
+                    } else {
+                        // Mantém URL absoluta se não precisar normalizar
+                        $url = $url;
+                    }
+                } else {
+                    $path = ltrim($url, '/');
+                    if (Str::startsWith($path, 'storage/uploads/')) {
+                        $path = preg_replace('#^storage/uploads/#', 'uploads/', $path);
+                    }
+                    $url = function_exists('tenant_asset') ? tenant_asset($path) : asset($path);
+                }
+                $g['public_url'] = $url;
+            }
+            return $g;
+        }, (array) $galeria));
+    }
     /**
      * Lista componentes (post_type=componentes) com paginação opcional.
      * Suporta filtros via querystring:
@@ -21,6 +71,8 @@ class ComponentController extends Controller
      * - ordenar: filtra por menu_order (inteiro)
      * Inclui slug (post_name como slug), nome do tipo de conteúdo e
      * nome do curso (se configurado em config.id_curso).
+     * EN: List components with optional pagination and filters; enrich items
+     * with content type name, course name and expose gallery IDs if present.
      */
     public function index(Request $request)
     {
@@ -29,15 +81,15 @@ class ComponentController extends Controller
         if ($request->filled('tipo_conteudo')) {
             $tipo = (string) $request->input('tipo_conteudo');
             if (is_numeric($tipo)) {
-                $tipoPost = Post::query()
-                    ->where('post_type', 'tipo_conteudo')
-                    ->find((int) $tipo);
-                if ($tipoPost) {
-                    $query->where('guid', $tipoPost->post_name);
-                } else {
+                // $tipoPost = Post::query()
+                //     ->where('post_type', 'tipo_conteudo')
+                //     ->find((int) $tipo);
+                // if ($tipoPost) {
+                //     $query->where('guid', $tipoPost->post_name);
+                // } else {
                     // Fallback: trata como slug caso não encontre por ID
                     $query->where('guid', $tipo);
-                }
+                // }
             } else {
                 $query->where('guid', $tipo);
             }
@@ -72,7 +124,7 @@ class ComponentController extends Controller
             'config',
         ]);
 
-        // Enriquecer cada item com nome do tipo de conteúdo e nome do curso
+        // Enriquecer cada item com nome do tipo de conteúdo, nome do curso e galeria (IDs)
         $items->getCollection()->transform(function ($item) {
             // Normaliza post_status para ativo (s/n) e remove post_status do payload
             $item->ativo = ($item->post_status === 'publish') ? 's' : 'n';
@@ -82,7 +134,7 @@ class ComponentController extends Controller
             if (!empty($item->tipo_conteudo)) {
                 $ct = Post::query()
                     ->where('post_type', 'tipo_conteudo')
-                    ->where('post_name', $item->tipo_conteudo)
+                    ->where('ID', $item->tipo_conteudo)
                     ->first();
                 $item->tipo_conteudo_nome = $ct?->post_title;
             } else {
@@ -98,6 +150,10 @@ class ComponentController extends Controller
                 $item->curso_nome = null;
             }
 
+            // Galeria: expõe objetos e enriquece com public_url
+            $galeriaRaw = is_array($item->config) ? ($item->config['galeria'] ?? []) : [];
+            $item->galeria = $this->enrichGalleryPublicUrls((array) $galeriaRaw);
+
             return $item;
         });
 
@@ -106,10 +162,12 @@ class ComponentController extends Controller
 
     /**
      * Obtém um componente pelo ID.
+     * EN: Get a single component by ID.
      */
     public function show(int $id)
     {
         $post = Post::where('post_type', 'componentes')->findOrFail($id);
+        $galeriaRaw = ($post->config['galeria'] ?? []);
         return response()->json([
             'id' => $post->ID,
             'nome' => $post->post_title,
@@ -119,6 +177,8 @@ class ComponentController extends Controller
             'ativo' => $post->post_status === 'publish' ? 's' : 'n',
             'obs' => $post->post_content,
             'config' => $post->config,
+            // Galeria: expõe objetos enriquecidos com public_url
+            'galeria' => $this->enrichGalleryPublicUrls((array) $galeriaRaw),
         ]);
     }
 
@@ -132,8 +192,12 @@ class ComponentController extends Controller
      * - ativo (s/n) -> post_status (publish/draft)
      * - obs -> post_content (HTML)
      * - id_curso -> guardado em config
+     * - galeria -> array de objetos {id, nome, descricao} com id de uploads
+     *             (guardado em config.galeria)
      * - token -> se vazio, gera automaticamente (mantém existente se já houver)
      * - autor -> preenchido automaticamente do usuário autenticado (UUID em config['autor_uuid'])
+     * EN: Create/update component; supports 'galeria' as array of objects
+     *     {id, nome, descricao} referencing uploads, stored in config.
      */
     public function store(Request $request)
     {
@@ -149,6 +213,16 @@ class ComponentController extends Controller
             'ativo' => 'nullable|in:s,n',
             'obs' => 'nullable|string',
             'token' => 'nullable|string|max:32',
+            // Galeria: array de objetos {id, nome, descricao} apontando para uploads
+            'galeria' => 'nullable|array',
+            'galeria.*.id' => [
+                'required', 'integer',
+                Rule::exists('posts', 'ID')->where(function ($q) {
+                    $q->where('post_type', 'files_uload');
+                }),
+            ],
+            'galeria.*.nome' => 'nullable|string|max:255',
+            'galeria.*.descricao' => 'nullable|string',
             // autor é sempre obtido da requisição autenticada
         ])->validate();
 
@@ -175,11 +249,27 @@ class ComponentController extends Controller
         $post->post_status = ($validated['ativo'] ?? 's') === 's' ? 'publish' : 'draft';
         $post->post_content = $validated['obs'] ?? '';
 
-        // Config extras (somente id_curso)
+        // Config extras: id_curso, galeria (array de objetos)
         $config = $post->config ?? [];
         $config['id_curso'] = array_key_exists('id_curso', $validated)
             ? (int) $validated['id_curso']
             : ($config['id_curso'] ?? null);
+        // Galeria: normaliza para array de objetos {id:int, nome?:string, descricao?:string}
+        if (array_key_exists('galeria', $validated)) {
+            $galeriaIn = (array) $validated['galeria'];
+            $galeriaOut = [];
+            foreach ($galeriaIn as $g) {
+                if (!is_array($g)) { continue; }
+                $id = isset($g['id']) ? (int)$g['id'] : 0;
+                if ($id <= 0) { continue; }
+                $galeriaOut[] = [
+                    'id' => $id,
+                    'nome' => array_key_exists('nome', $g) ? (string)$g['nome'] : null,
+                    'descricao' => array_key_exists('descricao', $g) ? (string)$g['descricao'] : null,
+                ];
+            }
+            $config['galeria'] = array_values($galeriaOut);
+        }
         // O UUID de autor pode ser adicionado abaixo, se aplicável
 
         // Autor: sempre obtido do usuário autenticado
@@ -217,6 +307,8 @@ class ComponentController extends Controller
             'id_curso' => ($post->config['id_curso'] ?? null),
             'token' => $post->token,
             'autor_uuid' => ($post->config['autor_uuid'] ?? null),
+            // Galeria: expõe objetos enriquecidos com public_url
+            'galeria' => $this->enrichGalleryPublicUrls((array) ($post->config['galeria'] ?? [])),
         ];
 
         return response()->json(['data' => $responseData], empty($validated['id']) ? 201 : 200);
@@ -225,15 +317,18 @@ class ComponentController extends Controller
     /**
      * Atualiza um componente via rota REST (PUT/PATCH).
      * Encaminha para store() reaproveitando a validação e o mapeamento.
+     * EN: Update a component by delegating to store() for validation/mapping.
      */
     public function update(Request $request, int $id)
     {
         $request->merge(['id' => $id]);
+        // dd($request->all());
         return $this->store($request);
     }
 
     /**
      * Remove logicamente (marca deletado) um componente.
+     * EN: Soft-delete a component by marking as deleted.
      */
     public function destroy(int $id)
     {

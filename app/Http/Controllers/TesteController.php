@@ -26,7 +26,7 @@ class TesteController extends Controller
         //     // $ret = Escola::adiciona_presenca_atividades_cronograma($id_turma);
         //     // dd($ret);
         // }
-        $ret = Qlib::qoption('url_api_aeroclube');
+        $ret = Qlib::get_post_by_shortcode('fundo_proposta_plano');
         // dd($ret);
         // $pid = $request->get('id');
         // if($pid){

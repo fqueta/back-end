@@ -22,6 +22,10 @@ class UploadController extends Controller
         if ($request->filled('search')) {
             $query->where('post_title', 'like', '%' . $request->string('search') . '%');
         }
+        // Adicionar consulta por ID se fornecido
+        if ($request->filled('id')) {
+            $query->where('ID', $request->integer('id'));
+        }
         $items = $query->orderBy('menu_order')->orderByDesc('ID')->paginate($request->integer('per_page', 15), [
             'ID as id',
             'post_title as nome',
@@ -32,33 +36,30 @@ class UploadController extends Controller
             'post_status',
             'menu_order as ordenar',
         ]);
-        // Normaliza URL considerando tenants: se relativa, prefixa com host atual e insere sufixo do tenant
-        $host = rtrim($request->getSchemeAndHttpHost(), '/');
-        $tenantId = tenant('id');
-        $suffixBase = config('tenancy.filesystem.suffix_base', 'tenant');
-        $items->getCollection()->transform(function ($item) use ($host, $tenantId, $suffixBase) {
+        // Normaliza URL considerando tenants: usa asset() multi-tenant para /storage/uploads
+        $items->getCollection()->transform(function ($item) {
             if (!empty($item->url)) {
-                // Se já for absoluta, mas sem sufixo tenant em /storage, ajusta
+                // Já absoluta e externa: mantém
                 if (Str::startsWith($item->url, ['http://', 'https://'])) {
+                    // Se apontar para /storage/tenant... normaliza para /storage/uploads e usa asset()
                     $pathOnly = parse_url($item->url, PHP_URL_PATH);
-                    if (is_string($pathOnly) && Str::startsWith(ltrim($pathOnly, '/'), 'storage/uploads/')) {
-                        $fixedPath = '/storage/' . $suffixBase . $tenantId . '/' . substr(ltrim($pathOnly, '/'), strlen('storage/'));
-                        // Reconstrói mantendo esquema/host originais
-                        $schemeHost = preg_replace('#(https?://[^/]+).*#', '$1', $item->url);
-                        $item->url = rtrim($schemeHost, '/') . $fixedPath;
+                    if (is_string($pathOnly) && Str::startsWith(ltrim($pathOnly, '/'), 'storage/')) {
+                        $rel = ltrim($pathOnly, '/');
+                        // Converte storage/tenant<id>/uploads/... -> storage/uploads/...
+                        $rel = preg_replace('#^storage/tenant[^/]+/uploads/#', 'storage/uploads/', $rel);
+                        // Converte para uploads/... (sem storage) e usa asset/tenant_asset
+                        $rel = preg_replace('#^storage/uploads/#', 'uploads/', $rel);
+                        $item->url = function_exists('tenant_asset') ? tenant_asset($rel) : asset($rel);
                     }
                     return $item;
                 }
                 $path = ltrim($item->url, '/');
-                // Se vier como /storage/uploads/... insere sufixo de tenant
+                // Uniformiza para uploads/... (sem storage)
                 if (Str::startsWith($path, 'storage/uploads/')) {
-                    $path = 'storage/' . $suffixBase . $tenantId . '/' . substr($path, strlen('storage/'));
+                    $path = preg_replace('#^storage/uploads/#', 'uploads/', $path);
                 }
-                // Se vier apenas como uploads/... prefixa caminho storage + sufixo tenant
-                if (Str::startsWith($path, 'uploads/')) {
-                    $path = 'storage/' . $suffixBase . $tenantId . '/' . $path;
-                }
-                $item->url = $host . '/' . $path;
+                // Usa tenant_asset() se disponível, caso contrário asset()
+                $item->url = function_exists('tenant_asset') ? tenant_asset($path) : asset($path);
             }
             return $item;
         });
@@ -102,12 +103,10 @@ class UploadController extends Controller
         if ($request->file('arquivo')) {
             $file = $request->file('arquivo');
             $path = $file->store('uploads', 'public');
-            // Tenants: construir URL absoluta com base no host atual e sufixo do tenant
-            $host = rtrim($request->getSchemeAndHttpHost(), '/');
-            $tenantId = tenant('id');
-            $suffixBase = config('tenancy.filesystem.suffix_base', 'tenant');
-            $relative = '/storage/' . $suffixBase . $tenantId . '/' . ltrim($path, '/');
-            $url = $host . $relative;
+            // Tenants: construir URL usando tenant_asset() (se disponível) para uploads
+            // $path já é 'uploads/<arquivo>' por conta do store('uploads','public')
+            $relative = ltrim($path, '/'); // garante 'uploads/...' sem prefixo
+            $url = function_exists('tenant_asset') ? tenant_asset($relative) : asset($relative);
             $mime = $file->getMimeType();
             $size = $file->getSize();
             // Nome padrão do arquivo
@@ -134,7 +133,12 @@ class UploadController extends Controller
         $post->post_content = $validated['descricao'] ?? ($post->post_content ?? '');
 
         // Metadados do arquivo
-        $post->guid = $url; // URL
+        // Persistimos caminho relativo (uploads/...) para evitar acoplar host/ambiente
+        if (isset($relative)) {
+            $post->guid = $relative; // caminho relativo
+        } else {
+            $post->guid = $url; // para URLs externas, manter absoluto
+        }
         $post->post_mime_type = $mime; // MIME
         $post->post_value1 = $size; // tamanho em bytes
 
@@ -153,7 +157,21 @@ class UploadController extends Controller
             'id' => $post->ID,
             'nome' => $post->post_title,
             'slug' => $post->post_name,
-            'url' => $post->guid,
+            // Sempre retorna URL pública resolvida
+            'url' => (function () use ($post) {
+                $u = $post->guid;
+                if (!empty($u)) {
+                    if (Str::startsWith($u, ['http://', 'https://'])) {
+                        return $u;
+                    }
+                    $p = ltrim($u, '/');
+                    if (Str::startsWith($p, 'storage/uploads/')) {
+                        $p = preg_replace('#^storage/uploads/#', 'uploads/', $p);
+                    }
+                    return function_exists('tenant_asset') ? tenant_asset($p) : asset($p);
+                }
+                return $u;
+            })(),
             'mime' => $post->post_mime_type,
             'size' => $post->post_value1,
             'ativo' => $post->post_status === 'publish' ? 's' : 'n',
@@ -180,28 +198,24 @@ class UploadController extends Controller
     public function show(int $id)
     {
         $post = Post::where('post_type', 'files_uload')->findOrFail($id);
-        // Tenants: normaliza URL para forma absoluta se necessário e insere sufixo do tenant
-        $host = rtrim(request()->getSchemeAndHttpHost(), '/');
-        $tenantId = tenant('id');
-        $suffixBase = config('tenancy.filesystem.suffix_base', 'tenant');
+        // Tenants: normaliza URL usando tenant_asset() multi-tenant (se disponível)
         $url = $post->guid;
         if (!empty($url)) {
             if (Str::startsWith($url, ['http://', 'https://'])) {
                 $pathOnly = parse_url($url, PHP_URL_PATH);
-                if (is_string($pathOnly) && Str::startsWith(ltrim($pathOnly, '/'), 'storage/uploads/')) {
-                    $fixedPath = '/storage/' . $suffixBase . $tenantId . '/' . substr(ltrim($pathOnly, '/'), strlen('storage/'));
-                    $schemeHost = preg_replace('#(https?://[^/]+).*#', '$1', $url);
-                    $url = rtrim($schemeHost, '/') . $fixedPath;
+                if (is_string($pathOnly) && Str::startsWith(ltrim($pathOnly, '/'), 'storage/')) {
+                    $rel = ltrim($pathOnly, '/');
+                    $rel = preg_replace('#^storage/tenant[^/]+/uploads/#', 'storage/uploads/', $rel);
+                    $rel = preg_replace('#^storage/uploads/#', 'uploads/', $rel);
+                    $url = function_exists('tenant_asset') ? tenant_asset($rel) : asset($rel);
                 }
             } else {
                 $path = ltrim($url, '/');
+                // Garantir uploads/... sem storage
                 if (Str::startsWith($path, 'storage/uploads/')) {
-                    $path = 'storage/' . $suffixBase . $tenantId . '/' . substr($path, strlen('storage/'));
+                    $path = preg_replace('#^storage/uploads/#', 'uploads/', $path);
                 }
-                if (Str::startsWith($path, 'uploads/')) {
-                    $path = 'storage/' . $suffixBase . $tenantId . '/' . $path;
-                }
-                $url = $host . '/' . $path;
+                $url = function_exists('tenant_asset') ? tenant_asset($path) : asset($path);
             }
         }
         return response()->json([

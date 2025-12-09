@@ -204,6 +204,12 @@ Route::name('api.')->prefix('v1')->middleware([
             'componentes' => 'id'
         ]]);
 
+        // PDF: Relatório de componentes
+        // Gera PDF a partir dos filtros usados pelo CRUD de componentes
+        Route::get('pdf/componentes', [\App\Http\Controllers\api\PdfController::class, 'componentes'])
+            ->name('pdf.componentes');
+
+
         // Rotas para tracking events
         Route::apiResource('tracking', TrackingEventController::class,['parameters' => [
             'tracking' => 'id'

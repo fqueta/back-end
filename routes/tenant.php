@@ -166,6 +166,10 @@ Route::name('api.')->prefix('api/v1')->middleware([
             'componentes' => 'id'
         ]]);
 
+        // PDF: Relatório de matrícula (tenant-aware URL)
+        Route::get('pdf/matriculas/{id}', [\App\Http\Controllers\api\PdfController::class, 'matricula'])
+            ->name('pdf.matriculas');
+
         // CRUD: Uploads de arquivos (posts: post_type=files_uload)
         Route::apiResource('uploads', UploadController::class, ['parameters' => [
             'uploads' => 'id'
