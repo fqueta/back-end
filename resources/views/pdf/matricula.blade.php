@@ -39,7 +39,7 @@
            - Ensures A4 height even with no text (background-only pages)
            - Forces page breaks between .page blocks */
         .page {
-            padding: 24px;
+            padding: 0; /* full-bleed background (no padding on page container) */
             box-sizing: border-box;
             page-break-inside: avoid;
             height: 297mm; /* A4 height */
@@ -49,6 +49,15 @@
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
             position: relative; /* establish containing block for background sizing */
+        }
+        /* Function-level comment: Content wrapper inside page to preserve padding without shrinking background. */
+        /* PT: Wrapper interno para conteúdo com padding; fundo permanece full-bleed. */
+        /* EN: Inner wrapper to provide padding while keeping background full-bleed. */
+        .page-inner {
+            padding: 24px;
+            box-sizing: border-box;
+            min-height: 297mm;
+            width: 210mm;
         }
         .page:last-of-type { page-break-after: auto; }
         /* PT: Quebra de página entre containers .page.
@@ -82,6 +91,7 @@
 </head>
 <body>
     <div class="page">
+    <div class="page-inner">
     <!-- PT: Cabeçalho com dados do cliente e da matrícula | EN: Header with client/enrollment data -->
     <header>
         <div class="client-info">
@@ -185,6 +195,7 @@
 
     <div class="footer">Gerado em {{ $generatedAt->format('d/m/Y H:i') }}</div>
     </div>
+    </div>
 
     <!-- PT: Páginas extras dinâmicas | EN: Dynamic extra pages -->
     @if(!empty($extra_pages))
@@ -196,6 +207,7 @@
                 $hasHtml = !empty($p['html']);
             @endphp
             <div class="page" style="{{ $pageBgStyle }}">
+                <div class="page-inner">
                 @if($hasTitle)
                     <h1>{{ $p['title'] }}</h1>
                 @endif
@@ -203,6 +215,7 @@
                 @if(!$hasTitle && !$hasHtml)
                     <div class="page-filler"></div>
                 @endif
+                </div>
             </div>
         @endforeach
     @endif

@@ -465,6 +465,10 @@ class PdfController extends Controller
                 ->setOption('margin-right', '0mm')
                 ->setOption('margin-bottom', '0mm')
                 ->setOption('margin-left', '0mm')
+                // Function-level comment: Avoid auto shrinking to preserve full-bleed backgrounds.
+                // PT: Desativa smart shrinking para evitar bordas/brancos no fundo.
+                // EN: Disable smart shrinking to prevent borders/whites on full-bleed backgrounds.
+                ->setOption('disable-smart-shrinking', true)
                 ->setPaper('a4')
                 ->output();
 
