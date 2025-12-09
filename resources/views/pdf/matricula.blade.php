@@ -49,6 +49,7 @@
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
             position: relative; /* establish containing block for background sizing */
+            overflow: hidden; /* ensure absolute bg doesn't overflow */
         }
         /* Function-level comment: Content wrapper inside page to preserve padding without shrinking background. */
         /* PT: Wrapper interno para conteúdo com padding; fundo permanece full-bleed. */
@@ -58,6 +59,8 @@
             box-sizing: border-box;
             min-height: 297mm;
             width: 210mm;
+            position: relative;
+            z-index: 1;
         }
         .page:last-of-type { page-break-after: auto; }
         /* PT: Quebra de página entre containers .page.
@@ -70,27 +73,23 @@
         /* PT: Preenchedor para páginas extras sem conteúdo textual.
            EN: Filler for extra pages with no textual content. */
         .page-filler { display: block; min-height: 100%; }
-        /* PT: Replicar imagem de fundo em cada página para full-bleed.
-           EN: Repeat background image on each page for full-bleed. */
-        @if(!empty($background_data_uri))
-        .page {
-            background-image: url('{{ $background_data_uri }}');
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-size: 100% 100%; /* fill entire A4 page */
+        /* PT/EN: Element-based full-bleed background to improve wkhtmltopdf reliability */
+        .page-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* full-bleed */
+            z-index: 0;
         }
-        @elseif(!empty($background_url))
-        .page {
-            background-image: url('{{ $background_url }}');
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-size: 100% 100%; /* fill entire A4 page */
-        }
-        @endif
     </style>
 </head>
 <body>
     <div class="page">
+    @if(!empty($background_data_uri) || !empty($background_url))
+        <img class="page-bg" src="{{ $background_data_uri ?? $background_url }}" alt="" />
+    @endif
     <div class="page-inner">
     <!-- PT: Cabeçalho com dados do cliente e da matrícula | EN: Header with client/enrollment data -->
     <header>
@@ -202,11 +201,14 @@
         @foreach($extra_pages as $p)
             @php
                 $pageBg = $p['background_data_uri'] ?? $p['background_url'] ?? null;
-                $pageBgStyle = ($pageBg ? "background-image: url('$pageBg'); background-repeat: no-repeat; background-position: center center; background-size: 100% 100%;" : '') . ' page-break-before: always; break-before: page; page-break-after: always; break-after: page; height: 297mm; width: 210mm;';
+                $pageBgStyle = 'page-break-before: always; break-before: page; page-break-after: always; break-after: page; height: 297mm; width: 210mm;';
                 $hasTitle = !empty($p['title']);
                 $hasHtml = !empty($p['html']);
             @endphp
             <div class="page" style="{{ $pageBgStyle }}">
+                @if($pageBg)
+                    <img class="page-bg" src="{{ $pageBg }}" alt="" />
+                @endif
                 <div class="page-inner">
                 @if($hasTitle)
                     <h1>{{ $p['title'] }}</h1>
