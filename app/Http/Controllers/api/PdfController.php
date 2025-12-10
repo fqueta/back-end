@@ -296,7 +296,9 @@ class PdfController extends Controller
         // Comentário: Determina fundos por página a partir da galeria do componente
         // e do parâmetro opcional 'background_url'. Quando existe galeria, ela tem prioridade.
         $backgroundUrl = $request->input('background_url') ?? '';
-        // Performance: evitar conversão para Data URI (download + base64) e usar direto a URL quando fast_dev
+        // Function-level comment: Prefer direct URL for backgrounds instead of Data URI.
+        // PT: Usamos diretamente a URL do fundo; não geramos base64/Data URI.
+        // EN: Use background URL directly; do not generate base64/Data URI.
         $backgroundDataUri = null;
         // PT: Páginas extras dinâmicas (array de blocos HTML com fundo opcional).
         // EN: Dynamic extra pages (array of HTML blocks with optional background).
@@ -396,30 +398,9 @@ class PdfController extends Controller
             }
         }
 
-        // PT: Fallback para embutir fundos como Data URI (base64) quando URL HTTP pode não ser alcançável pelo wkhtmltopdf.
-        // EN: Fallback to embed backgrounds as Data URI (base64) when HTTP URLs may be unreachable to wkhtmltopdf.
-        if (!$fastDev) {
-            if (is_string($backgroundUrl) && $backgroundUrl !== '') {
-                $tryDataUri = $this->buildDataUriFromUrl($backgroundUrl, 5);
-                if (is_string($tryDataUri) && str_starts_with($tryDataUri, 'data:')) {
-                    $backgroundDataUri = $tryDataUri;
-                    $backgroundUrl = null; // prefer Data URI for reliability
-                }
-            }
-            if (is_array($extraPages) && !empty($extraPages)) {
-                foreach ($extraPages as $idx => $p) {
-                    $pUrl = $p['background_url'] ?? null;
-                    $pDataUri = $p['background_data_uri'] ?? null;
-                    if (!$pDataUri && is_string($pUrl) && $pUrl !== '') {
-                        $tryDataUri = $this->buildDataUriFromUrl($pUrl, 5);
-                        if (is_string($tryDataUri) && str_starts_with($tryDataUri, 'data:')) {
-                            $extraPages[$idx]['background_data_uri'] = $tryDataUri;
-                            $extraPages[$idx]['background_url'] = null;
-                        }
-                    }
-                }
-            }
-        }
+        // Function-level comment: Data URI conversion disabled globally.
+        // PT: Conversão para base64/Data URI desativada; wkhtmltopdf tem 'enable-local-file-access'.
+        // EN: Data URI conversion disabled; wkhtmltopdf uses 'enable-local-file-access'.
 
         $html = View::make('pdf.matricula', [
             'cliente_nome' => $matricula->cliente_nome,
