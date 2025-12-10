@@ -478,7 +478,9 @@ class PdfController extends Controller
                 // Continua gerando se não for possível obter mtime.
             }
         }
-
+        // Function-level comment: Engine selection without interrupting execution flow.
+        // PT: Remove debug (dd) para não interromper a geração do PDF.
+        // EN: Remove debug (dd) to avoid interrupting PDF generation.
         if ($engine === 'browsershot') {
             try {
                 // Function-level comment: Generate PDF using Chromium (Browsershot) with full-bleed and print media.
@@ -518,6 +520,8 @@ class PdfController extends Controller
                 if (is_string($binary) && $binary !== '') {
                     config(['snappy.pdf.binary' => $binary]);
                 }
+                $headerHtml = View::make('pdf.header')->render();
+                $footerHtml = View::make('pdf.footer')->render();
 
                 if ($shouldGenerate) {
                 // $pdfBinary = SnappyPdf::loadHTML($html)
@@ -550,11 +554,9 @@ class PdfController extends Controller
                 //     ->setOption('page-height', '297mm')
                 //     ->setPaper('a4')
                 //     ->output();
-                    $headerHtml = View::make('pdf.header')->render();
-                    $footerHtml = View::make('pdf.footer')->render();
-                    if(isset($_GET['tes'])){
-                        return $headerHtml.$html.$footerHtml;
-                    }
+                    // if(isset($_GET['tes'])){
+                    //     return $headerHtml.$html.$footerHtml;
+                    // }
                     // Function-level comment: Build wkhtmltopdf with header/footer and stable scale.
                     // PT: Monta wkhtmltopdf com cabeçalho/rodapé e escala estável 1:1.
                     // EN: Build wkhtmltopdf with header/footer and stable 1:1 scale.

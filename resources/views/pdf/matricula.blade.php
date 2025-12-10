@@ -32,6 +32,27 @@
         .content-html { font-size: 12px; line-height: 1.55; }
         .check { color: #10b981; font-weight: 700; }
         .footer { margin-top: 18px; font-size: 11px; color: var(--muted); }
+        /* PT: Botão de chamada para ação na capa | EN: Cover CTA button */
+        .cta-wrap { display: flex; justify-content: center; margin: 24px 0 0; }
+        .cta-button {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(180deg, #63b92a 0%, #4aa31b 100%);
+            color: #fff; font-weight: 700; border-radius: 8px;
+            padding: 10px 14px; box-shadow: 0 2px 0 rgba(0,0,0,.15);
+        }
+        .cta-button .icon { width: 20px; height: 20px; border-radius: 50%; background: #2c7a0a; display: inline-block; }
+        /* PT: Bloco central da capa com alinhamento e espaçamento como na imagem.
+           EN: Centered cover block with alignment and spacing to match screenshot. */
+        .cover-content {
+            position: absolute; inset: 0; padding: 40mm 20mm 28mm;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; z-index: 2;
+        }
+        .cover-title { font-size: 42px; line-height: 1.1; margin: 0 0 6px; color: #0f2a5b; font-weight: 800; }
+        .cover-subtitle { font-size: 16px; color: #2d6cdf; font-weight: 700; margin: 0 0 12px; }
+        .cover-info { font-size: 13px; line-height: 1.7; }
+        .cover-info b { font-weight: 700; }
+        .cover-cta { margin-top: 12px; }
         /* PT: Container interno por página.
            - Garante altura de uma folha A4 mesmo sem conteúdo (apenas fundo)
            - Força quebra de página entre blocos .page
@@ -112,110 +133,113 @@
         }
     @endphp
     <div class="page" style="{{ $pageStyleFirst }}">
-    <div class="page-inner">
-    <!-- PT: Cabeçalho com dados do cliente e da matrícula | EN: Header with client/enrollment data -->
-    <header>
-        <div class="client-info">
-            <div>Cliente: <b>{{ $cliente_nome }}</b> <span class="muted">zapsint Nº: {{ $cliente_zapsint ?? '-' }}</span></div>
-            <div>Telefone: <b>{{ $cliente_telefone ?? '-' }}</b></div>
-            <div>Email: <b>{{ $cliente_email ?? '-' }}</b></div>
-            <div>Data: <b>{{ $data_formatada }}</b> &nbsp; Validade: <b>{{ $validade_formatada }}</b></div>
+        <div class="page-inner">
+            <!-- PT: Conteúdo central da capa (título, subtítulo, dados e CTA) | EN: Centered cover content (title, subtitle, data and CTA) -->
+            <div class="cover-content">
+                <h1 class="cover-title">Proposta Comercial</h1>
+                <div class="cover-subtitle">Dados relacionados da proposta:</div>
+                <div class="cover-info">
+                    <div><b>Cliente:</b> {{ $cliente_nome }} <span class="muted">Nº: {{ $cliente_zapsint ?? '-' }}</span></div>
+                    <div><b>Telefone:</b> {{ $cliente_telefone ?? '-' }}</div>
+                    <div><b>Email:</b> {{ $cliente_email ?? '-' }}</div>
+                    <div><b>Data:</b> {{ $data_formatada }} &nbsp; <b>Validade:</b> {{ $validade_formatada }}</div>
+                </div>
+                <div class="cta-wrap cover-cta"><span class="cta-button"><span class="icon"></span>ACEITO A PROPOSTA</span></div>
+            </div>
         </div>
-        <div class="meta-info">
-            <div class="muted">CRM • Aeroclube</div>
-            <div>Consultor: <b>{{ $consultor_nome ?? '-' }}</b></div>
-        </div>
-    </header>
+    </div>
 
-    <h1>Orçamento</h1>
+    <!-- PT: Segunda página com detalhes da proposta | EN: Second page with proposal details -->
+    <div class="page">
+        <div class="page-inner">
+            <h1>Orçamento</h1>
+            <!-- PT: Tabela de itens do orçamento | EN: Budget items table -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Etapa</th>
+                        <th class="right">H. Teóricas</th>
+                        <th class="right">H. Práticas</th>
+                        <th class="right">Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(($orc['modulos'] ?? []) as $m)
+                        <tr>
+                            <td>{{ $m['titulo'] ?? '-' }}</td>
+                            <td class="muted">{{ $m['etapa'] ?? '—' }}</td>
+                            <td class="right">{{ $m['limite'] ?? '0' }}</td>
+                            <td class="right">{{ $m['limite_pratico'] ?? '0' }}</td>
+                            <td class="right">{{ $m['valor'] ?? '0,00' }}</td>
+                        </tr>
+                    @endforeach
+                    @if(isset($desconto) && $desconto !== null)
+                        <tr>
+                            <td class="accent">Desconto de Pontualidade</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td class="right accent">- R$ {{ number_format((float)$desconto, 2, ',', '.') }}</td>
+                        </tr>
+                    @endif
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="right">Subtotal</td>
+                        <td class="right">R$ {{ $subtotal_formatado }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" class="right">Total do Orçamento</td>
+                        <td class="right">R$ {{ $total_formatado }}</td>
+                    </tr>
+                </tfoot>
+            </table>
 
-    <!-- PT: Tabela de itens do orçamento | EN: Budget items table -->
-    <table>
-        <thead>
-            <tr>
-                <th>Descrição</th>
-                <th>Etapa</th>
-                <th class="right">H. Teóricas</th>
-                <th class="right">H. Práticas</th>
-                <th class="right">Valor</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach(($orc['modulos'] ?? []) as $m)
-                <tr>
-                    <td>{{ $m['titulo'] ?? '-' }}</td>
-                    <td class="muted">{{ $m['etapa'] ?? '—' }}</td>
-                    <td class="right">{{ $m['limite'] ?? '0' }}</td>
-                    <td class="right">{{ $m['limite_pratico'] ?? '0' }}</td>
-                    <td class="right">{{ $m['valor'] ?? '0,00' }}</td>
-                </tr>
-            @endforeach
-            @if(isset($desconto) && $desconto !== null)
-                <tr>
-                    <td class="accent">Desconto de Pontualidade</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td class="right accent">- R$ {{ number_format((float)$desconto, 2, ',', '.') }}</td>
-                </tr>
-            @endif
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="4" class="right">Subtotal</td>
-                <td class="right">R$ {{ $subtotal_formatado }}</td>
-            </tr>
-            <tr>
-                <td colspan="4" class="right">Total do Orçamento</td>
-                <td class="right">R$ {{ $total_formatado }}</td>
-            </tr>
-        </tfoot>
-    </table>
-
-    <!-- PT: Seção Parcelamento com chips | EN: Installment section with chips -->
-    <div class="section-title">Parceliamento</div>
-    <div class="chips">
-        @php
-            /*
-             * PT: Normaliza $orc (string JSON ou array) e coleta linhas do parcelamento com segurança.
-             * EN: Normalize $orc (JSON string or array) and safely collect installment lines.
-             */
-            $orcArr = is_array($orc)
-                ? $orc
-                : (is_string($orc) ? (json_decode($orc, true) ?: []) : []);
-            $linhas = [];
-            if (isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
-                $linhasRaw = $orcArr['parcelamento']['linhas'] ?? [];
-                $linhas = is_array($linhasRaw) ? $linhasRaw : [];
-            }
-        @endphp
-        @if(!empty($linhas))
-            @foreach($linhas as $linha)
-                <span class="chip">Total de Parcelas: {{ $linha['parcelas'] ?? '-' }}</span>
-                <span class="chip">Valor da Parcela: R$ {{ isset($linha['valor']) ? number_format((float)$linha['valor'], 2, ',', '.') : '-' }}</span>
-                @if(isset($linha['desconto']))
-                    <span class="chip">Desconto Pontualidade: R$ {{ number_format((float)$linha['desconto'], 2, ',', '.') }}</span>
-                    <span class="chip">Parcela c/ Desconto: R$ {{ number_format(((float)$linha['valor']) - ((float)$linha['desconto']), 2, ',', '.') }}</span>
+            <!-- PT: Seção Parcelamento com chips | EN: Installment section with chips -->
+            <div class="section-title">Parceliamento</div>
+            <div class="chips">
+                @php
+                    /*
+                     * PT: Normaliza $orc (string JSON ou array) e coleta linhas do parcelamento com segurança.
+                     * EN: Normalize $orc (JSON string or array) and safely collect installment lines.
+                     */
+                    $orcArr = is_array($orc)
+                        ? $orc
+                        : (is_string($orc) ? (json_decode($orc, true) ?: []) : []);
+                    $linhas = [];
+                    if (isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
+                        $linhasRaw = $orcArr['parcelamento']['linhas'] ?? [];
+                        $linhas = is_array($linhasRaw) ? $linhasRaw : [];
+                    }
+                @endphp
+                @if(!empty($linhas))
+                    @foreach($linhas as $linha)
+                        <span class="chip">Total de Parcelas: {{ $linha['parcelas'] ?? '-' }}</span>
+                        <span class="chip">Valor da Parcela: R$ {{ isset($linha['valor']) ? number_format((float)$linha['valor'], 2, ',', '.') : '-' }}</span>
+                        @if(isset($linha['desconto']))
+                            <span class="chip">Desconto Pontualidade: R$ {{ number_format((float)$linha['desconto'], 2, ',', '.') }}</span>
+                            <span class="chip">Parcela c/ Desconto: R$ {{ number_format(((float)$linha['valor']) - ((float)$linha['desconto']), 2, ',', '.') }}</span>
+                        @endif
+                    @endforeach
+                @else
+                    <span class="chip">Sem dados de parcelamento</span>
                 @endif
-            @endforeach
-        @else
-            <span class="chip">Sem dados de parcelamento</span>
-        @endif
-    </div>
+            </div>
 
-    <!-- PT: Texto HTML explicativo do parcelamento | EN: Preview HTML for installment explanation -->
-    <div class="content-html">
-        @php
-            $textoPreview = '';
-            if (!empty($orcArr) && isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
-                $textoPreview = $orcArr['parcelamento']['texto_preview_html'] ?? '';
-            }
-        @endphp
-        {!! $textoPreview !!}
-    </div>
+            <!-- PT: Texto HTML explicativo do parcelamento | EN: Preview HTML for installment explanation -->
+            <div class="content-html">
+                @php
+                    $textoPreview = '';
+                    if (!empty($orcArr) && isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
+                        $textoPreview = $orcArr['parcelamento']['texto_preview_html'] ?? '';
+                    }
+                @endphp
+                {!! $textoPreview !!}
+            </div>
 
-    <div class="footer">Gerado em {{ $generatedAt->format('d/m/Y H:i') }}</div>
-    </div>
+            <div class="footer">Gerado em {{ $generatedAt->format('d/m/Y H:i') }}</div>
+        </div>
     </div>
 
     <!-- PT: Páginas extras dinâmicas | EN: Dynamic extra pages -->
