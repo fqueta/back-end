@@ -151,7 +151,7 @@
             <div class="page-inner">
                 @if($idx === 0)
                     <!-- PT/EN: Page 0 = Cover -->
-                    <div class="cover-content">
+                    <div class="cover-content" style="margin-top: 100mm;">
                         <h1 class="cover-title">Proposta Comercial</h1>
                         <div class="cover-subtitle">Dados relacionados da proposta:</div>
                         <div class="cover-info">
