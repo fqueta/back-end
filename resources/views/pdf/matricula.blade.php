@@ -96,7 +96,7 @@
 <body>
     <div class="page">
     @if(!empty($background_data_uri) || !empty($background_url))
-        {{-- PT/EN: Allow configurable focus of the background image via $background_position (top|center|bottom). Defaults to 'top center'. */}
+        {{-- PT/EN: Allow configurable focus of the background image via $background_position (top|center|bottom). Defaults to 'top center'. --}}
         <img class="page-bg" src="{{ $background_data_uri ?? $background_url }}" alt="" style="object-position: {{ $background_position ?? 'top center' }};" />
     @endif
     <div class="page-inner">
