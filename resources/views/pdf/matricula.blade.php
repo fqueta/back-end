@@ -45,7 +45,7 @@
         /* PT: Bloco central da capa com alinhamento e espaçamento como na imagem.
            EN: Centered cover block with alignment and spacing to match screenshot. */
         .cover-content {
-            position: absolute; inset: 0; padding: 40mm 20mm 28mm;
+            position: absolute; inset: 0; padding: 50mm 20mm 28mm;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; z-index: 2;
         }
@@ -121,7 +121,7 @@
         /* Overrides: fine-tune cover centering and link clickability for PDF */
         .cover-content {
             /* Function-level comment: Override positioning to center between header/footer. */
-            position: absolute; left: 0; right: 0; top: 32mm; bottom: 26mm;
+            position: absolute; left: 0; right: 0; top: 64mm; bottom: 26mm;
             padding: 0 20mm; justify-content: center; align-items: center; gap: 6px;
         }
         .cta-button { pointer-events: auto; }
