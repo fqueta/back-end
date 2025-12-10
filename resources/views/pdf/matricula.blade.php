@@ -118,6 +118,13 @@
         /* PT: Define tamanho da página via CSS para reduzir variações de escala/zoom. */
         /* EN: Set page size via CSS to reduce scale/zoom variance. */
         @page { size: A4; margin: 0; }
+        /* Overrides: fine-tune cover centering and link clickability for PDF */
+        .cover-content {
+            /* Function-level comment: Override positioning to center between header/footer. */
+            position: absolute; left: 0; right: 0; top: 32mm; bottom: 26mm;
+            padding: 0 20mm; justify-content: center; align-items: center; gap: 6px;
+        }
+        .cta-button { pointer-events: auto; }
     </style>
 </head>
 <body>

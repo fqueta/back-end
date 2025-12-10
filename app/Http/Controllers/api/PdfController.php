@@ -580,6 +580,11 @@ class PdfController extends Controller
                         ->setOption('page-width', '210mm')
                         ->setOption('page-height', '297mm')
                         ->setOption('zoom', '1.0')
+                        // Function-level comment: Enable clickable links in the generated PDF.
+                        // PT: Habilita links clicáveis (internos e externos) no PDF.
+                        // EN: Enables clickable (internal/external) links in the PDF.
+                        ->setOption('enable-external-links', true)
+                        ->setOption('enable-internal-links', true)
                         ->setOption('header-html', $headerHtml)
                         ->setOption('margin-top', 0)
                         ->setOption('margin-bottom', 0)
