@@ -75,15 +75,15 @@
         .page-filler { display: block; min-height: 100%; }
         /* PT/EN: Element-based full-bleed background to improve wkhtmltopdf reliability */
         /* PT: Imagem de fundo posicionada atrás do conteúdo usando z-index.
-           - Ultrapassa 1mm em cada lado para evitar faixas brancas por arredondamento do wkhtmltopdf
+           - Ultrapassa 2mm em cada lado para evitar faixas brancas por arredondamento do wkhtmltopdf
            EN: Background image behind content using z-index.
-           - Bleeds 1mm beyond each edge to avoid white bands from wkhtmltopdf rounding */
+           - Bleeds 2mm beyond each edge to avoid white bands from wkhtmltopdf rounding */
         .page-bg {
             position: absolute;
-            top: -1mm;
-            left: -1mm;
-            width: calc(210mm + 2mm);
-            height: calc(297mm + 2mm);
+            top: -2mm;
+            left: -2mm;
+            width: calc(210mm + 4mm);
+            height: calc(297mm + 4mm);
             object-fit: cover; /* full-bleed */
             z-index: 0;
             pointer-events: none;
