@@ -151,7 +151,7 @@
             <div class="page-inner">
                 @if($idx === 0)
                     <!-- PT/EN: Page 0 = Cover -->
-                    <div class="cover-content" style="margin-top: 100mm;">
+                    <div class="cover-content">
                         <h1 class="cover-title">Proposta Comercial</h1>
                         <div class="cover-subtitle">Dados relacionados da proposta:</div>
                         <div class="cover-info">
@@ -174,82 +174,85 @@
                         </div>
                     </div>
                 @elseif($idx === 1)
+                    <div style="margin-top: 50mm;">
                     <!-- PT/EN: Page 1 = Budget table -->
-                    <h1>Orçamento</h1>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Descrição</th>
-                                <th>Etapa</th>
-                                <th class="right">H. Teóricas</th>
-                                <th class="right">H. Práticas</th>
-                                <th class="right">Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach(($orc['modulos'] ?? []) as $m)
-                                <tr>
-                                    <td>{{ $m['titulo'] ?? '-' }}</td>
-                                    <td class="muted">{{ $m['etapa'] ?? '—' }}</td>
-                                    <td class="right">{{ $m['limite'] ?? '0' }}</td>
-                                    <td class="right">{{ $m['limite_pratico'] ?? '0' }}</td>
-                                    <td class="right">{{ $m['valor'] ?? '0,00' }}</td>
-                                </tr>
-                            @endforeach
-                            @if(isset($desconto) && $desconto !== null)
-                                <tr>
-                                    <td class="accent">Desconto de Pontualidade</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td class="right accent">- R$ {{ number_format((float)$desconto, 2, ',', '.') }}</td>
-                                </tr>
-                            @endif
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="4" class="right">Subtotal</td>
-                                <td class="right">R$ {{ $subtotal_formatado }}</td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" class="right">Total do Orçamento</td>
-                                <td class="right">R$ {{ $total_formatado }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                    <div class="section-title">Parceliamento</div>
-                    <div class="chips">
-                        @php
-                            $orcArr = is_array($orc) ? $orc : (is_string($orc) ? (json_decode($orc, true) ?: []) : []);
-                            $linhas = [];
-                            if (isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
-                                $linhasRaw = $orcArr['parcelamento']['linhas'] ?? [];
-                                $linhas = is_array($linhasRaw) ? $linhasRaw : [];
-                            }
-                        @endphp
-                        @if(!empty($linhas))
-                            @foreach($linhas as $linha)
-                                <span class="chip">Total de Parcelas: {{ $linha['parcelas'] ?? '-' }}</span>
-                                <span class="chip">Valor da Parcela: R$ {{ isset($linha['valor']) ? number_format((float)$linha['valor'], 2, ',', '.') : '-' }}</span>
-                                @if(isset($linha['desconto']))
-                                    <span class="chip">Desconto Pontualidade: R$ {{ number_format((float)$linha['desconto'], 2, ',', '.') }}</span>
-                                    <span class="chip">Parcela c/ Desconto: R$ {{ number_format(((float)$linha['valor']) - ((float)$linha['desconto']), 2, ',', '.') }}</span>
+                        <h1>Orçamento</h1>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Descrição</th>
+                                        <th>Etapa</th>
+                                        <th class="right">H. Teóricas</th>
+                                        <th class="right">H. Práticas</th>
+                                        <th class="right">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach(($orc['modulos'] ?? []) as $m)
+                                        <tr>
+                                            <td>{{ $m['titulo'] ?? '-' }}</td>
+                                            <td class="muted">{{ $m['etapa'] ?? '—' }}</td>
+                                            <td class="right">{{ $m['limite'] ?? '0' }}</td>
+                                            <td class="right">{{ $m['limite_pratico'] ?? '0' }}</td>
+                                            <td class="right">{{ $m['valor'] ?? '0,00' }}</td>
+                                        </tr>
+                                    @endforeach
+                                    @if(isset($desconto) && $desconto !== null)
+                                        <tr>
+                                            <td class="accent">Desconto de Pontualidade</td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td class="right accent">- R$ {{ number_format((float)$desconto, 2, ',', '.') }}</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="4" class="right">Subtotal</td>
+                                        <td class="right">R$ {{ $subtotal_formatado }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="right">Total do Orçamento</td>
+                                        <td class="right">R$ {{ $total_formatado }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            <div class="section-title">Parceliamento</div>
+                            <div class="chips">
+                                @php
+                                    $orcArr = is_array($orc) ? $orc : (is_string($orc) ? (json_decode($orc, true) ?: []) : []);
+                                    $linhas = [];
+                                    if (isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
+                                        $linhasRaw = $orcArr['parcelamento']['linhas'] ?? [];
+                                        $linhas = is_array($linhasRaw) ? $linhasRaw : [];
+                                    }
+                                @endphp
+                                @if(!empty($linhas))
+                                    @foreach($linhas as $linha)
+                                        <span class="chip">Total de Parcelas: {{ $linha['parcelas'] ?? '-' }}</span>
+                                        <span class="chip">Valor da Parcela: R$ {{ isset($linha['valor']) ? number_format((float)$linha['valor'], 2, ',', '.') : '-' }}</span>
+                                        @if(isset($linha['desconto']))
+                                            <span class="chip">Desconto Pontualidade: R$ {{ number_format((float)$linha['desconto'], 2, ',', '.') }}</span>
+                                            <span class="chip">Parcela c/ Desconto: R$ {{ number_format(((float)$linha['valor']) - ((float)$linha['desconto']), 2, ',', '.') }}</span>
+                                        @endif
+                                    @endforeach
+                                @else
+                                    <span class="chip">Sem dados de parcelamento</span>
                                 @endif
-                            @endforeach
-                        @else
-                            <span class="chip">Sem dados de parcelamento</span>
-                        @endif
+                            </div>
+                            <div class="content-html">
+                                @php
+                                    $textoPreview = '';
+                                    if (!empty($orcArr) && isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
+                                        $textoPreview = $orcArr['parcelamento']['texto_preview_html'] ?? '';
+                                    }
+                                @endphp
+                                {!! $textoPreview !!}
+                            </div>
+                            <div class="footer">Gerado em {{ $generatedAt->format('d/m/Y H:i') }}
+                            </div>
                     </div>
-                    <div class="content-html">
-                        @php
-                            $textoPreview = '';
-                            if (!empty($orcArr) && isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
-                                $textoPreview = $orcArr['parcelamento']['texto_preview_html'] ?? '';
-                            }
-                        @endphp
-                        {!! $textoPreview !!}
-                    </div>
-                    <div class="footer">Gerado em {{ $generatedAt->format('d/m/Y H:i') }}</div>
                 @else
                     <!-- PT/EN: Remaining pages from controller -->
                     @php
