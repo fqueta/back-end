@@ -96,8 +96,17 @@
 <body>
     <div class="page">
     @if(!empty($background_data_uri) || !empty($background_url))
-        {{-- PT/EN: Allow configurable focus of the background image via $background_position (top|center|bottom). Defaults to 'top center'. --}}
-        <img class="page-bg" src="{{ $background_data_uri ?? $background_url }}" alt="" style="object-position: {{ $background_position ?? 'top center' }};" />
+        {{-- Function-level comment: Allow configurable focus and fit of the background image on the first page.
+             PT: Suporta $background_position ('top center'|'center'|'bottom center') e $background_fit ('cover'|'contain').
+             EN: Supports $background_position ('top center'|'center'|'bottom center') and $background_fit ('cover'|'contain'). --}}
+        @php
+            // Function-level comment: Default first-page background fit to 'contain' to avoid cropping.
+            // PT: Define 'contain' como padrão para evitar cortes na capa.
+            // EN: Set 'contain' as default to avoid background cropping on cover.
+            $bgPosFirst = is_string($background_position ?? null) ? $background_position : 'top center';
+            $bgFitFirst = is_string($background_fit ?? null) ? $background_fit : 'contain';
+        @endphp
+        <img class="page-bg" src="{{ $background_data_uri ?? $background_url }}" alt="" style="object-position: {{ $bgPosFirst }}; object-fit: {{ $bgFitFirst }};" />
     @endif
     <div class="page-inner">
     <!-- PT: Cabeçalho com dados do cliente e da matrícula | EN: Header with client/enrollment data -->
@@ -217,13 +226,20 @@
             <div class="page" style="{{ $pageBgStyle }}">
                 @if($pageBg)
                     @php
-                        /* PT: Suporte a foco da imagem de fundo nas páginas extras via $p['background_position'].
-                           EN: Support focusing the background image in extra pages via $p['background_position']. */
+                        /* Function-level comment: Support background focus and fit for extra pages.
+                           PT: Suporta $p['background_position'] e $p['background_fit'] por página.
+                           EN: Supports $p['background_position'] and $p['background_fit'] per page. */
                         $bgPos = isset($p['background_position']) && is_string($p['background_position'])
                             ? $p['background_position']
                             : 'top center';
+                        // Function-level comment: Default extra-page background fit to 'contain' to avoid cropping.
+                        // PT: Define 'contain' como padrão nas extras para evitar cortes.
+                        // EN: Set 'contain' as default for extra pages to avoid cropping.
+                        $bgFit = isset($p['background_fit']) && is_string($p['background_fit'])
+                            ? $p['background_fit']
+                            : 'contain';
                     @endphp
-                    <img class="page-bg" src="{{ $pageBg }}" alt="" style="object-position: {{ $bgPos }};" />
+                    <img class="page-bg" src="{{ $pageBg }}" alt="" style="object-position: {{ $bgPos }}; object-fit: {{ $bgFit }};" />
                 @endif
                 <div class="page-inner">
                 @if($hasTitle)

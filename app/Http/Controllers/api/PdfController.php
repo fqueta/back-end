@@ -358,6 +358,14 @@ class PdfController extends Controller
             }
         }
         if (!empty($galleryBackgrounds)) {
+            // Function-level comment: Read optional defaults for background focus/fit from request.
+            // PT: Lê defaults opcionais para posição e ajuste do fundo.
+            // EN: Read optional defaults for background position and fit.
+            $defaultBgPos = $request->input('background_position');
+            // Function-level comment: Default to 'contain' globally when not specified.
+            // PT: Usa 'contain' como padrão global quando não informado.
+            // EN: Use 'contain' as global default when not provided.
+            $defaultBgFit = $request->input('background_fit', 'contain');
             // Primeiro fundo aplicado na página principal
             $backgroundUrl = $galleryBackgrounds[0]['url'];
             $backgroundDataUri = null;
@@ -368,6 +376,9 @@ class PdfController extends Controller
                     'html' => '',
                     'background_url' => $gb['url'],
                     'background_data_uri' => null,
+                    // Function-level comment: Apply defaults for background positioning and fit if provided.
+                    'background_position' => is_string($defaultBgPos ?? null) ? $defaultBgPos : null,
+                    'background_fit' => is_string($defaultBgFit ?? null) ? $defaultBgFit : null,
                 ];
             }
         }
@@ -410,6 +421,11 @@ class PdfController extends Controller
             'generatedAt' => now(),
             'background_url' => $backgroundUrl,
             'background_data_uri' => $backgroundDataUri,
+            // Function-level comment: Pass defaults for first-page background focus/fit.
+            // PT: Repassa parâmetros com default 'contain' para evitar cortes.
+            // EN: Pass parameters with default 'contain' to avoid cropping.
+            'background_position' => $request->input('background_position'),
+            'background_fit' => $request->input('background_fit', 'contain'),
             'extra_pages' => $extraPages,
         ])->render();
         // Modo de depuração opcional: retorna o HTML renderizado sem gerar PDF
