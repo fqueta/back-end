@@ -539,7 +539,7 @@ class PdfController extends Controller
                 }
 
                 if ($shouldGenerate) {
-                    $pdfBinary = SnappyPdf::loadHTML($html)
+                $pdfBinary = SnappyPdf::loadHTML($html)
                     ->setOption('encoding', 'utf-8')
                     ->setOption('print-media-type', true)
                     ->setOption('enable-local-file-access', true)
@@ -552,15 +552,16 @@ class PdfController extends Controller
                     // Function-level comment: Lock scaling at 1:1 to avoid auto zoom adjustments.
                     // PT: Garante zoom 1:1 para evitar reescalonamento automático.
                     // EN: Ensure 1:1 zoom to prevent automatic rescaling.
-                    // ->setOption('zoom', '1.0')
+                    ->setOption('zoom', '1.0')
                     // Function-level comment: Stabilize layout box model by setting viewport-size.
                     // PT: Define viewport aproximado da A4 para reduzir variação de escala.
                     // EN: Set an A4-proportional viewport to reduce scale variance.
-                    ->setOption('viewport-size', '1240x1754')
+                    // (Removed: viewport-size; letting wkhtmltopdf infer viewport avoids unintended zoom)
                     // Function-level comment: Avoid auto shrinking to preserve full-bleed backgrounds.
                     // PT: Desativa smart shrinking para evitar bordas/brancos no fundo.
                     // EN: Disable smart shrinking to prevent borders/whites on full-bleed backgrounds.
-                    ->setOption('disable-smart-shrinking', true)
+                    // (Changed) Allow smart shrinking to avoid clipping/zoom on all pages.
+                    ->setOption('disable-smart-shrinking', false)
                     ->setPaper('a4')
                     ->output();
                     // Grava o PDF pelo disco público
