@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Services\Qlib;
 use Barryvdh\Snappy\Facades\SnappyPdf;
+use Spatie\Browsershot\Browsershot;
 
 class PdfController extends Controller
 {
@@ -445,54 +446,83 @@ class PdfController extends Controller
             mkdir(dirname($absolute), 0775, true);
         }
 
-        // Geração do PDF com Snappy (wkhtmltopdf), salvando via Storage::put
-        // PT: Usa wkhtmltopdf para evitar timeouts do Chromium em Windows.
-        // EN: Use wkhtmltopdf to avoid Chromium timeouts on Windows.
-        try {
-            // Function-level comment: Configure wkhtmltopdf binary from env (WKHTML_PDF_BINARY) for Windows.
-            $binary = env('WKHTML_PDF_BINARY');
-            if (is_string($binary) && $binary !== '') {
-                config(['snappy.pdf.binary' => $binary]);
+        // Function-level comment: Choose PDF engine via request or env.
+        // PT: Permite escolher o engine ('wkhtmltopdf' ou 'browsershot') por query (?engine=...) ou env PDF_ENGINE.
+        // EN: Allow selecting engine ('wkhtmltopdf' or 'browsershot') via query (?engine=...) or env PDF_ENGINE.
+        $engine = strtolower((string)($request->input('engine', env('PDF_ENGINE', 'wkhtmltopdf'))));
+
+        if ($engine === 'browsershot') {
+            try {
+                // Function-level comment: Generate PDF using Chromium (Browsershot) with full-bleed and print media.
+                // PT: Usa Browsershot com A4, margens 0 e fundo ativo.
+                // EN: Use Browsershot with A4, zero margins, and print background.
+                Browsershot::html($html)
+                    ->format('A4')
+                    ->margins(0, 0, 0, 0)
+                    ->emulateMedia('print')
+                    ->timeout(60000)
+                    ->setOption('printBackground', true)
+                    ->setOption('waitUntil', 'load')
+                    ->save($absolute);
+            } catch (\Throwable $e) {
+                \Log::warning('Browsershot PDF generation failed, falling back to wkhtmltopdf', [
+                    'matricula_id' => $matricula->id ?? null,
+                    'exception' => $e->getMessage(),
+                ]);
+                $engine = 'wkhtmltopdf'; // fallback
             }
+        }
 
-            $pdfBinary = SnappyPdf::loadHTML($html)
-                ->setOption('encoding', 'utf-8')
-                ->setOption('print-media-type', true)
-                ->setOption('enable-local-file-access', true)
-                ->setOption('dpi', 96)
-                ->setOption('image-quality', 100)
-                ->setOption('margin-top', '0mm')
-                ->setOption('margin-right', '0mm')
-                ->setOption('margin-bottom', '0mm')
-                ->setOption('margin-left', '0mm')
-                // Function-level comment: Lock scaling at 1:1 to avoid auto zoom adjustments.
-                // PT: Garante zoom 1:1 para evitar reescalonamento automático.
-                // EN: Ensure 1:1 zoom to prevent automatic rescaling.
-                ->setOption('zoom', '1.0')
-                // Function-level comment: Stabilize layout box model by setting viewport-size.
-                // PT: Define viewport aproximado da A4 para reduzir variação de escala.
-                // EN: Set an A4-proportional viewport to reduce scale variance.
-                ->setOption('viewport-size', '1240x1754')
-                // Function-level comment: Avoid auto shrinking to preserve full-bleed backgrounds.
-                // PT: Desativa smart shrinking para evitar bordas/brancos no fundo.
-                // EN: Disable smart shrinking to prevent borders/whites on full-bleed backgrounds.
-                ->setOption('disable-smart-shrinking', true)
-                ->setPaper('a4')
-                ->output();
+        if ($engine !== 'browsershot') {
+            // Geração do PDF com Snappy (wkhtmltopdf), salvando via Storage::put
+            // PT: Usa wkhtmltopdf para evitar timeouts do Chromium em Windows.
+            // EN: Use wkhtmltopdf to avoid Chromium timeouts on Windows.
+            try {
+                // Function-level comment: Configure wkhtmltopdf binary from env (WKHTML_PDF_BINARY) for Windows.
+                $binary = env('WKHTML_PDF_BINARY');
+                if (is_string($binary) && $binary !== '') {
+                    config(['snappy.pdf.binary' => $binary]);
+                }
 
-            // Grava o PDF pelo disco público
-            $disk->put($relative, $pdfBinary);
-            $absolute = $disk->path($relative);
-        } catch (\Throwable $e) {
-            \Log::error('Snappy PDF generation failed', [
-                'matricula_id' => $matricula->id ?? null,
-                'exception' => $e->getMessage(),
-            ]);
-            if (!$disk->exists($relative)) {
-                return response()->json([
-                    'message' => 'Falha ao gerar o PDF da matrícula',
-                    'error' => $e->getMessage(),
-                ], 500);
+                $pdfBinary = SnappyPdf::loadHTML($html)
+                    ->setOption('encoding', 'utf-8')
+                    ->setOption('print-media-type', true)
+                    ->setOption('enable-local-file-access', true)
+                    ->setOption('dpi', 96)
+                    ->setOption('image-quality', 100)
+                    ->setOption('margin-top', '0mm')
+                    ->setOption('margin-right', '0mm')
+                    ->setOption('margin-bottom', '0mm')
+                    ->setOption('margin-left', '0mm')
+                    // Function-level comment: Lock scaling at 1:1 to avoid auto zoom adjustments.
+                    // PT: Garante zoom 1:1 para evitar reescalonamento automático.
+                    // EN: Ensure 1:1 zoom to prevent automatic rescaling.
+                    ->setOption('zoom', '1.0')
+                    // Function-level comment: Stabilize layout box model by setting viewport-size.
+                    // PT: Define viewport aproximado da A4 para reduzir variação de escala.
+                    // EN: Set an A4-proportional viewport to reduce scale variance.
+                    ->setOption('viewport-size', '1240x1754')
+                    // Function-level comment: Avoid auto shrinking to preserve full-bleed backgrounds.
+                    // PT: Desativa smart shrinking para evitar bordas/brancos no fundo.
+                    // EN: Disable smart shrinking to prevent borders/whites on full-bleed backgrounds.
+                    ->setOption('disable-smart-shrinking', true)
+                    ->setPaper('a4')
+                    ->output();
+
+                // Grava o PDF pelo disco público
+                $disk->put($relative, $pdfBinary);
+                $absolute = $disk->path($relative);
+            } catch (\Throwable $e) {
+                \Log::error('Snappy PDF generation failed', [
+                    'matricula_id' => $matricula->id ?? null,
+                    'exception' => $e->getMessage(),
+                ]);
+                if (!$disk->exists($relative)) {
+                    return response()->json([
+                        'message' => 'Falha ao gerar o PDF da matrícula',
+                        'error' => $e->getMessage(),
+                    ], 500);
+                }
             }
         }
 

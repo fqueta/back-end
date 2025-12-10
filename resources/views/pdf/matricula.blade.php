@@ -96,7 +96,8 @@
 <body>
     <div class="page">
     @if(!empty($background_data_uri) || !empty($background_url))
-        <img class="page-bg" src="{{ $background_data_uri ?? $background_url }}" alt="" />
+        {{-- PT/EN: Allow configurable focus of the background image via $background_position (top|center|bottom). Defaults to 'top center'. */}
+        <img class="page-bg" src="{{ $background_data_uri ?? $background_url }}" alt="" style="object-position: {{ $background_position ?? 'top center' }};" />
     @endif
     <div class="page-inner">
     <!-- PT: Cabeçalho com dados do cliente e da matrícula | EN: Header with client/enrollment data -->
@@ -215,7 +216,14 @@
             @endphp
             <div class="page" style="{{ $pageBgStyle }}">
                 @if($pageBg)
-                    <img class="page-bg" src="{{ $pageBg }}" alt="" />
+                    @php
+                        /* PT: Suporte a foco da imagem de fundo nas páginas extras via $p['background_position'].
+                           EN: Support focusing the background image in extra pages via $p['background_position']. */
+                        $bgPos = isset($p['background_position']) && is_string($p['background_position'])
+                            ? $p['background_position']
+                            : 'top center';
+                    @endphp
+                    <img class="page-bg" src="{{ $pageBg }}" alt="" style="object-position: {{ $bgPos }};" />
                 @endif
                 <div class="page-inner">
                 @if($hasTitle)
