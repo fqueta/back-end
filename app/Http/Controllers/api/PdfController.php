@@ -497,7 +497,7 @@ class PdfController extends Controller
                     // Function-level comment: Lock scaling at 1:1 to avoid auto zoom adjustments.
                     // PT: Garante zoom 1:1 para evitar reescalonamento automático.
                     // EN: Ensure 1:1 zoom to prevent automatic rescaling.
-                    ->setOption('zoom', '1.0')
+                    // ->setOption('zoom', '1.0')
                     // Function-level comment: Stabilize layout box model by setting viewport-size.
                     // PT: Define viewport aproximado da A4 para reduzir variação de escala.
                     // EN: Set an A4-proportional viewport to reduce scale variance.
