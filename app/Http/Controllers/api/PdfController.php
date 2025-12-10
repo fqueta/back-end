@@ -259,6 +259,17 @@ class PdfController extends Controller
             ->select('matriculas.*', 'cursos.nome as curso_nome','cursos.tipo as curso_tipo', 'turmas.nome as turma_nome', 'users.name as cliente_nome')
             ->findOrFail($id);
 
+        // Function-level comment: Fast dev toggles and caching.
+        // PT: Atalhos de performance no ambiente de desenvolvimento.
+        // - fast_dev: pula conversões pesadas e limpeza; favorece velocidade.
+        // - skip_extra_pages: não gera páginas extras (galeria/request).
+        // - force: força regerar PDF mesmo havendo cache recente.
+        // - cache_ttl: tempo (segundos) para considerar PDF válido.
+        $fastDev = $request->boolean('fast_dev', env('PDF_FAST_DEV', false));
+        $skipExtras = $request->boolean('skip_extra_pages', env('PDF_SKIP_EXTRA_PAGES', false));
+        $force = $request->boolean('force', false);
+        $cacheTtl = (int)($request->input('cache_ttl', env('PDF_CACHE_TTL', 300)));
+
         // Metacampos
         $meta = $this->getAllMatriculaMeta($matricula->id);
 
@@ -284,9 +295,8 @@ class PdfController extends Controller
         // EN: background_url: optional background image to customize the PDF
         // Comentário: Determina fundos por página a partir da galeria do componente
         // e do parâmetro opcional 'background_url'. Quando existe galeria, ela tem prioridade.
-        $backgroundUrl = $request->input('background_url')
-            ?? '';
-        // Performance: evitar conversão para Data URI (download + base64) e usar direto a URL
+        $backgroundUrl = $request->input('background_url') ?? '';
+        // Performance: evitar conversão para Data URI (download + base64) e usar direto a URL quando fast_dev
         $backgroundDataUri = null;
         // PT: Páginas extras dinâmicas (array de blocos HTML com fundo opcional).
         // EN: Dynamic extra pages (array of HTML blocks with optional background).
@@ -323,6 +333,9 @@ class PdfController extends Controller
             $decoded = json_decode($extraPagesRaw, true);
             if (is_array($decoded)) { $extraPagesRaw = $decoded; }
         }
+        if ($skipExtras) {
+            $extraPagesRaw = [];
+        }
         if (is_array($extraPagesRaw)) {
             foreach ($extraPagesRaw as $page) {
                 if (is_string($page)) {
@@ -344,7 +357,7 @@ class PdfController extends Controller
         // Aplica fundos por página vindos da galeria (public_url)
         // 1º item vira fundo da primeira página; demais viram páginas extras com fundo específico.
         $galleryBackgrounds = [];
-        foreach ($listaPaginas as $item) {
+        if (!$skipExtras) foreach ($listaPaginas as $item) {
             $arr = is_array($item) ? $item : (is_object($item) ? (array)$item : []);
             $pub = $arr['public_url'] ?? null;
             $nome = $arr['nome'] ?? null;
@@ -357,7 +370,7 @@ class PdfController extends Controller
                 ];
             }
         }
-        if (!empty($galleryBackgrounds)) {
+        if (!$skipExtras && !empty($galleryBackgrounds)) {
             // Function-level comment: Read optional defaults for background focus/fit from request.
             // PT: Lê defaults opcionais para posição e ajuste do fundo.
             // EN: Read optional defaults for background position and fit.
@@ -385,22 +398,24 @@ class PdfController extends Controller
 
         // PT: Fallback para embutir fundos como Data URI (base64) quando URL HTTP pode não ser alcançável pelo wkhtmltopdf.
         // EN: Fallback to embed backgrounds as Data URI (base64) when HTTP URLs may be unreachable to wkhtmltopdf.
-        if (is_string($backgroundUrl) && $backgroundUrl !== '') {
-            $tryDataUri = $this->buildDataUriFromUrl($backgroundUrl, 5);
-            if (is_string($tryDataUri) && str_starts_with($tryDataUri, 'data:')) {
-                $backgroundDataUri = $tryDataUri;
-                $backgroundUrl = null; // prefer Data URI for reliability
+        if (!$fastDev) {
+            if (is_string($backgroundUrl) && $backgroundUrl !== '') {
+                $tryDataUri = $this->buildDataUriFromUrl($backgroundUrl, 5);
+                if (is_string($tryDataUri) && str_starts_with($tryDataUri, 'data:')) {
+                    $backgroundDataUri = $tryDataUri;
+                    $backgroundUrl = null; // prefer Data URI for reliability
+                }
             }
-        }
-        if (is_array($extraPages) && !empty($extraPages)) {
-            foreach ($extraPages as $idx => $p) {
-                $pUrl = $p['background_url'] ?? null;
-                $pDataUri = $p['background_data_uri'] ?? null;
-                if (!$pDataUri && is_string($pUrl) && $pUrl !== '') {
-                    $tryDataUri = $this->buildDataUriFromUrl($pUrl, 5);
-                    if (is_string($tryDataUri) && str_starts_with($tryDataUri, 'data:')) {
-                        $extraPages[$idx]['background_data_uri'] = $tryDataUri;
-                        $extraPages[$idx]['background_url'] = null;
+            if (is_array($extraPages) && !empty($extraPages)) {
+                foreach ($extraPages as $idx => $p) {
+                    $pUrl = $p['background_url'] ?? null;
+                    $pDataUri = $p['background_data_uri'] ?? null;
+                    if (!$pDataUri && is_string($pUrl) && $pUrl !== '') {
+                        $tryDataUri = $this->buildDataUriFromUrl($pUrl, 5);
+                        if (is_string($tryDataUri) && str_starts_with($tryDataUri, 'data:')) {
+                            $extraPages[$idx]['background_data_uri'] = $tryDataUri;
+                            $extraPages[$idx]['background_url'] = null;
+                        }
                     }
                 }
             }
@@ -446,15 +461,17 @@ class PdfController extends Controller
 
         // Limpar versões antigas com timestamp para esta matrícula (best-effort)
         // EN: Clean up older timestamped versions for this enrollment (best-effort)
-        try {
-            $disk = Storage::disk('public');
-            foreach ($disk->files('uploads/matriculas') as $path) {
-                if ($path !== $relative && Str::startsWith($path, 'uploads/matriculas/matricula-' . $matricula->id . '-')) {
-                    $disk->delete($path);
+        $disk = Storage::disk('public');
+        if (!$fastDev) {
+            try {
+                foreach ($disk->files('uploads/matriculas') as $path) {
+                    if ($path !== $relative && Str::startsWith($path, 'uploads/matriculas/matricula-' . $matricula->id . '-')) {
+                        $disk->delete($path);
+                    }
                 }
+            } catch (\Throwable $e) {
+                // silencioso: não bloquear a geração do PDF
             }
-        } catch (\Throwable $e) {
-            // silencioso: não bloquear a geração do PDF
         }
 
         // Garantir diretório
@@ -466,20 +483,41 @@ class PdfController extends Controller
         // PT: Permite escolher o engine ('wkhtmltopdf' ou 'browsershot') por query (?engine=...) ou env PDF_ENGINE.
         // EN: Allow selecting engine ('wkhtmltopdf' or 'browsershot') via query (?engine=...) or env PDF_ENGINE.
         $engine = strtolower((string)($request->input('engine', env('PDF_ENGINE', 'wkhtmltopdf'))));
+        // Function-level comment: Skip generation if cached and fresh.
+        // PT: Se já existe e está dentro do TTL, não reprocessa (a menos que force).
+        // EN: If file exists and is fresh within TTL, skip regeneration (unless force).
+        $shouldGenerate = true;
+        if (!$force && $disk->exists($relative) && $cacheTtl > 0) {
+            try {
+                $mtime = @filemtime($disk->path($relative));
+                if (is_int($mtime) && (time() - $mtime) <= $cacheTtl) {
+                    $shouldGenerate = false;
+                }
+            } catch (\Throwable $e) {
+                // Continua gerando se não for possível obter mtime.
+            }
+        }
 
         if ($engine === 'browsershot') {
             try {
                 // Function-level comment: Generate PDF using Chromium (Browsershot) with full-bleed and print media.
                 // PT: Usa Browsershot com A4, margens 0 e fundo ativo.
                 // EN: Use Browsershot with A4, zero margins, and print background.
-                Browsershot::html($html)
+                if ($shouldGenerate) {
+                    Browsershot::html($html)
                     ->format('A4')
                     ->margins(0, 0, 0, 0)
                     ->emulateMedia('print')
                     ->timeout(60000)
                     ->setOption('printBackground', true)
+                    // Function-level comment: Lock PDF scale and respect CSS page size to avoid zoom.
+                    // PT: Fixa escala em 1 e usa tamanho de página do CSS (@page) para evitar zoom.
+                    // EN: Fix scale to 1 and use CSS page size (@page) to avoid zoom.
+                    ->setOption('scale', 1)
+                    ->setOption('preferCSSPageSize', true)
                     ->setOption('waitUntil', 'load')
                     ->save($absolute);
+                }
             } catch (\Throwable $e) {
                 \Log::warning('Browsershot PDF generation failed, falling back to wkhtmltopdf', [
                     'matricula_id' => $matricula->id ?? null,
@@ -500,7 +538,8 @@ class PdfController extends Controller
                     config(['snappy.pdf.binary' => $binary]);
                 }
 
-                $pdfBinary = SnappyPdf::loadHTML($html)
+                if ($shouldGenerate) {
+                    $pdfBinary = SnappyPdf::loadHTML($html)
                     ->setOption('encoding', 'utf-8')
                     ->setOption('print-media-type', true)
                     ->setOption('enable-local-file-access', true)
@@ -524,10 +563,10 @@ class PdfController extends Controller
                     ->setOption('disable-smart-shrinking', true)
                     ->setPaper('a4')
                     ->output();
-
-                // Grava o PDF pelo disco público
-                $disk->put($relative, $pdfBinary);
-                $absolute = $disk->path($relative);
+                    // Grava o PDF pelo disco público
+                    $disk->put($relative, $pdfBinary);
+                    $absolute = $disk->path($relative);
+                }
             } catch (\Throwable $e) {
                 \Log::error('Snappy PDF generation failed', [
                     'matricula_id' => $matricula->id ?? null,

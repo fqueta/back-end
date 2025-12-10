@@ -82,15 +82,20 @@
            - Anchored to top to reduce header cropping */
         .page-bg {
             position: absolute;
-            top: -1mm;
-            left: -1mm;
-            width: calc(210mm + 2mm);
-            height: calc(297mm + 2mm);
-            object-fit: cover; /* full-bleed */
+            /* Default sem sangria: evita cortes laterais quando usar contain */
+            top: 0;
+            left: 0;
+            width: 210mm;
+            height: 297mm;
+            object-fit: contain; /* default sem corte */
             object-position: top center; /* favor topo da arte */
             z-index: 0;
             pointer-events: none;
         }
+        /* Function-level comment: Set page size for Chromium PDF to match CSS mm units. */
+        /* PT: Define tamanho da página via CSS para reduzir variações de escala/zoom. */
+        /* EN: Set page size via CSS to reduce scale/zoom variance. */
+        @page { size: A4; margin: 0; }
     </style>
 </head>
 <body>
@@ -105,8 +110,17 @@
             // EN: Set 'contain' as default to avoid background cropping on cover.
             $bgPosFirst = is_string($background_position ?? null) ? $background_position : 'top center';
             $bgFitFirst = is_string($background_fit ?? null) ? $background_fit : 'contain';
+            // Function-level comment: Remove 1mm bleed when using 'contain' to prevent lateral clipping.
+            // PT: Remove a sangria de 1mm quando usar 'contain' para eliminar cortes laterais.
+            // EN: Remove 1mm bleed when using 'contain' to eliminate lateral clipping.
+        /* Function-level comment: Toggle bleed based on background_fit.
+           PT: Quando 'cover', aplicamos sangria de 1mm para evitar faixas.
+           EN: When 'cover', apply 1mm bleed to avoid white stripes. */
+        $bleedStyleFirst = ($bgFitFirst === 'cover')
+            ? 'top: -1mm; left: -1mm; width: calc(210mm + 2mm); height: calc(297mm + 2mm);'
+            : 'top: 0; left: 0; width: 210mm; height: 297mm;';
         @endphp
-        <img class="page-bg" src="{{ $background_data_uri ?? $background_url }}" alt="" style="object-position: {{ $bgPosFirst }}; object-fit: {{ $bgFitFirst }};" />
+        <img class="page-bg" src="{{ $background_data_uri ?? $background_url }}" alt="" style="{{ $bleedStyleFirst }} object-position: {{ $bgPosFirst }}; object-fit: {{ $bgFitFirst }};" />
     @endif
     <div class="page-inner">
     <!-- PT: Cabeçalho com dados do cliente e da matrícula | EN: Header with client/enrollment data -->
@@ -239,7 +253,18 @@
                             ? $p['background_fit']
                             : 'contain';
                     @endphp
-                    <img class="page-bg" src="{{ $pageBg }}" alt="" style="object-position: {{ $bgPos }}; object-fit: {{ $bgFit }};" />
+                    @php
+                        // Function-level comment: Remove bleed for 'contain' to avoid lateral cuts on extra pages.
+                        // PT: Remove sangria quando 'contain' for usado, evitando cortes laterais.
+                        // EN: Remove bleed when 'contain' is used to avoid side cropping.
+        /* Function-level comment: Toggle bleed per extra page.
+           PT: 'cover' => sangria 1mm; 'contain' => sem sangria.
+           EN: 'cover' => 1mm bleed; 'contain' => no bleed. */
+        $bleedStyle = ($bgFit === 'cover')
+            ? 'top: -1mm; left: -1mm; width: calc(210mm + 2mm); height: calc(297mm + 2mm);'
+            : 'top: 0; left: 0; width: 210mm; height: 297mm;';
+                    @endphp
+                    <img class="page-bg" src="{{ $pageBg }}" alt="" style="{{ $bleedStyle }} object-position: {{ $bgPos }}; object-fit: {{ $bgFit }};" />
                 @endif
                 <div class="page-inner">
                 @if($hasTitle)
