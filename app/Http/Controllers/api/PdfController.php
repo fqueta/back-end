@@ -539,37 +539,58 @@ class PdfController extends Controller
                 }
 
                 if ($shouldGenerate) {
-                $pdfBinary = SnappyPdf::loadHTML($html)
-                    ->setOption('encoding', 'utf-8')
-                    ->setOption('print-media-type', true)
-                    ->setOption('enable-local-file-access', true)
-                    ->setOption('dpi', 96)
-                    ->setOption('image-quality', 100)
-                    ->setOption('margin-top', '0mm')
-                    ->setOption('margin-right', '0mm')
-                    ->setOption('margin-bottom', '0mm')
-                    ->setOption('margin-left', '0mm')
-                    // Function-level comment: Lock scaling at 1:1 to avoid auto zoom adjustments.
-                    // PT: Garante zoom 1:1 para evitar reescalonamento automático.
-                    // EN: Ensure 1:1 zoom to prevent automatic rescaling.
-                    ->setOption('zoom', '1.0')
-                    // Function-level comment: Stabilize layout box model by setting viewport-size.
-                    // PT: Define viewport aproximado da A4 para reduzir variação de escala.
-                    // EN: Set an A4-proportional viewport to reduce scale variance.
-                    // (Removed: viewport-size; letting wkhtmltopdf infer viewport avoids unintended zoom)
-                    // Function-level comment: Avoid auto shrinking to preserve full-bleed backgrounds.
-                    // PT: Desativa smart shrinking para evitar bordas/brancos no fundo.
-                    // EN: Disable smart shrinking to prevent borders/whites on full-bleed backgrounds.
-                    // (Changed) Allow smart shrinking to avoid clipping/zoom on all pages.
-                    ->setOption('disable-smart-shrinking', true)
-                    // Function-level comment: Explicit A4 physical size to match CSS mm units.
-                    // PT: Define largura/altura da página em mm para alinhar com @page A4.
-                    // EN: Set page width/height in mm to align with @page A4.
-                    ->setOption('page-width', '210mm')
-                    ->setOption('page-height', '297mm')
-                    ->setPaper('a4')
-                    ->output();
-                    // Grava o PDF pelo disco público
+                // $pdfBinary = SnappyPdf::loadHTML($html)
+                //     ->setOption('encoding', 'utf-8')
+                //     ->setOption('print-media-type', true)
+                //     ->setOption('enable-local-file-access', true)
+                //     ->setOption('dpi', 96)
+                //     ->setOption('image-quality', 100)
+                //     ->setOption('margin-top', '0mm')
+                //     ->setOption('margin-right', '0mm')
+                //     ->setOption('margin-bottom', '0mm')
+                //     ->setOption('margin-left', '0mm')
+                //     // Function-level comment: Lock scaling at 1:1 to avoid auto zoom adjustments.
+                //     // PT: Garante zoom 1:1 para evitar reescalonamento automático.
+                //     // EN: Ensure 1:1 zoom to prevent automatic rescaling.
+                //     ->setOption('zoom', '1.0')
+                //     // Function-level comment: Stabilize layout box model by setting viewport-size.
+                //     // PT: Define viewport aproximado da A4 para reduzir variação de escala.
+                //     // EN: Set an A4-proportional viewport to reduce scale variance.
+                //     // (Removed: viewport-size; letting wkhtmltopdf infer viewport avoids unintended zoom)
+                //     // Function-level comment: Avoid auto shrinking to preserve full-bleed backgrounds.
+                //     // PT: Desativa smart shrinking para evitar bordas/brancos no fundo.
+                //     // EN: Disable smart shrinking to prevent borders/whites on full-bleed backgrounds.
+                //     // (Changed) Allow smart shrinking to avoid clipping/zoom on all pages.
+                //     ->setOption('disable-smart-shrinking', true)
+                //     // Function-level comment: Explicit A4 physical size to match CSS mm units.
+                //     // PT: Define largura/altura da página em mm para alinhar com @page A4.
+                //     // EN: Set page width/height in mm to align with @page A4.
+                //     ->setOption('page-width', '210mm')
+                //     ->setOption('page-height', '297mm')
+                //     ->setPaper('a4')
+                //     ->output();
+                    $headerHtml = View::make('pdf.header')->render();
+                    $footerHtml = View::make('pdf.footer')->render();
+                    if(isset($_GET['tes'])){
+                        return $headerHtml.$html.$footerHtml;
+                    }
+                    $pdfBinary = SnappyPdf::loadHTML($html)
+                        ->setPaper('a4')
+                        ->setOption('header-html', $headerHtml)
+                        ->setOption('margin-top', 25)
+                        ->setOption('margin-bottom', 13)
+                        ->setOption('margin-left', 0)
+                        ->setOption('margin-right', 0)
+                        ->setOption('disable-smart-shrinking', true)
+                        ->setOption('footer-spacing', '0')
+                        ->setOption('print-media-type', true)
+                        ->setOption('background', true)
+                        ->setOption('replace', [
+                            '{PAGE_NUM}' => '{PAGE_NUM}',
+                            '{PAGE_COUNT}' => '{PAGE_COUNT}'
+                        ])
+                    ->setOption('footer-html', $footerHtml);
+                        // Grava o PDF pelo disco público
                     $disk->put($relative, $pdfBinary);
                     $absolute = $disk->path($relative);
                 }
