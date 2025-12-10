@@ -33,15 +33,18 @@
         .check { color: #10b981; font-weight: 700; }
         .footer { margin-top: 18px; font-size: 11px; color: var(--muted); }
         /* PT: Botão de chamada para ação na capa | EN: Cover CTA button */
-        .cta-wrap { display: flex; justify-content: center; margin: 24px 0 0; }
+        .cta-wrap { position: relative; z-index: 4; display: flex; justify-content: center; margin: 24px 0 0; }
         .cta-button {
-            display: inline-flex; align-items: center; gap: 8px;
+            /* Function-level comment: Use inline-block (wkhtmltopdf-friendly) to ensure clickable area. */
+            /* PT: Usa inline-block em vez de inline-flex para garantir área clicável no PDF. */
+            /* EN: Use inline-block instead of inline-flex to ensure clickable area in PDF. */
+            display: inline-block;
             background: linear-gradient(180deg, #63b92a 0%, #4aa31b 100%);
             color: #fff; font-weight: 700; border-radius: 8px;
             padding: 10px 14px; box-shadow: 0 2px 0 rgba(0,0,0,.15);
-            text-decoration: none; cursor: pointer;
+            text-decoration: none; cursor: pointer; line-height: 20px; position: relative; z-index: 5;
         }
-        .cta-button .icon { width: 20px; height: 20px; border-radius: 50%; background: #2c7a0a; display: inline-block; }
+        .cta-button .icon { width: 20px; height: 20px; border-radius: 50%; background: #2c7a0a; display: inline-block; vertical-align: middle; margin-right: 8px; }
         /* PT: Bloco central da capa com alinhamento e espaçamento como na imagem.
            EN: Centered cover block with alignment and spacing to match screenshot. */
         .cover-content {
