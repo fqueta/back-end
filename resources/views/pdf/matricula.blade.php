@@ -74,17 +74,20 @@
            EN: Filler for extra pages with no textual content. */
         .page-filler { display: block; min-height: 100%; }
         /* PT/EN: Element-based full-bleed background to improve wkhtmltopdf reliability */
-        /* PT: Imagem de fundo posicionada atrás do conteúdo usando z-index.
-           - Ultrapassa 2mm em cada lado para evitar faixas brancas por arredondamento do wkhtmltopdf
+        /* PT: Imagem de fundo atrás do conteúdo com z-index.
+           - Bleed de 1mm por lado para evitar faixas brancas
+           - Posicionada no topo para reduzir cortes em cabeçalhos
            EN: Background image behind content using z-index.
-           - Bleeds 2mm beyond each edge to avoid white bands from wkhtmltopdf rounding */
+           - 1mm bleed per side to avoid white bands
+           - Anchored to top to reduce header cropping */
         .page-bg {
             position: absolute;
-            top: -2mm;
-            left: -2mm;
-            width: calc(210mm + 4mm);
-            height: calc(297mm + 4mm);
+            top: -1mm;
+            left: -1mm;
+            width: calc(210mm + 2mm);
+            height: calc(297mm + 2mm);
             object-fit: cover; /* full-bleed */
+            object-position: top center; /* favor topo da arte */
             z-index: 0;
             pointer-events: none;
         }
