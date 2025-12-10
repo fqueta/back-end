@@ -440,6 +440,11 @@ class PdfController extends Controller
         $relative = 'uploads/matriculas/' . $filename; // caminho relativo
         $absolute = storage_path('app/public/' . $relative);
 
+        // Function-level comment: Allow generating without persisting files.
+        // PT: Permite gerar PDF sem salvar em disco via query ?no_store=1 (default: true).
+        // EN: Allow generating PDF without saving to disk via ?no_store=1 (default: true).
+        $noStore = $request->boolean('no_store', true);
+
         // Limpar versões antigas com timestamp para esta matrícula (best-effort)
         // EN: Clean up older timestamped versions for this enrollment (best-effort)
         $disk = Storage::disk('public');
@@ -468,38 +473,46 @@ class PdfController extends Controller
         // PT: Se já existe e está dentro do TTL, não reprocessa (a menos que force).
         // EN: If file exists and is fresh within TTL, skip regeneration (unless force).
         $shouldGenerate = true;
-        if (!$force && $disk->exists($relative) && $cacheTtl > 0) {
-            try {
-                $mtime = @filemtime($disk->path($relative));
-                if (is_int($mtime) && (time() - $mtime) <= $cacheTtl) {
-                    $shouldGenerate = false;
+        if (!$noStore) {
+            // Apenas considera cache quando for persistir em disco.
+            if (!$force && $disk->exists($relative) && $cacheTtl > 0) {
+                try {
+                    $mtime = @filemtime($disk->path($relative));
+                    if (is_int($mtime) && (time() - $mtime) <= $cacheTtl) {
+                        $shouldGenerate = false;
+                    }
+                } catch (\Throwable $e) {
+                    // Continua gerando se não for possível obter mtime.
                 }
-            } catch (\Throwable $e) {
-                // Continua gerando se não for possível obter mtime.
             }
         }
         // Function-level comment: Engine selection without interrupting execution flow.
         // PT: Remove debug (dd) para não interromper a geração do PDF.
         // EN: Remove debug (dd) to avoid interrupting PDF generation.
+        $pdfBinary = null; // conteúdo binário do PDF quando no_store ou para resposta direta
         if ($engine === 'browsershot') {
             try {
                 // Function-level comment: Generate PDF using Chromium (Browsershot) with full-bleed and print media.
                 // PT: Usa Browsershot com A4, margens 0 e fundo ativo.
                 // EN: Use Browsershot with A4, zero margins, and print background.
                 if ($shouldGenerate) {
-                    Browsershot::html($html)
-                    ->format('A4')
-                    ->margins(0, 0, 0, 0)
-                    ->emulateMedia('print')
-                    ->timeout(60000)
-                    ->setOption('printBackground', true)
-                    // Function-level comment: Lock PDF scale and respect CSS page size to avoid zoom.
-                    // PT: Fixa escala em 1 e usa tamanho de página do CSS (@page) para evitar zoom.
-                    // EN: Fix scale to 1 and use CSS page size (@page) to avoid zoom.
-                    ->setOption('scale', 1)
-                    ->setOption('preferCSSPageSize', true)
-                    ->setOption('waitUntil', 'load')
-                    ->save($absolute);
+                    $shot = Browsershot::html($html)
+                        ->format('A4')
+                        ->margins(0, 0, 0, 0)
+                        ->emulateMedia('print')
+                        ->timeout(60000)
+                        ->setOption('printBackground', true)
+                        // Function-level comment: Lock PDF scale and respect CSS page size to avoid zoom.
+                        // PT: Fixa escala em 1 e usa tamanho de página do CSS (@page) para evitar zoom.
+                        // EN: Fix scale to 1 and use CSS page size (@page) to avoid zoom.
+                        ->setOption('scale', 1)
+                        ->setOption('preferCSSPageSize', true)
+                        ->setOption('waitUntil', 'load');
+                    if ($noStore) {
+                        $pdfBinary = $shot->pdf();
+                    } else {
+                        $shot->save($absolute);
+                    }
                 }
             } catch (\Throwable $e) {
                 \Log::warning('Browsershot PDF generation failed, falling back to wkhtmltopdf', [
@@ -582,16 +595,18 @@ class PdfController extends Controller
                         ])
                         ->setOption('footer-html', $footerHtml)
                         ->output();
+                    if (!$noStore) {
                         // Grava o PDF pelo disco público
-                    $disk->put($relative, $pdfBinary);
-                    $absolute = $disk->path($relative);
+                        $disk->put($relative, $pdfBinary);
+                        $absolute = $disk->path($relative);
+                    }
                 }
             } catch (\Throwable $e) {
                 \Log::error('Snappy PDF generation failed', [
                     'matricula_id' => $matricula->id ?? null,
                     'exception' => $e->getMessage(),
                 ]);
-                if (!$disk->exists($relative)) {
+                if (!$noStore && !$disk->exists($relative)) {
                     return response()->json([
                         'message' => 'Falha ao gerar o PDF da matrícula',
                         'error' => $e->getMessage(),
@@ -602,9 +617,22 @@ class PdfController extends Controller
 
         // Metadados do arquivo
         $mime = 'application/pdf';
-        $size = $disk->exists($relative) ? $disk->size($relative) : null;
+        $size = $noStore ? ($pdfBinary ? strlen($pdfBinary) : null) : ($disk->exists($relative) ? $disk->size($relative) : null);
 
         // Upsert registro em posts como files_uload
+        if ($noStore) {
+            // Function-level comment: Stream PDF inline without caching.
+            // PT: Retorna o PDF em streaming, sem salvar e sem cache.
+            // EN: Stream the PDF inline, without saving and without cache.
+            return response($pdfBinary, 200)
+                ->header('Content-Type', $mime)
+                ->header('Content-Disposition', 'inline; filename="' . $filename . '"')
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+        }
+
+        // Persistente: mantém comportamento anterior (salva e retorna metadados JSON)
         $post = Post::where('post_type','files_uload')->where('guid',$relative)->first() ?? new Post();
         $post->post_type = 'files_uload';
         $post->post_title = 'PDF Matrícula #' . $matricula->id;
