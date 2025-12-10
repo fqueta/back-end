@@ -99,29 +99,19 @@
     </style>
 </head>
 <body>
-    <div class="page">
-    @if(!empty($background_data_uri) || !empty($background_url))
-        {{-- Function-level comment: Allow configurable focus and fit of the background image on the first page.
-             PT: Suporta $background_position ('top center'|'center'|'bottom center') e $background_fit ('cover'|'contain').
-             EN: Supports $background_position ('top center'|'center'|'bottom center') and $background_fit ('cover'|'contain'). --}}
-        @php
-            // Function-level comment: Default first-page background fit to 'contain' to avoid cropping.
-            // PT: Define 'contain' como padrão para evitar cortes na capa.
-            // EN: Set 'contain' as default to avoid background cropping on cover.
-            $bgPosFirst = is_string($background_position ?? null) ? $background_position : 'top center';
-            $bgFitFirst = is_string($background_fit ?? null) ? $background_fit : 'contain';
-            // Function-level comment: Remove 1mm bleed when using 'contain' to prevent lateral clipping.
-            // PT: Remove a sangria de 1mm quando usar 'contain' para eliminar cortes laterais.
-            // EN: Remove 1mm bleed when using 'contain' to eliminate lateral clipping.
-        /* Function-level comment: Toggle bleed based on background_fit.
-           PT: Quando 'cover', aplicamos sangria de 1mm para evitar faixas.
-           EN: When 'cover', apply 1mm bleed to avoid white stripes. */
-        $bleedStyleFirst = ($bgFitFirst === 'cover')
-            ? 'top: -1mm; left: -1mm; width: calc(210mm + 2mm); height: calc(297mm + 2mm);'
-            : 'top: 0; left: 0; width: 210mm; height: 297mm;';
-        @endphp
-        <img class="page-bg" src="{{ $background_data_uri ?? $background_url }}" alt="" style="{{ $bleedStyleFirst }} object-position: {{ $bgPosFirst }}; object-fit: {{ $bgFitFirst }};" />
-    @endif
+    @php
+        /* Function-level comment: Compose first page style using background-image on container.
+           PT: Monta o estilo da capa usando background-image na div .page.
+           EN: Build cover style using background-image on the .page container. */
+        $pageStyleFirst = '';
+        $bgUrlFirst = $background_data_uri ?? $background_url ?? '';
+        $bgPosFirst = is_string($background_position ?? null) ? $background_position : 'top center';
+        $bgFitFirst = is_string($background_fit ?? null) ? $background_fit : 'contain';
+        if (is_string($bgUrlFirst) && $bgUrlFirst !== '') {
+            $pageStyleFirst = "background-image: url('" . $bgUrlFirst . "'); background-repeat: no-repeat; background-position: " . $bgPosFirst . "; background-size: " . ($bgFitFirst === 'cover' ? 'cover' : 'contain') . ";";
+        }
+    @endphp
+    <div class="page" style="{{ $pageStyleFirst }}">
     <div class="page-inner">
     <!-- PT: Cabeçalho com dados do cliente e da matrícula | EN: Header with client/enrollment data -->
     <header>
@@ -237,35 +227,21 @@
                 $hasTitle = !empty($p['title']);
                 $hasHtml = !empty($p['html']);
             @endphp
+            @php
+                /* Function-level comment: Apply background-image on extra page container.
+                   PT: Aplica background-image na div .page de cada extra.
+                   EN: Apply background-image on the .page container for each extra. */
+                if ($pageBg) {
+                    $bgPos = isset($p['background_position']) && is_string($p['background_position'])
+                        ? $p['background_position']
+                        : 'top center';
+                    $bgFit = isset($p['background_fit']) && is_string($p['background_fit'])
+                        ? $p['background_fit']
+                        : 'contain';
+                    $pageBgStyle .= " background-image: url('" . $pageBg . "'); background-repeat: no-repeat; background-position: " . $bgPos . "; background-size: " . ($bgFit === 'cover' ? 'cover' : 'contain') . ";";
+                }
+            @endphp
             <div class="page" style="{{ $pageBgStyle }}">
-                @if($pageBg)
-                    @php
-                        /* Function-level comment: Support background focus and fit for extra pages.
-                           PT: Suporta $p['background_position'] e $p['background_fit'] por página.
-                           EN: Supports $p['background_position'] and $p['background_fit'] per page. */
-                        $bgPos = isset($p['background_position']) && is_string($p['background_position'])
-                            ? $p['background_position']
-                            : 'top center';
-                        // Function-level comment: Default extra-page background fit to 'contain' to avoid cropping.
-                        // PT: Define 'contain' como padrão nas extras para evitar cortes.
-                        // EN: Set 'contain' as default for extra pages to avoid cropping.
-                        $bgFit = isset($p['background_fit']) && is_string($p['background_fit'])
-                            ? $p['background_fit']
-                            : 'contain';
-                    @endphp
-                    @php
-                        // Function-level comment: Remove bleed for 'contain' to avoid lateral cuts on extra pages.
-                        // PT: Remove sangria quando 'contain' for usado, evitando cortes laterais.
-                        // EN: Remove bleed when 'contain' is used to avoid side cropping.
-        /* Function-level comment: Toggle bleed per extra page.
-           PT: 'cover' => sangria 1mm; 'contain' => sem sangria.
-           EN: 'cover' => 1mm bleed; 'contain' => no bleed. */
-        $bleedStyle = ($bgFit === 'cover')
-            ? 'top: -1mm; left: -1mm; width: calc(210mm + 2mm); height: calc(297mm + 2mm);'
-            : 'top: 0; left: 0; width: 210mm; height: 297mm;';
-                    @endphp
-                    {{-- <img class="page-bg" src="{{ $pageBg }}" alt="" style="{{ $bleedStyle }} object-position: {{ $bgPos }}; object-fit: {{ $bgFit }};" /> --}}
-                @endif
                 <div class="page-inner">
                 @if($hasTitle)
                     <h1>{{ $p['title'] }}</h1>
