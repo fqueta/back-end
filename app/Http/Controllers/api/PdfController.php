@@ -561,7 +561,12 @@ class PdfController extends Controller
                     // PT: Desativa smart shrinking para evitar bordas/brancos no fundo.
                     // EN: Disable smart shrinking to prevent borders/whites on full-bleed backgrounds.
                     // (Changed) Allow smart shrinking to avoid clipping/zoom on all pages.
-                    ->setOption('disable-smart-shrinking', false)
+                    ->setOption('disable-smart-shrinking', true)
+                    // Function-level comment: Explicit A4 physical size to match CSS mm units.
+                    // PT: Define largura/altura da página em mm para alinhar com @page A4.
+                    // EN: Set page width/height in mm to align with @page A4.
+                    ->setOption('page-width', '210mm')
+                    ->setOption('page-height', '297mm')
                     ->setPaper('a4')
                     ->output();
                     // Grava o PDF pelo disco público
