@@ -33,16 +33,31 @@
         .check { color: #10b981; font-weight: 700; }
         .footer { margin-top: 18px; font-size: 11px; color: var(--muted); }
         /* PT: Botão de chamada para ação na capa | EN: Cover CTA button */
-        .cta-wrap { position: relative; z-index: 4; display: flex; justify-content: center; margin: 24px 0 0; }
+        .cta-wrap {
+            /* Function-level comment: Avoid flex to ensure wkhtmltopdf creates link annotations. */
+            /* PT: Evita flex; usa block + text-align para centralizar sem afetar o clique. */
+            /* EN: Avoid flex; use block + text-align to center without affecting click. */
+            position: static;
+            z-index: auto;
+            display: block;
+            text-align: center;
+            margin: 24px 0 0;
+        }
         .cta-button {
-            /* Function-level comment: Use inline-block (wkhtmltopdf-friendly) to ensure clickable area. */
-            /* PT: Usa inline-block em vez de inline-flex para garantir área clicável no PDF. */
-            /* EN: Use inline-block instead of inline-flex to ensure clickable area in PDF. */
+            /* Function-level comment: Minimal, wkhtmltopdf-friendly anchor for reliable clicking. */
+            /* PT: Estilo mínimo e estático para o link ser clicável no PDF. */
+            /* EN: Minimal and static styles so the link becomes clickable in PDF. */
             display: inline-block;
-            background: linear-gradient(180deg, #63b92a 0%, #4aa31b 100%);
-            color: #fff; font-weight: 700; border-radius: 8px;
-            padding: 10px 14px; box-shadow: 0 2px 0 rgba(0,0,0,.15);
-            text-decoration: none; cursor: pointer; line-height: 20px; position: relative; z-index: 5;
+            position: static; /* evita camadas/overlays que bloqueiam a anotação do link */
+            z-index: auto;
+            background-color:  #63b92a;
+            color: #fff;
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-decoration: none;
+            cursor: pointer;
+            line-height: 20px;
         }
         .cta-button .icon { width: 20px; height: 20px; border-radius: 50%; background: #2c7a0a; display: inline-block; vertical-align: middle; margin-right: 8px; }
         /* PT: Bloco central da capa com alinhamento e espaçamento como na imagem.
@@ -113,7 +128,7 @@
             left: 0;
             width: 210mm;
             height: 297mm;
-            object-fit: contain; /* default sem corte */
+            object-fit: contain; /* default: sem corte; pode trocar para cover pela arte */
             object-position: top center; /* favor topo da arte */
             z-index: 0;
             pointer-events: none;
@@ -151,6 +166,10 @@
             }
         @endphp
         <div class="page" style="{{ $pageBgStyle }}">
+            @if($pageBg)
+                <!-- PT/EN: Element-based full-bleed background for wkhtmltopdf reliability -->
+                <img class="page-bg" src="{{ $pageBg }}" alt="" />
+            @endif
             <div class="page-inner">
                 @if($idx === 0)
                     <!-- PT/EN: Page 0 = Cover -->
@@ -164,20 +183,24 @@
                             <div><b>Data:</b> {{ $data_formatada }} &nbsp; <b>Validade:</b> {{ $validade_formatada }}</div>
                         </div>
                         @php
-                            /* Function-level comment: Resolve customizable CTA link and text.
-                               PT: Define URL e texto do CTA de forma personalizável.
-                               EN: Resolve CTA URL and text in a customizable way. */
-                            $ctaUrl = $cta_url ?? ($cta_link ?? '#');
-                            $ctaText = $cta_text ?? 'ACEITO A PROPOSTA';
+                            /* Function-level comment: Resolve CTA URL and text, hiding link if empty.
+                               PT: Resolve URL/texto do CTA. Esconde o botão se URL estiver vazia.
+                               EN: Resolve CTA URL/text. Hide the button if URL is empty. */
+                            $resolvedCtaUrl = trim((string)($cta_url ?? ($cta_link ?? '')));
+                            $resolvedCtaUrl = ($resolvedCtaUrl === '' || $resolvedCtaUrl === '#') ? null : $resolvedCtaUrl;
+                            $resolvedCtaText = 'ACEITO A PROPOSTA';
+                            // dd($resolvedCtaUrl);
                         @endphp
-                        <div class="cta-wrap cover-cta">
-                            <a class="cta-button" href="{{ $ctaUrl }}" target="_blank" rel="noopener noreferrer">
-                                <span class="icon"></span>{{ $ctaText }}
-                            </a>
-                        </div>
+                        @if($resolvedCtaUrl)
+                            <div class="cta-wrap cover-cta">
+                                <a class="cta-button" href="{{ $resolvedCtaUrl }}" target="_blank">
+                                    <span class="icon"></span>{{ $resolvedCtaText }}
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 @elseif($idx === 1)
-                    <div style="margin-top: 50mm;">
+                    <div style="margin-top: 40mm;">
                     <!-- PT/EN: Page 1 = Budget table -->
                         <h1>Orçamento</h1>
                             <table>

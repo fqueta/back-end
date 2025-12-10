@@ -258,7 +258,6 @@ class PdfController extends Controller
             ->leftJoin('users', 'matriculas.id_cliente', '=', 'users.id')
             ->select('matriculas.*', 'cursos.nome as curso_nome','cursos.tipo as curso_tipo', 'turmas.nome as turma_nome', 'users.name as cliente_nome')
             ->findOrFail($id);
-
         // Function-level comment: Fast dev toggles and caching.
         // PT: Atalhos de performance no ambiente de desenvolvimento.
         // - fast_dev: pula conversões pesadas e limpeza; favorece velocidade.
@@ -269,6 +268,7 @@ class PdfController extends Controller
         $skipExtras = $request->boolean('skip_extra_pages', env('PDF_SKIP_EXTRA_PAGES', false));
         $force = $request->boolean('force', false);
         $cacheTtl = (int)($request->input('cache_ttl', env('PDF_CACHE_TTL', 300)));
+        $token = $matricula->id_cliente . '_' . $matricula->id;
 
         // Metacampos
         $meta = $this->getAllMatriculaMeta($matricula->id);
@@ -278,8 +278,8 @@ class PdfController extends Controller
         $consultor = $matricula->id_consultor ? User::find($matricula->id_consultor) : null;
         $cliente_email = $cliente?->email ?? null;
         $cliente_telefone = $cliente->telefone ?? ($cliente->phone ?? null);
-        $cliente_zapsint = $cliente->zapsint ?? null;
-
+        $cliente_zapsint = $matricula->id ?? null;
+        $cliente_zapsint = Qlib::zerofill($cliente_zapsint, 5);
         // Datas formatadas
         $dataCadastro = $matricula->data ? Carbon::parse($matricula->data) : now();
         $validadeDias = (int)($meta['validade'] ?? 0);
@@ -401,6 +401,7 @@ class PdfController extends Controller
         // Function-level comment: Data URI conversion disabled globally.
         // PT: Conversão para base64/Data URI desativada; wkhtmltopdf tem 'enable-local-file-access'.
         // EN: Data URI conversion disabled; wkhtmltopdf uses 'enable-local-file-access'.
+        $cta_url = Qlib::getFrontUrl() . '/aluno/matricula/' . $token ?? '';
 
         $html = View::make('pdf.matricula', [
             'cliente_nome' => $matricula->cliente_nome,
@@ -422,6 +423,12 @@ class PdfController extends Controller
             // EN: Pass parameters with default 'contain' to avoid cropping.
             'background_position' => $request->input('background_position'),
             'background_fit' => $request->input('background_fit', 'contain'),
+            // Function-level comment: Allow customizing CTA link/text via request.
+            // PT: Permite informar 'cta_url' e 'cta_text' na query para testes/ajustes.
+            // EN: Allow 'cta_url' and 'cta_text' in the query for testing/adjustment.
+            //token matricula = id_cliente+_+id_curso
+            'cta_url' => $cta_url,
+            'cta_text' => (string)$request->input('cta_text', ''),
             'extra_pages' => $extraPages,
         ])->render();
         // Modo de depuração opcional: retorna o HTML renderizado sem gerar PDF
@@ -439,7 +446,7 @@ class PdfController extends Controller
         $filename = $slug . '.pdf';
         $relative = 'uploads/matriculas/' . $filename; // caminho relativo
         $absolute = storage_path('app/public/' . $relative);
-
+        // dd($absolute);
         // Function-level comment: Allow generating without persisting files.
         // PT: Permite gerar PDF sem salvar em disco via query ?no_store=1 (default: true).
         // EN: Allow generating PDF without saving to disk via ?no_store=1 (default: true).
@@ -452,6 +459,9 @@ class PdfController extends Controller
             try {
                 foreach ($disk->files('uploads/matriculas') as $path) {
                     if ($path !== $relative && Str::startsWith($path, 'uploads/matriculas/matricula-' . $matricula->id . '-')) {
+                        // Function-level comment: Remove debug dump and quietly delete old files.
+                        // PT: Remove dd() e apaga versões antigas sem interromper a geração.
+                        // EN: Remove dd() and delete old versions without interrupting generation.
                         $disk->delete($path);
                     }
                 }
@@ -649,9 +659,10 @@ class PdfController extends Controller
         $user = $request->user();
         $post->post_author = $user && !empty($user->id) ? $user->id : 0;
         $post->save();
-
         // URL pública
         $publicUrl = function_exists('tenant_asset') ? tenant_asset($relative) : asset($relative);
+        //Gravar campo meta com o link do PDF
+        $saveLink = Qlib::update_matriculameta($matricula->id, 'proposta_pdf', $publicUrl);
 
         return response()->json([
             'data' => [
@@ -660,6 +671,7 @@ class PdfController extends Controller
                 'slug' => $post->post_name,
                 'url' => $publicUrl,
                 'mime' => $mime,
+                'save_link' => $saveLink,
                 'size' => $size,
                 'ativo' => 's',
                 'ordenar' => 0,

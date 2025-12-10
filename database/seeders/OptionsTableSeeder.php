@@ -50,6 +50,11 @@ class OptionsTableSeeder extends Seeder
                     'value' => '16',
                     'url'   => 'default_proposal_situacao_id',
                 ],
+                [
+                    'name'  => 'Link do front',
+                    'value' => 'https://crm-v2.aeroclubejf.com.br',
+                    'url'   => 'front_url',
+                ],
             ];
         }else{
             $data = [
@@ -72,6 +77,21 @@ class OptionsTableSeeder extends Seeder
                     'name'  => 'Token da Api Aeroclube',
                     'value' => '',
                     'url'   => 'token_api_aeroclube',
+                ],
+                [
+                    'name'  => 'Id do funil padrão de vendas',
+                    'value' => '2',
+                    'url'   => 'default_funil_vendas_id',
+                ],
+                [
+                    'name'  => 'Id da etapa padrão de vendas',
+                    'value' => '7',
+                    'url'   => 'default_etapa_vendas_id',
+                ],
+                [
+                    'name'  => 'Link do front',
+                    'value' => 'https://oficina2.aeroclubejf.com.br',
+                    'url'   => 'front_url',
                 ],
             ];
 

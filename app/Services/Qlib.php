@@ -2958,4 +2958,8 @@ class Qlib
 
         return null;
     }
+    static function getFrontUrl(){
+        $front_url = self::buscaValorDb('options','url','front_url','value');
+        return $front_url;
+    }
 }
