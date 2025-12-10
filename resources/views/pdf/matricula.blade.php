@@ -264,7 +264,7 @@
             ? 'top: -1mm; left: -1mm; width: calc(210mm + 2mm); height: calc(297mm + 2mm);'
             : 'top: 0; left: 0; width: 210mm; height: 297mm;';
                     @endphp
-                    <img class="page-bg" src="{{ $pageBg }}" alt="" style="{{ $bleedStyle }} object-position: {{ $bgPos }}; object-fit: {{ $bgFit }};" />
+                    {{-- <img class="page-bg" src="{{ $pageBg }}" alt="" style="{{ $bleedStyle }} object-position: {{ $bgPos }}; object-fit: {{ $bgFit }};" /> --}}
                 @endif
                 <div class="page-inner">
                 @if($hasTitle)
