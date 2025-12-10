@@ -574,8 +574,16 @@ class PdfController extends Controller
                     if(isset($_GET['tes'])){
                         return $headerHtml.$html.$footerHtml;
                     }
+                    // Function-level comment: Build wkhtmltopdf with header/footer and stable scale.
+                    // PT: Monta wkhtmltopdf com cabeçalho/rodapé e escala estável 1:1.
+                    // EN: Build wkhtmltopdf with header/footer and stable 1:1 scale.
                     $pdfBinary = SnappyPdf::loadHTML($html)
+                        ->setOption('encoding', 'utf-8')
+                        ->setOption('enable-local-file-access', true)
                         ->setPaper('a4')
+                        ->setOption('page-width', '210mm')
+                        ->setOption('page-height', '297mm')
+                        ->setOption('zoom', '1.0')
                         ->setOption('header-html', $headerHtml)
                         ->setOption('margin-top', 25)
                         ->setOption('margin-bottom', 13)
@@ -589,7 +597,8 @@ class PdfController extends Controller
                             '{PAGE_NUM}' => '{PAGE_NUM}',
                             '{PAGE_COUNT}' => '{PAGE_COUNT}'
                         ])
-                    ->setOption('footer-html', $footerHtml);
+                        ->setOption('footer-html', $footerHtml)
+                        ->output();
                         // Grava o PDF pelo disco público
                     $disk->put($relative, $pdfBinary);
                     $absolute = $disk->path($relative);
