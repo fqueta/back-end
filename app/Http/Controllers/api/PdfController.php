@@ -318,7 +318,6 @@ class PdfController extends Controller
         // PT: Inicializa $extraPagesRaw para garantir existência antes de uso.
         // EN: Initialize $extraPagesRaw to ensure it exists before usage.
         $extraPagesRaw = [];
-
         if(is_array($listaPaginas)){
             foreach($listaPaginas as $key => $item){
                 $extraPagesRaw[$key]['html'] = $item['description'] ?? '';
@@ -335,9 +334,9 @@ class PdfController extends Controller
             $decoded = json_decode($extraPagesRaw, true);
             if (is_array($decoded)) { $extraPagesRaw = $decoded; }
         }
-        if ($skipExtras) {
-            $extraPagesRaw = [];
-        }
+        // if ($skipExtras) {
+        //     $extraPagesRaw = [];
+        // }
         if (is_array($extraPagesRaw)) {
             foreach ($extraPagesRaw as $page) {
                 if (is_string($page)) {
@@ -372,6 +371,7 @@ class PdfController extends Controller
                 ];
             }
         }
+        // dd($galleryBackgrounds);
         if (!$skipExtras && !empty($galleryBackgrounds)) {
             // Function-level comment: Read optional defaults for background focus/fit from request.
             // PT: Lê defaults opcionais para posição e ajuste do fundo.
@@ -385,8 +385,8 @@ class PdfController extends Controller
             $backgroundUrl = $galleryBackgrounds[0]['url'];
             $backgroundDataUri = null;
             // Demais viram páginas extras sem conteúdo, apenas fundo
-            foreach (array_slice($galleryBackgrounds, 1) as $gb) {
-                $extraPages[] = [
+            foreach ($galleryBackgrounds as $idx => $gb) {
+                $extraPages[$idx] = [
                     'title' => $gb['title'] ?? null,
                     'html' => '',
                     'background_url' => $gb['url'],

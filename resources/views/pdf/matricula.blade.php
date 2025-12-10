@@ -39,6 +39,7 @@
             background: linear-gradient(180deg, #63b92a 0%, #4aa31b 100%);
             color: #fff; font-weight: 700; border-radius: 8px;
             padding: 10px 14px; box-shadow: 0 2px 0 rgba(0,0,0,.15);
+            text-decoration: none; cursor: pointer;
         }
         .cta-button .icon { width: 20px; height: 20px; border-radius: 50%; background: #2c7a0a; display: inline-block; }
         /* PT: Bloco central da capa com alinhamento e espaçamento como na imagem.
@@ -121,162 +122,142 @@
 </head>
 <body>
     @php
-        /* Function-level comment: Compose first page style using background-image on container.
-           PT: Monta o estilo da capa usando background-image na div .page.
-           EN: Build cover style using background-image on the .page container. */
-        $pageStyleFirst = '';
-        $bgUrlFirst = $background_data_uri ?? $background_url ?? '';
-        $bgPosFirst = is_string($background_position ?? null) ? $background_position : 'top center';
-        $bgFitFirst = is_string($background_fit ?? null) ? $background_fit : 'contain';
-        if (is_string($bgUrlFirst) && $bgUrlFirst !== '') {
-            $pageStyleFirst = "background-image: url('" . $bgUrlFirst . "'); background-repeat: no-repeat; background-position: " . $bgPosFirst . "; background-size: " . ($bgFitFirst === 'cover' ? 'cover' : 'contain') . ";";
-        }
+        /* Function-level comment: Build a single pages loop where
+           0 => cover, 1 => budget, 2..N => controller-provided pages.
+           PT: Constrói um único loop de páginas onde
+           0 => capa, 1 => orçamento, 2..N => páginas da controller. */
+        $extras = is_array($extra_pages ?? null) ? $extra_pages : [];
     @endphp
-    <div class="page" style="{{ $pageStyleFirst }}">
-        <div class="page-inner">
-            <!-- PT: Conteúdo central da capa (título, subtítulo, dados e CTA) | EN: Centered cover content (title, subtitle, data and CTA) -->
-            <div class="cover-content">
-                <h1 class="cover-title">Proposta Comercial</h1>
-                <div class="cover-subtitle">Dados relacionados da proposta:</div>
-                <div class="cover-info">
-                    <div><b>Cliente:</b> {{ $cliente_nome }} <span class="muted">Nº: {{ $cliente_zapsint ?? '-' }}</span></div>
-                    <div><b>Telefone:</b> {{ $cliente_telefone ?? '-' }}</div>
-                    <div><b>Email:</b> {{ $cliente_email ?? '-' }}</div>
-                    <div><b>Data:</b> {{ $data_formatada }} &nbsp; <b>Validade:</b> {{ $validade_formatada }}</div>
-                </div>
-                <div class="cta-wrap cover-cta"><span class="cta-button"><span class="icon"></span>ACEITO A PROPOSTA</span></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- PT: Segunda página com detalhes da proposta | EN: Second page with proposal details -->
-    <div class="page">
-        <div class="page-inner">
-            <h1>Orçamento</h1>
-            <!-- PT: Tabela de itens do orçamento | EN: Budget items table -->
-            <table>
-                <thead>
-                    <tr>
-                        <th>Descrição</th>
-                        <th>Etapa</th>
-                        <th class="right">H. Teóricas</th>
-                        <th class="right">H. Práticas</th>
-                        <th class="right">Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach(($orc['modulos'] ?? []) as $m)
-                        <tr>
-                            <td>{{ $m['titulo'] ?? '-' }}</td>
-                            <td class="muted">{{ $m['etapa'] ?? '—' }}</td>
-                            <td class="right">{{ $m['limite'] ?? '0' }}</td>
-                            <td class="right">{{ $m['limite_pratico'] ?? '0' }}</td>
-                            <td class="right">{{ $m['valor'] ?? '0,00' }}</td>
-                        </tr>
-                    @endforeach
-                    @if(isset($desconto) && $desconto !== null)
-                        <tr>
-                            <td class="accent">Desconto de Pontualidade</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td class="right accent">- R$ {{ number_format((float)$desconto, 2, ',', '.') }}</td>
-                        </tr>
-                    @endif
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="4" class="right">Subtotal</td>
-                        <td class="right">R$ {{ $subtotal_formatado }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="4" class="right">Total do Orçamento</td>
-                        <td class="right">R$ {{ $total_formatado }}</td>
-                    </tr>
-                </tfoot>
-            </table>
-
-            <!-- PT: Seção Parcelamento com chips | EN: Installment section with chips -->
-            <div class="section-title">Parceliamento</div>
-            <div class="chips">
-                @php
-                    /*
-                     * PT: Normaliza $orc (string JSON ou array) e coleta linhas do parcelamento com segurança.
-                     * EN: Normalize $orc (JSON string or array) and safely collect installment lines.
-                     */
-                    $orcArr = is_array($orc)
-                        ? $orc
-                        : (is_string($orc) ? (json_decode($orc, true) ?: []) : []);
-                    $linhas = [];
-                    if (isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
-                        $linhasRaw = $orcArr['parcelamento']['linhas'] ?? [];
-                        $linhas = is_array($linhasRaw) ? $linhasRaw : [];
-                    }
-                @endphp
-                @if(!empty($linhas))
-                    @foreach($linhas as $linha)
-                        <span class="chip">Total de Parcelas: {{ $linha['parcelas'] ?? '-' }}</span>
-                        <span class="chip">Valor da Parcela: R$ {{ isset($linha['valor']) ? number_format((float)$linha['valor'], 2, ',', '.') : '-' }}</span>
-                        @if(isset($linha['desconto']))
-                            <span class="chip">Desconto Pontualidade: R$ {{ number_format((float)$linha['desconto'], 2, ',', '.') }}</span>
-                            <span class="chip">Parcela c/ Desconto: R$ {{ number_format(((float)$linha['valor']) - ((float)$linha['desconto']), 2, ',', '.') }}</span>
+{{-- {{ dd($extra_pages,$extras); }} --}}
+    @foreach($extras as $idx => $p)
+        @php
+            $pageBg = $p['background_data_uri'] ?? $p['background_url'] ?? null;
+            $pageBgStyle = 'page-break-before: always; break-before: page; page-break-after: always; break-after: page; height: 297mm; width: 210mm;';
+            if ($pageBg) {
+                $bgPos = isset($p['background_position']) && is_string($p['background_position']) ? $p['background_position'] : 'top center';
+                $bgFit = isset($p['background_fit']) && is_string($p['background_fit']) ? $p['background_fit'] : 'contain';
+                $pageBgStyle .= " background-image: url('" . $pageBg . "'); background-repeat: no-repeat; background-position: " . $bgPos . "; background-size: " . ($bgFit === 'cover' ? 'cover' : 'contain') . ";";
+            }
+        @endphp
+        <div class="page" style="{{ $pageBgStyle }}">
+            <div class="page-inner">
+                @if($idx === 0)
+                    <!-- PT/EN: Page 0 = Cover -->
+                    <div class="cover-content">
+                        <h1 class="cover-title">Proposta Comercial</h1>
+                        <div class="cover-subtitle">Dados relacionados da proposta:</div>
+                        <div class="cover-info">
+                            <div><b>Cliente:</b> {{ $cliente_nome }} <span class="muted">Nº: {{ $cliente_zapsint ?? '-' }}</span></div>
+                            <div><b>Telefone:</b> {{ $cliente_telefone ?? '-' }}</div>
+                            <div><b>Email:</b> {{ $cliente_email ?? '-' }}</div>
+                            <div><b>Data:</b> {{ $data_formatada }} &nbsp; <b>Validade:</b> {{ $validade_formatada }}</div>
+                        </div>
+                        @php
+                            /* Function-level comment: Resolve customizable CTA link and text.
+                               PT: Define URL e texto do CTA de forma personalizável.
+                               EN: Resolve CTA URL and text in a customizable way. */
+                            $ctaUrl = $cta_url ?? ($cta_link ?? '#');
+                            $ctaText = $cta_text ?? 'ACEITO A PROPOSTA';
+                        @endphp
+                        <div class="cta-wrap cover-cta">
+                            <a class="cta-button" href="{{ $ctaUrl }}" target="_blank" rel="noopener noreferrer">
+                                <span class="icon"></span>{{ $ctaText }}
+                            </a>
+                        </div>
+                    </div>
+                @elseif($idx === 1)
+                    <!-- PT/EN: Page 1 = Budget table -->
+                    <h1>Orçamento</h1>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Descrição</th>
+                                <th>Etapa</th>
+                                <th class="right">H. Teóricas</th>
+                                <th class="right">H. Práticas</th>
+                                <th class="right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(($orc['modulos'] ?? []) as $m)
+                                <tr>
+                                    <td>{{ $m['titulo'] ?? '-' }}</td>
+                                    <td class="muted">{{ $m['etapa'] ?? '—' }}</td>
+                                    <td class="right">{{ $m['limite'] ?? '0' }}</td>
+                                    <td class="right">{{ $m['limite_pratico'] ?? '0' }}</td>
+                                    <td class="right">{{ $m['valor'] ?? '0,00' }}</td>
+                                </tr>
+                            @endforeach
+                            @if(isset($desconto) && $desconto !== null)
+                                <tr>
+                                    <td class="accent">Desconto de Pontualidade</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="right accent">- R$ {{ number_format((float)$desconto, 2, ',', '.') }}</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="right">Subtotal</td>
+                                <td class="right">R$ {{ $subtotal_formatado }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="right">Total do Orçamento</td>
+                                <td class="right">R$ {{ $total_formatado }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div class="section-title">Parceliamento</div>
+                    <div class="chips">
+                        @php
+                            $orcArr = is_array($orc) ? $orc : (is_string($orc) ? (json_decode($orc, true) ?: []) : []);
+                            $linhas = [];
+                            if (isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
+                                $linhasRaw = $orcArr['parcelamento']['linhas'] ?? [];
+                                $linhas = is_array($linhasRaw) ? $linhasRaw : [];
+                            }
+                        @endphp
+                        @if(!empty($linhas))
+                            @foreach($linhas as $linha)
+                                <span class="chip">Total de Parcelas: {{ $linha['parcelas'] ?? '-' }}</span>
+                                <span class="chip">Valor da Parcela: R$ {{ isset($linha['valor']) ? number_format((float)$linha['valor'], 2, ',', '.') : '-' }}</span>
+                                @if(isset($linha['desconto']))
+                                    <span class="chip">Desconto Pontualidade: R$ {{ number_format((float)$linha['desconto'], 2, ',', '.') }}</span>
+                                    <span class="chip">Parcela c/ Desconto: R$ {{ number_format(((float)$linha['valor']) - ((float)$linha['desconto']), 2, ',', '.') }}</span>
+                                @endif
+                            @endforeach
+                        @else
+                            <span class="chip">Sem dados de parcelamento</span>
                         @endif
-                    @endforeach
+                    </div>
+                    <div class="content-html">
+                        @php
+                            $textoPreview = '';
+                            if (!empty($orcArr) && isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
+                                $textoPreview = $orcArr['parcelamento']['texto_preview_html'] ?? '';
+                            }
+                        @endphp
+                        {!! $textoPreview !!}
+                    </div>
+                    <div class="footer">Gerado em {{ $generatedAt->format('d/m/Y H:i') }}</div>
                 @else
-                    <span class="chip">Sem dados de parcelamento</span>
+                    <!-- PT/EN: Remaining pages from controller -->
+                    @php
+                        $hasTitle = !empty($p['title']);
+                        $hasHtml = !empty($p['html']);
+                    @endphp
+                    @if($hasTitle)
+                        <h1>{{ $p['title'] }}</h1>
+                    @endif
+                    {!! $p['html'] ?? '' !!}
+                    @if(!$hasTitle && !$hasHtml)
+                        <div class="page-filler"></div>
+                    @endif
                 @endif
             </div>
-
-            <!-- PT: Texto HTML explicativo do parcelamento | EN: Preview HTML for installment explanation -->
-            <div class="content-html">
-                @php
-                    $textoPreview = '';
-                    if (!empty($orcArr) && isset($orcArr['parcelamento']) && is_array($orcArr['parcelamento'])) {
-                        $textoPreview = $orcArr['parcelamento']['texto_preview_html'] ?? '';
-                    }
-                @endphp
-                {!! $textoPreview !!}
-            </div>
-
-            <div class="footer">Gerado em {{ $generatedAt->format('d/m/Y H:i') }}</div>
         </div>
-    </div>
-
-    <!-- PT: Páginas extras dinâmicas | EN: Dynamic extra pages -->
-    @if(!empty($extra_pages))
-        @foreach($extra_pages as $p)
-            @php
-                $pageBg = $p['background_data_uri'] ?? $p['background_url'] ?? null;
-                $pageBgStyle = 'page-break-before: always; break-before: page; page-break-after: always; break-after: page; height: 297mm; width: 210mm;';
-                $hasTitle = !empty($p['title']);
-                $hasHtml = !empty($p['html']);
-            @endphp
-            @php
-                /* Function-level comment: Apply background-image on extra page container.
-                   PT: Aplica background-image na div .page de cada extra.
-                   EN: Apply background-image on the .page container for each extra. */
-                if ($pageBg) {
-                    $bgPos = isset($p['background_position']) && is_string($p['background_position'])
-                        ? $p['background_position']
-                        : 'top center';
-                    $bgFit = isset($p['background_fit']) && is_string($p['background_fit'])
-                        ? $p['background_fit']
-                        : 'contain';
-                    $pageBgStyle .= " background-image: url('" . $pageBg . "'); background-repeat: no-repeat; background-position: " . $bgPos . "; background-size: " . ($bgFit === 'cover' ? 'cover' : 'contain') . ";";
-                }
-            @endphp
-            <div class="page" style="{{ $pageBgStyle }}">
-                <div class="page-inner">
-                @if($hasTitle)
-                    <h1>{{ $p['title'] }}</h1>
-                @endif
-                {!! $p['html'] ?? '' !!}
-                @if(!$hasTitle && !$hasHtml)
-                    <div class="page-filler"></div>
-                @endif
-                </div>
-            </div>
-        @endforeach
-    @endif
+    @endforeach
 </body>
 </html>
